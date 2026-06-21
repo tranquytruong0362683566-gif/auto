@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Đăng Reels (Ver 3)</title>
+  <title>Đăng Reels (Ver 4 - Random & Auto Comment)</title>
   <style>
     :root {
       --bg-main: #f1f5f9;
@@ -14,42 +14,36 @@
       --primary: #1d4ed8;
       --primary-hover: #1e40af;
       --danger: #ef4444;
+      --success: #10b981;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background-color: var(--bg-main); color: var(--text-main); font-size: 13px; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
 
-    /* Container mô phỏng cửa sổ Modal như trong ảnh */
-    .window-modal { background: var(--bg-card); width: 100%; max-width: 800px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); overflow: hidden; position: relative; }
+    .window-modal { background: var(--bg-card); width: 100%; max-width: 800px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); overflow: hidden; }
     
-    /* Header cửa sổ */
     .window-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border-color); }
     .window-title { font-size: 16px; font-weight: bold; color: #000; }
     .close-btn { background: none; border: none; font-size: 18px; color: var(--text-muted); cursor: pointer; }
 
-    /* Thanh thông tin User/Facebook SDK ẩn hiện */
     .fb-account-bar { background: #f8fafc; padding: 8px 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
     .user-info { display: flex; align-items: center; gap: 8px; }
     .user-avatar { width: 28px; height: 28px; border-radius: 50%; }
     .btn-logout { background: none; border: 1px solid var(--border-color); padding: 2px 8px; border-radius: 4px; cursor: pointer; color: var(--text-muted); }
     .btn-logout:hover { color: var(--danger); border-color: var(--danger); }
 
-    /* Nội dung chính chia 2 cột */
     .window-body { padding: 16px; }
     .grid-container { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; }
 
-    /* View Đăng nhập bằng FB */
     .center-box { text-align: center; padding: 40px 20px; }
     .btn-fb-login { background: #1877f2; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
     .btn-fb-login:hover { background: #166fe0; }
 
-    /* Form controls định dạng giống ảnh mẫu */
     .form-group { margin-bottom: 14px; }
     .form-row-inline { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
     .form-group label { font-weight: bold; color: #000; }
     
     .checkbox-label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; font-weight: normal; font-size: 13px; }
-    .checkbox-label.ai-text { color: #0066ff; font-weight: bold; }
     .checkbox-label input[type="checkbox"] { width: 14px; height: 14px; cursor: pointer; }
 
     textarea, select, input[type="text"], input[type="number"] {
@@ -57,40 +51,40 @@
     }
     textarea { height: 90px; resize: none; }
     
-    /* Custom Input File chọn video */
     .video-picker-container { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
     .file-btn { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 500; }
     .file-btn:hover { background: #e2e8f0; }
-    .file-status-text { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
+    .file-status-text { color: var(--primary); font-weight: bold; font-size: 12px; margin-top: 4px; }
 
-    /* Khối song song, comment, cấu hình bên phải */
     .inline-input-box { display: flex; align-items: center; gap: 6px; }
     .inline-input-box input { width: 60px; text-align: center; padding: 4px; }
     
     .right-col .form-group { margin-bottom: 16px; }
 
-    /* Footer chứa nút bấm */
     .window-footer { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-top: 1px solid var(--border-color); background: #fff; }
     .btn-submit { background: #1d4ed8; color: white; border: none; padding: 10px 24px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 13px; }
     .btn-submit:hover { background: #1e40af; }
     .btn-submit:disabled { background: #94a3b8; cursor: not-allowed; }
 
-    /* Trạng thái / Progress bar */
-    .status-box { padding: 8px 12px; border-radius: 4px; font-size: 12px; margin-top: 10px; display: none; }
+    .status-box { padding: 10px 12px; border-radius: 4px; font-size: 13px; margin-top: 10px; display: none; line-height: 1.5; }
     .status-box.show { display: block; }
     .status-box.ok { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
     .status-box.err { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
     .status-box.loading { background: #e0f2fe; color: #075985; border: 1px solid #bae6fd; }
+    
     .progress-bar-wrap { background: #e2e8f0; border-radius: 4px; height: 6px; margin-top: 8px; overflow: hidden; display: none; }
     .progress-bar-wrap.show { display: block; }
     .progress-bar { height: 100%; background: #1d4ed8; width: 0%; transition: width 0.3s; }
+    
+    .post-link { color: #1d4ed8; font-weight: bold; text-decoration: none; }
+    .post-link:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
 
   <div class="window-modal">
     <div class="window-header">
-      <div class="window-title">Đăng Reels (Ver 3)</div>
+      <div class="window-title">Đăng Reels (Ver 4 - Random Video & Auto Comment)</div>
       <button class="close-btn">&times;</button>
     </div>
 
@@ -120,30 +114,19 @@
           
           <div class="left-col">
             <div class="form-group">
-              <div class="form-row-inline">
-                <label>Nội dung bài viết:</label>
-                <label class="checkbox-label ai-text">
-                  <input type="checkbox"> 🤖 AI Viết
-                </label>
-              </div>
-              <textarea id="postContent" placeholder="Nhập nội dung... (Hỗ trợ spin content {a|b|c})"></textarea>
+              <label style="color: var(--primary);">Nội dung Comment tự động (Sau khi đăng):</label>
+              <textarea id="commentContent" placeholder="Nhập nội dung bạn muốn tự động comment vào bài viết..."></textarea>
             </div>
 
             <div class="form-group">
               <div style="display: flex; gap: 20px;">
                 <div style="flex: 1;">
-                  <label>Chọn Video:</label>
+                  <label>Chọn Kho Video (Chọn nhiều tệp):</label>
                   <div class="video-picker-container">
-                    <button class="file-btn" type="button" onclick="document.getElementById('videoFile').click()">Chọn tệp</button>
-                    <input type="file" id="videoFile" style="display:none" accept="video/*">
+                    <button class="file-btn" type="button" onclick="document.getElementById('videoFile').click()">Mở thư mục</button>
+                    <input type="file" id="videoFile" style="display:none" accept="video/*" multiple>
                   </div>
-                  <div class="file-status-text" id="fileText">Chưa chọn video</div>
-                </div>
-                <div>
-                  <label>Song song:</label>
-                  <div class="inline-input-box" style="margin-top: 4px;">
-                    <input type="number" value="5">
-                  </div>
+                  <div class="file-status-text" id="fileText">Chưa có video nào được chọn</div>
                 </div>
               </div>
             </div>
@@ -151,35 +134,25 @@
             <div class="form-group" style="margin-top: 20px;">
               <div class="inline-input-box">
                 <label class="checkbox-label">
-                  <input type="checkbox"> Comments sau
+                  <input type="checkbox" id="enableComment" checked> Thực hiện comment sau
                 </label>
-                <input type="number" value="90" style="width: 50px;">
-                <span>giây</span>
-                <label class="checkbox-label ai-text" style="margin-left: 15px;">
-                  <input type="checkbox"> 🤖 AI Viết
-                </label>
+                <input type="number" id="commentDelay" value="90" style="width: 50px;">
+                <span>giây (Nên để delay để FB kịp xử lý video)</span>
               </div>
             </div>
 
             <div class="form-group" style="margin-top: 15px;">
-              <label>Thứ tự đăng:</label>
-              <select style="margin-top: 4px;">
-                <option>Từ A tới Z</option>
-                <option>Ngẫu nhiên</option>
+              <label>Thứ tự bốc video:</label>
+              <select style="margin-top: 4px;" disabled>
+                <option>Ngẫu nhiên (Random)</option>
               </select>
             </div>
           </div>
 
           <div class="right-col">
             <div class="form-group">
-              <label class="checkbox-label" style="font-weight: bold; color: #000;">
-                <input type="checkbox"> Lên lịch đăng
-              </label>
-            </div>
-
-            <div class="form-group">
-              <label class="checkbox-label" style="font-weight: bold; color: #000;">
-                <input type="checkbox" checked> Tên file video làm tiêu đề
+              <label class="checkbox-label" style="font-weight: bold; color: var(--success);">
+                <input type="checkbox" checked disabled> Tự động lấy tên file làm Tiêu đề
               </label>
             </div>
 
@@ -204,7 +177,6 @@
               </div>
             </div>
           </div>
-
         </div>
 
         <div class="progress-bar-wrap" id="progressWrap">
@@ -233,6 +205,7 @@
     let currentAccessToken = null;
     let currentPages = [];
 
+    // ================= KHỞI TẠO SDK =================
     window.fbAsyncInit = function () {
       FB.init({ appId: FB_APP_ID, cookie: true, xfbml: false, version: GRAPH_VERSION });
       FB.getLoginStatus(function (response) {
@@ -250,6 +223,7 @@
       fjs.parentNode.insertBefore(js, fjs);
     }(document, 'script', 'facebook-jssdk'));
 
+    // ================= XỬ LÝ ĐĂNG NHẬP =================
     document.getElementById('btnFbLogin').addEventListener('click', () => {
       const statusEl = document.getElementById('loginStatus');
       statusEl.className = 'status-box show loading';
@@ -320,83 +294,130 @@
       });
     });
 
+    // ================= XỬ LÝ CHỌN NHIỀU FILE =================
     document.getElementById('videoFile').addEventListener('change', function () {
-      document.getElementById('fileText').textContent = this.files.length > 0 ? '✔️ ' + this.files[0].name : 'Chưa chọn video';
+      const count = this.files.length;
+      document.getElementById('fileText').textContent = count > 0 
+        ? `✔️ Đã nạp ${count} video (Sẽ chọn ngẫu nhiên 1 file khi đăng)` 
+        : 'Chưa có video nào được chọn';
     });
 
+    // ================= LOGIC UPLOAD & COMMENT =================
     document.getElementById('btnSubmit').addEventListener('click', async () => {
       const pageId = document.getElementById('pageSelect').value;
       const page = currentPages.find(p => p.id === pageId);
-      const content = document.getElementById('postContent').value;
       const fileInput = document.getElementById('videoFile');
+      const commentContent = document.getElementById('commentContent').value.trim();
+      const isEnableComment = document.getElementById('enableComment').checked;
+      const commentDelay = parseInt(document.getElementById('commentDelay').value) || 0;
+
       const statusEl = document.getElementById('postStatus');
       const btn = document.getElementById('btnSubmit');
       const progressWrap = document.getElementById('progressWrap');
       const progressBar = document.getElementById('progressBar');
 
       if (!page) { alert('⚠️ Vui lòng cấu hình tài khoản & chọn Page.'); return; }
-      if (fileInput.files.length === 0) { alert('⚠️ Vui lòng chọn tệp video cần đăng.'); return; }
+      if (fileInput.files.length === 0) { alert('⚠️ Vui lòng chọn ít nhất 1 tệp video để hệ thống bốc ngẫu nhiên.'); return; }
+      if (isEnableComment && !commentContent) { alert('⚠️ Bạn đã bật tính năng Comment tự động nhưng chưa nhập nội dung Comment.'); return; }
+
+      // 1. Chọn ngẫu nhiên 1 video từ tập files
+      const randomIndex = Math.floor(Math.random() * fileInput.files.length);
+      const selectedVideo = fileInput.files[randomIndex];
+      
+      // 2. Lấy tên file làm tiêu đề (Loại bỏ đuôi .mp4, .mov...)
+      const videoTitle = selectedVideo.name.replace(/\.[^/.]+$/, "");
 
       const pageAccessToken = page.access_token;
 
       btn.disabled = true;
       btn.textContent = '⏳ Đang tiến hành đăng...';
       statusEl.className = 'status-box show loading';
-      statusEl.textContent = `Đang tải video lên Page: "${page.name}"...`;
+      statusEl.innerHTML = `Đang tải video ngẫu nhiên: <b>"${videoTitle}"</b> lên Page...`;
       progressWrap.className = 'progress-bar-wrap show';
       progressBar.style.width = '10%';
 
       try {
-        // Bước 1: Khởi tạo phiên
+        // [PHASE 1] - Khởi tạo
         const initForm = new FormData();
         initForm.append('upload_phase', 'start');
         initForm.append('access_token', pageAccessToken);
-
-        const initRes = await fetch(`https://graph-video.facebook.com/${GRAPH_VERSION}/${page.id}/videos`, {
-          method: 'POST', body: initForm
-        });
+        const initRes = await fetch(`https://graph-video.facebook.com/${GRAPH_VERSION}/${page.id}/videos`, { method: 'POST', body: initForm });
         const initData = await initRes.json();
         if (initData.error) throw new Error(initData.error.message);
 
         progressBar.style.width = '40%';
 
-        // Bước 2: Upload file chunk
+        // [PHASE 2] - Truyền dữ liệu
         const uploadForm = new FormData();
         uploadForm.append('upload_phase', 'transfer');
         uploadForm.append('start_offset', initData.start_offset);
         uploadForm.append('upload_session_id', initData.upload_session_id);
-        uploadForm.append('video_file_chunk', fileInput.files[0]);
+        uploadForm.append('video_file_chunk', selectedVideo); // Dùng video ngẫu nhiên đã chọn
         uploadForm.append('access_token', pageAccessToken);
-
-        const uploadRes = await fetch(`https://graph-video.facebook.com/${GRAPH_VERSION}/${page.id}/videos`, {
-          method: 'POST', body: uploadForm
-        });
+        const uploadRes = await fetch(`https://graph-video.facebook.com/${GRAPH_VERSION}/${page.id}/videos`, { method: 'POST', body: uploadForm });
         const uploadData = await uploadRes.json();
         if (uploadData.error) throw new Error(uploadData.error.message);
 
         progressBar.style.width = '80%';
 
-        // Bước 3: Đăng bài hoàn thành
+        // [PHASE 3] - Hoàn tất (Gắn tên file làm Tiêu đề)
         const finishForm = new FormData();
         finishForm.append('upload_phase', 'finish');
         finishForm.append('upload_session_id', initData.upload_session_id);
-        finishForm.append('description', content);
+        finishForm.append('description', videoTitle); // Gắn tiêu đề = Tên file
         finishForm.append('video_state', 'PUBLISHED');
         finishForm.append('access_token', pageAccessToken);
-
-        const finishRes = await fetch(`https://graph-video.facebook.com/${GRAPH_VERSION}/${page.id}/videos`, {
-          method: 'POST', body: finishForm
-        });
+        const finishRes = await fetch(`https://graph-video.facebook.com/${GRAPH_VERSION}/${page.id}/videos`, { method: 'POST', body: finishForm });
         const finishData = await finishRes.json();
         if (finishData.error) throw new Error(finishData.error.message);
 
         progressBar.style.width = '100%';
-        statusEl.className = 'status-box show ok';
-        statusEl.textContent = `✅ Đăng Reels thành công lên trang "${page.name}"!`;
+        
+        // Thu thập Video ID & Build Link
+        const videoId = finishData.video_id || finishData.id;
+        const postLink = `https://www.facebook.com/${page.id}/videos/${videoId}/`;
+
+        // [PHASE 4] - Auto Comment (Nếu được bật)
+        if (isEnableComment && commentContent) {
+            statusEl.className = 'status-box show loading';
+            statusEl.innerHTML = `✅ Đã đăng thành công video!<br>⏳ Đang chờ <b>${commentDelay} giây</b> để thực hiện Auto-Comment vào bài viết...`;
+            
+            // Hàm Delay chờ Facebook xử lý video
+            await new Promise(resolve => setTimeout(resolve, commentDelay * 1000));
+            
+            statusEl.innerHTML = `⏳ Đang gửi comment...`;
+            
+            // Gọi Graph API Post Comment
+            const commentRes = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/${videoId}/comments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: commentContent,
+                    access_token: pageAccessToken
+                })
+            });
+            const commentData = await commentRes.json();
+            if (commentData.error) throw new Error("Lỗi khi Comment: " + commentData.error.message);
+
+            statusEl.className = 'status-box show ok';
+            statusEl.innerHTML = `
+              🎉 <b>HOÀN TẤT TOÀN BỘ QUÁ TRÌNH!</b><br>
+              - Đã đăng video ngẫu nhiên: <i>${videoTitle}</i><br>
+              - Đã tự động thả comment.<br>
+              🔗 Link bài viết: <a href="${postLink}" target="_blank" class="post-link">${postLink}</a>
+            `;
+        } else {
+            statusEl.className = 'status-box show ok';
+            statusEl.innerHTML = `
+              ✅ <b>ĐĂNG THÀNH CÔNG!</b> (Không thực hiện Comment)<br>
+              - Video đăng: <i>${videoTitle}</i><br>
+              🔗 Link bài viết: <a href="${postLink}" target="_blank" class="post-link">${postLink}</a>
+            `;
+        }
 
       } catch (err) {
         statusEl.className = 'status-box show err';
-        statusEl.textContent = `❌ Thất bại: ${err.message}`;
+        statusEl.textContent = `❌ Lỗi tiến trình: ${err.message}`;
         progressWrap.className = 'progress-bar-wrap';
       } finally {
         btn.disabled = false;
