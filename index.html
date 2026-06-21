@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Đăng Reels (Ver 5 - Vòng Lặp Tự Động Liên Tục)</title>
+  <title>Đăng Reels (Ver 6 - Multi-Page Song Song)</title>
   <style>
     :root {
       --bg-main: #f1f5f9;
@@ -78,6 +78,35 @@
     
     .post-link { color: #1d4ed8; font-weight: bold; text-decoration: none; }
     .post-link:hover { text-decoration: underline; }
+
+    .page-multiselect { border: 1px solid var(--border-color); border-radius: 4px; max-height: 130px; overflow-y: auto; background: #fff; margin-top: 4px; }
+    .page-multiselect-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
+    .page-multiselect-item:last-child { border-bottom: none; }
+    .page-multiselect-item:hover { background: #f8fafc; }
+    .page-multiselect-item img { width: 20px; height: 20px; border-radius: 50%; }
+    .page-multiselect-item span.pname { font-weight: 500; flex: 1; }
+    .page-multiselect-item input[type="checkbox"] { width: 14px; height: 14px; cursor: pointer; }
+
+    .page-cards-wrap { display: flex; flex-direction: column; gap: 14px; margin-top: 14px; }
+    .page-card { border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; }
+    .page-card-header { background: #f8fafc; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
+    .page-card-header .pname { font-weight: bold; display: flex; align-items: center; gap: 8px; }
+    .page-card-header img { width: 22px; height: 22px; border-radius: 50%; }
+    .page-card-badge { font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 10px; }
+    .page-card-badge.idle { background: #e2e8f0; color: #475569; }
+    .page-card-badge.running { background: #dbeafe; color: #1d4ed8; }
+    .page-card-badge.ok { background: #d1fae5; color: #065f46; }
+    .page-card-badge.err { background: #fee2e2; color: #991b1b; }
+    .page-card-body { padding: 12px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; }
+    .page-card-status { font-size: 12px; padding: 8px 10px; border-radius: 4px; margin-top: 8px; line-height: 1.5; }
+    .page-card-status.loading { background: #e0f2fe; color: #075985; }
+    .page-card-status.ok { background: #d1fae5; color: #065f46; }
+    .page-card-status.err { background: #fee2e2; color: #991b1b; }
+    .page-card-progress-wrap { background: #e2e8f0; border-radius: 4px; height: 5px; margin-top: 8px; overflow: hidden; display: none; }
+    .page-card-progress-wrap.show { display: block; }
+    .page-card-progress { height: 100%; background: #1d4ed8; width: 0%; transition: width 0.3s; }
+
+    .global-bar { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 8px 12px; border: 1px dashed var(--border-color); border-radius: 4px; margin-top: 12px; font-size: 12px; }
   </style>
 </head>
 <body>
@@ -106,73 +135,31 @@
       <div id="postView" style="display:none;">
         
         <div class="form-group" style="background: #f8fafc; padding: 8px; border: 1px dashed var(--border-color); border-radius: 4px;">
-          <label style="font-size: 12px; color: var(--text-muted);">Chọn Fanpage mục tiêu:</label>
-          <select id="pageSelect" style="margin-top:4px; padding:4px 8px;"></select>
+          <label style="font-size: 12px; color: var(--text-muted);">Chọn Fanpage mục tiêu (chọn nhiều để đăng song song):</label>
+          <div class="page-multiselect" id="pageMultiselect"></div>
         </div>
 
-        <div class="grid-container">
-          
-          <div class="left-col">
-            <div class="form-group">
-              <label style="color: var(--primary);">Nội dung Comment tự động (Sau khi đăng):</label>
-              <textarea id="commentContent" placeholder="Nhập nội dung bạn muốn tự động comment vào bài viết..."></textarea>
-            </div>
-
-            <div class="form-group">
-              <div style="display: flex; gap: 20px;">
-                <div style="flex: 1;">
-                  <label>Chọn Kho Video (Chọn nhiều tệp):</label>
-                  <div class="video-picker-container">
-                    <button class="file-btn" type="button" onclick="document.getElementById('videoFile').click()">Mở thư mục</button>
-                    <input type="file" id="videoFile" style="display:none" accept="video/*" multiple>
-                  </div>
-                  <div class="file-status-text" id="fileText">Chưa có video nào được chọn</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="form-group" style="margin-top: 20px;">
-              <div class="inline-input-box">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="enableComment" checked> Thực hiện comment sau
-                </label>
-                <input type="number" id="commentDelay" value="90" style="width: 50px;">
-                <span>giây (Nên để delay để FB kịp xử lý video)</span>
-              </div>
-            </div>
+        <div class="global-bar">
+          <div>
+            <label style="color: var(--warning); font-weight: bold;">⏱️ Chu kỳ lặp lại liên tục (áp dụng cho tất cả page):</label>
+            <select id="loopInterval" style="margin-top: 6px; width: auto; display: inline-block;">
+              <option value="30">30 phút</option>
+              <option value="60" selected>60 phút</option>
+              <option value="1">1 phút (test)</option>
+            </select>
           </div>
-
-          <div class="right-col">
-            <div class="form-group">
-              <label class="checkbox-label" style="font-weight: bold; color: var(--success);">
-                <input type="checkbox" checked disabled> Tự động lấy tên file làm Tiêu đề
-              </label>
-            </div>
-
-            <div class="form-group" style="margin-top: 20px;">
-              <label style="color: var(--warning); font-weight: bold;">⏱️ Chu kỳ lặp lại liên tục:</label>
-              <select id="loopInterval" style="margin-top: 6px;">
-                <option value="30">30 phút (Mỗi nửa tiếng đăng 1 bài)</option>
-                <option value="60" selected>60 phút (Mỗi 1 tiếng đăng 1 bài)</option>
-                <option value="1">1 phút (Dành cho việc chạy thử nghiệm)</option>
-              </select>
-              <p style="color: var(--text-muted); font-size: 11px; margin-top: 6px; line-height: 1.4;">
-                Hệ thống sẽ bốc ngẫu nhiên 1 video trong kho, đăng lên, tự động thả comment, và lặp lại liên tục sau khoảng thời gian được thiết lập.
-              </p>
-            </div>
+          <div style="color: var(--text-muted); max-width: 280px; text-align: right;">
+            Mỗi page chạy vòng lặp độc lập — dừng 1 page không ảnh hưởng các page khác.
           </div>
         </div>
 
-        <div class="progress-bar-wrap" id="progressWrap">
-          <div class="progress-bar" id="progressBar"></div>
-        </div>
-        <div class="status-box" id="postStatus"></div>
+        <div class="page-cards-wrap" id="pageCardsWrap"></div>
       </div>
     </div>
 
     <div class="window-footer">
       <div>
-        <span style="color: var(--text-muted); font-weight: bold;">Chế độ: Chạy lặp lại liên tục không giới hạn</span>
+        <span style="color: var(--text-muted); font-weight: bold;">Chế độ: Đăng song song nhiều Fanpage, lặp lại liên tục</span>
       </div>
       <div>
         <button class="btn-submit" id="btnSubmit">Bắt đầu đăng liên tục</button>
@@ -186,10 +173,6 @@
 
     let currentAccessToken = null;
     let currentPages = [];
-    
-    // Quản lý trạng thái lặp liên tục
-    let isLooping = false;
-    let loopTimeoutId = null;
 
     // ================= KHỞI TẠO SDK =================
     window.fbAsyncInit = function () {
@@ -254,8 +237,17 @@
           return;
         }
 
-        const sel = document.getElementById('pageSelect');
-        sel.innerHTML = currentPages.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+        const ms = document.getElementById('pageMultiselect');
+        ms.innerHTML = currentPages.map(p => `
+          <label class="page-multiselect-item" for="pagechk_${p.id}">
+            <input type="checkbox" id="pagechk_${p.id}" value="${p.id}">
+            <img src="${(p.picture && p.picture.data && p.picture.data.url) || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(p.name)}" alt="">
+            <span class="pname">${p.name}</span>
+          </label>
+        `).join('');
+        ms.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+          chk.addEventListener('change', () => togglePageCard(chk.value, chk.checked));
+        });
 
         document.getElementById('loginView').style.display = 'none';
         document.getElementById('postView').style.display = 'block';
@@ -277,106 +269,188 @@
         document.getElementById('postView').style.display = 'none';
         document.getElementById('loginView').style.display = 'block';
         document.getElementById('loginStatus').className = 'status-box';
-        stopLoop();
+        stopAllLoops();
+        document.getElementById('pageCardsWrap').innerHTML = '';
       });
     });
 
-    // ================= XỬ LÝ CHỌN NHIỀU FILE =================
-    document.getElementById('videoFile').addEventListener('change', function () {
-      const count = this.files.length;
-      document.getElementById('fileText').textContent = count > 0 
-        ? `✔️ Đã nạp ${count} video (Sẽ chọn ngẫu nhiên mỗi lượt đăng)` 
-        : 'Chưa có video nào được chọn';
-    });
+    // ================= QUẢN LÝ THẺ PAGE ĐỘNG (MULTI-PAGE) =================
+    // Mỗi page có trạng thái loop độc lập: { active, timeoutId }
+    const pageLoops = {};
 
-    // ================= ĐIỀU KHIỂN BẬT / TẮT VÒNG LẶP LIÊN TỤC =================
-    document.getElementById('btnSubmit').addEventListener('click', async () => {
-      if (isLooping) {
-        stopLoop();
+    function togglePageCard(pageId, isChecked) {
+      const wrap = document.getElementById('pageCardsWrap');
+      const existing = document.getElementById(`pagecard_${pageId}`);
+
+      if (isChecked) {
+        if (existing) return;
+        const page = currentPages.find(p => p.id === pageId);
+        const card = document.createElement('div');
+        card.className = 'page-card';
+        card.id = `pagecard_${pageId}`;
+        card.innerHTML = `
+          <div class="page-card-header">
+            <div class="pname">
+              <img src="${(page.picture && page.picture.data && page.picture.data.url) || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(page.name)}" alt="">
+              ${page.name}
+            </div>
+            <span class="page-card-badge idle" id="badge_${pageId}">Chưa chạy</span>
+          </div>
+          <div class="page-card-body">
+            <div>
+              <div class="form-group">
+                <label style="color: var(--primary);">Nội dung Comment tự động:</label>
+                <textarea id="comment_${pageId}" placeholder="Nội dung comment riêng cho page này..."></textarea>
+              </div>
+              <div class="inline-input-box">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="enableComment_${pageId}" checked> Comment sau
+                </label>
+                <input type="number" id="commentDelay_${pageId}" value="90" style="width: 50px;">
+                <span>giây</span>
+              </div>
+            </div>
+            <div>
+              <label>Kho Video riêng cho page này:</label>
+              <div class="video-picker-container">
+                <button class="file-btn" type="button" onclick="document.getElementById('videoFile_${pageId}').click()">Mở thư mục</button>
+                <input type="file" id="videoFile_${pageId}" style="display:none" accept="video/*" multiple>
+              </div>
+              <div class="file-status-text" id="fileText_${pageId}">Chưa có video nào được chọn</div>
+            </div>
+          </div>
+          <div class="page-card-progress-wrap" id="progressWrap_${pageId}">
+            <div class="page-card-progress" id="progressBar_${pageId}"></div>
+          </div>
+          <div class="page-card-status" id="status_${pageId}" style="display:none;"></div>
+        `;
+        wrap.appendChild(card);
+
+        document.getElementById(`videoFile_${pageId}`).addEventListener('change', function () {
+          const count = this.files.length;
+          document.getElementById(`fileText_${pageId}`).textContent = count > 0
+            ? `✔️ Đã nạp ${count} video (Sẽ chọn ngẫu nhiên mỗi lượt đăng)`
+            : 'Chưa có video nào được chọn';
+        });
+
+        pageLoops[pageId] = { active: false, timeoutId: null };
       } else {
-        await startLoop();
+        stopPageLoop(pageId);
+        delete pageLoops[pageId];
+        if (existing) existing.remove();
+      }
+    }
+
+    function setBadge(pageId, state, text) {
+      const badge = document.getElementById(`badge_${pageId}`);
+      if (!badge) return;
+      badge.className = `page-card-badge ${state}`;
+      badge.textContent = text;
+    }
+
+    // ================= ĐIỀU KHIỂN BẬT / TẮT VÒNG LẶP SONG SONG TẤT CẢ PAGE =================
+    let isRunning = false;
+
+    document.getElementById('btnSubmit').addEventListener('click', async () => {
+      if (isRunning) {
+        stopAllLoops();
+      } else {
+        await startAllLoops();
       }
     });
 
-    function stopLoop() {
-      isLooping = false;
-      clearTimeout(loopTimeoutId);
-      
+    function stopAllLoops() {
+      isRunning = false;
+      Object.keys(pageLoops).forEach(pageId => stopPageLoop(pageId));
+
       const btn = document.getElementById('btnSubmit');
       btn.textContent = 'Bắt đầu đăng liên tục';
       btn.style.background = 'var(--primary)';
-      
-      const statusEl = document.getElementById('postStatus');
-      statusEl.className = 'status-box show err';
-      statusEl.textContent = '🛑 Đã chủ động dừng tiến trình chạy lặp lại liên tục.';
-      
-      const progressWrap = document.getElementById('progressWrap');
-      progressWrap.className = 'progress-bar-wrap';
     }
 
-    async function startLoop() {
-      const pageId = document.getElementById('pageSelect').value;
-      const page = currentPages.find(p => p.id === pageId);
-      const fileInput = document.getElementById('videoFile');
-      const commentContent = document.getElementById('commentContent').value.trim();
-      const isEnableComment = document.getElementById('enableComment').checked;
+    function stopPageLoop(pageId) {
+      const loop = pageLoops[pageId];
+      if (!loop) return;
+      loop.active = false;
+      clearTimeout(loop.timeoutId);
+      setBadge(pageId, 'idle', 'Đã dừng');
+      const progressWrap = document.getElementById(`progressWrap_${pageId}`);
+      if (progressWrap) progressWrap.className = 'page-card-progress-wrap';
+    }
 
-      if (!page) { alert('⚠️ Vui lòng cấu hình tài khoản & chọn Page.'); return; }
-      if (fileInput.files.length === 0) { alert('⚠️ Vui lòng chọn ít nhất 1 tệp video để hệ thống bốc ngẫu nhiên.'); return; }
-      if (isEnableComment && !commentContent) { alert('⚠️ Bạn đã bật tính năng Comment tự động nhưng chưa nhập nội dung Comment.'); return; }
+    async function startAllLoops() {
+      const selectedIds = Object.keys(pageLoops);
 
-      isLooping = true;
-      
+      if (selectedIds.length === 0) { alert('⚠️ Vui lòng chọn ít nhất 1 Fanpage để đăng.'); return; }
+
+      for (const pageId of selectedIds) {
+        const fileInput = document.getElementById(`videoFile_${pageId}`);
+        const commentContent = document.getElementById(`comment_${pageId}`).value.trim();
+        const isEnableComment = document.getElementById(`enableComment_${pageId}`).checked;
+        const page = currentPages.find(p => p.id === pageId);
+
+        if (fileInput.files.length === 0) { alert(`⚠️ Page "${page.name}" chưa chọn video nào.`); return; }
+        if (isEnableComment && !commentContent) { alert(`⚠️ Page "${page.name}" đã bật Comment tự động nhưng chưa nhập nội dung.`); return; }
+      }
+
+      isRunning = true;
       const btn = document.getElementById('btnSubmit');
-      btn.textContent = '🔴 Dừng chạy liên tục';
+      btn.textContent = '🔴 Dừng tất cả Page';
       btn.style.background = 'var(--danger)';
 
-      await triggerNextPost();
+      // Mỗi page khởi động vòng lặp riêng, chạy song song độc lập (không await tuần tự)
+      selectedIds.forEach(pageId => {
+        pageLoops[pageId].active = true;
+        triggerNextPostForPage(pageId);
+      });
     }
 
-    // Cơ chế lập lịch đệ quy có kiểm tra trạng thái an toàn
-    async function triggerNextPost() {
-      if (!isLooping) return;
+    // Cơ chế lập lịch đệ quy theo từng page, độc lập với các page khác
+    async function triggerNextPostForPage(pageId) {
+      const loop = pageLoops[pageId];
+      if (!loop || !loop.active) return;
 
-      // Thực thi quy trình bốc và đăng bài
-      await runPostSequence();
-      
-      if (!isLooping) return;
+      await runPostSequenceForPage(pageId);
+
+      if (!loop.active) return;
 
       const intervalMins = parseInt(document.getElementById('loopInterval').value) || 60;
-      const statusEl = document.getElementById('postStatus');
-      
-      statusEl.className = 'status-box show loading';
-      statusEl.innerHTML += `<br><br>✅ <b>Chu kỳ hoàn tất!</b><br>⏳ Hệ thống bắt đầu đếm ngược <b>${intervalMins} phút</b> để đăng bài tiếp theo...`;
+      const statusEl = document.getElementById(`status_${pageId}`);
 
-      // Thiết lập chu kỳ chạy tiếp theo
-      loopTimeoutId = setTimeout(triggerNextPost, intervalMins * 60 * 1000);
+      statusEl.style.display = 'block';
+      statusEl.className = 'page-card-status show loading';
+      statusEl.innerHTML += `<br><br>✅ <b>Chu kỳ hoàn tất!</b><br>⏳ Đếm ngược <b>${intervalMins} phút</b> tới lượt kế tiếp...`;
+      setBadge(pageId, 'running', `Chờ ${intervalMins}p`);
+
+      loop.timeoutId = setTimeout(() => triggerNextPostForPage(pageId), intervalMins * 60 * 1000);
     }
 
-    // ================= QUY TRÌNH ĐĂNG 1 BÀI & CƠ CHẾ COMMENT =================
-    async function runPostSequence() {
-      const pageId = document.getElementById('pageSelect').value;
+    // ================= QUY TRÌNH ĐĂNG 1 BÀI & CƠ CHẾ COMMENT (THEO TỪNG PAGE) =================
+    async function runPostSequenceForPage(pageId) {
+      const loop = pageLoops[pageId];
       const page = currentPages.find(p => p.id === pageId);
-      const fileInput = document.getElementById('videoFile');
-      const commentContent = document.getElementById('commentContent').value.trim();
-      const isEnableComment = document.getElementById('enableComment').checked;
-      const commentDelay = parseInt(document.getElementById('commentDelay').value) || 0;
+      const fileInput = document.getElementById(`videoFile_${pageId}`);
+      const commentContent = document.getElementById(`comment_${pageId}`).value.trim();
+      const isEnableComment = document.getElementById(`enableComment_${pageId}`).checked;
+      const commentDelay = parseInt(document.getElementById(`commentDelay_${pageId}`).value) || 0;
 
-      const statusEl = document.getElementById('postStatus');
-      const progressWrap = document.getElementById('progressWrap');
-      const progressBar = document.getElementById('progressBar');
+      const statusEl = document.getElementById(`status_${pageId}`);
+      const progressWrap = document.getElementById(`progressWrap_${pageId}`);
+      const progressBar = document.getElementById(`progressBar_${pageId}`);
 
-      // 1. Bốc ngẫu nhiên 1 video từ danh sách file đã chọn
+      // 1. Bốc ngẫu nhiên 1 video từ kho riêng của page này
       const randomIndex = Math.floor(Math.random() * fileInput.files.length);
       const selectedVideo = fileInput.files[randomIndex];
-      
+
       // 2. Tách tên file làm tiêu đề Reels
       const videoTitle = selectedVideo.name.replace(/\.[^/.]+$/, "");
       const pageAccessToken = page.access_token;
 
-      statusEl.className = 'status-box show loading';
+      setBadge(pageId, 'running', 'Đang upload');
+      statusEl.style.display = 'block';
+      statusEl.className = 'page-card-status show loading';
       statusEl.innerHTML = `🚀 [Lượt mới] Đang bốc ngẫu nhiên video: <b>"${videoTitle}"</b> để tải lên...`;
-      progressWrap.className = 'progress-bar-wrap show';
+      progressWrap.className = 'page-card-progress-wrap show';
       progressBar.style.width = '10%';
 
       try {
@@ -390,7 +464,7 @@
         const initData = await initRes.json();
         if (initData.error) throw new Error("Lỗi Phase 1: " + initData.error.message);
 
-        const videoId = initData.video_id; 
+        const videoId = initData.video_id;
         progressBar.style.width = '20%';
 
         // [PHASE 2] - Truyền dữ liệu dạng Chunking (băm file lớn)
@@ -399,10 +473,10 @@
         let sessionId = initData.upload_session_id;
 
         while (startOffset < selectedVideo.size) {
-          if (!isLooping) return; // Kiểm tra ngắt giữa chừng khi user bấm Dừng
+          if (!loop.active) return; // Kiểm tra ngắt giữa chừng khi user bấm Dừng page này
 
           const chunk = selectedVideo.slice(startOffset, endOffset);
-          
+
           const uploadForm = new FormData();
           uploadForm.append('upload_phase', 'transfer');
           uploadForm.append('upload_session_id', sessionId);
@@ -416,7 +490,7 @@
 
           startOffset = parseInt(uploadData.start_offset);
           endOffset = parseInt(uploadData.end_offset);
-          
+
           let progressPercent = 20 + Math.floor((startOffset / selectedVideo.size) * 60);
           if (progressPercent > 80) progressPercent = 80;
           progressBar.style.width = `${progressPercent}%`;
@@ -429,7 +503,7 @@
         finishForm.append('description', videoTitle);
         finishForm.append('video_state', 'PUBLISHED');
         finishForm.append('access_token', pageAccessToken);
-        
+
         const finishRes = await fetch(`https://graph-video.facebook.com/${GRAPH_VERSION}/${page.id}/videos`, { method: 'POST', body: finishForm });
         const finishData = await finishRes.json();
         if (finishData.error) throw new Error("Lỗi Phase 3: " + finishData.error.message);
@@ -439,18 +513,19 @@
 
         // [PHASE 4] - Tự động Comment sau khi đăng
         if (isEnableComment && commentContent) {
-            statusEl.className = 'status-box show loading';
+            setBadge(pageId, 'running', `Chờ comment`);
+            statusEl.className = 'page-card-status show loading';
             statusEl.innerHTML = `✅ Đã upload video thành công!<br>⏳ Đang chờ <b>${commentDelay} giây</b> để Facebook index bài đăng trước khi nhét comment...`;
-            
-            // Đếm ngược an toàn có kiểm tra lệnh Ngắt hệ thống liên tục
+
+            // Đếm ngược an toàn có kiểm tra lệnh Ngắt riêng cho page này
             for (let i = 0; i < commentDelay; i++) {
-                if (!isLooping) return;
+                if (!loop.active) return;
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
-            
-            if (!isLooping) return;
+
+            if (!loop.active) return;
             statusEl.innerHTML = `⏳ Đang gửi comment tự động vào bài viết...`;
-            
+
             const commentRes = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/${videoId}/comments`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -461,27 +536,33 @@
             });
             const commentData = await commentRes.json();
             if (commentData.error) throw new Error("Lỗi khi Comment: " + commentData.error.message);
-            
-            statusEl.className = 'status-box show ok';
+
+            setBadge(pageId, 'ok', 'Thành công');
+            statusEl.className = 'page-card-status show ok';
             statusEl.innerHTML = `
               🎉 <b>ĐĂNG THÀNH CÔNG!</b><br>
+              - Page: <i>${page.name}</i><br>
               - Video: <i>${videoTitle}</i><br>
               - Đã thả comment tự động.<br>
               🔗 Link Reels: <a href="${postLink}" target="_blank" class="post-link">${postLink}</a>
             `;
         } else {
-            statusEl.className = 'status-box show ok';
+            setBadge(pageId, 'ok', 'Thành công');
+            statusEl.className = 'page-card-status show ok';
             statusEl.innerHTML = `
               🎉 <b>ĐĂNG THÀNH CÔNG!</b><br>
+              - Page: <i>${page.name}</i><br>
               - Video: <i>${videoTitle}</i><br>
               🔗 Link Reels: <a href="${postLink}" target="_blank" class="post-link">${postLink}</a>
             `;
         }
 
       } catch (err) {
-        // Nếu bị lỗi 1 bài, báo lỗi và chờ 5s rồi vẫn trả quy trình về Trigger Loop tiếp theo
-        statusEl.className = 'status-box show err';
-        statusEl.textContent = `❌ Lỗi bài đăng hiện tại: ${err.message}`;
+        // Nếu bị lỗi 1 bài trên page này, báo lỗi và vẫn trả quy trình về Trigger Loop tiếp theo của riêng page đó
+        setBadge(pageId, 'err', 'Lỗi');
+        statusEl.style.display = 'block';
+        statusEl.className = 'page-card-status show err';
+        statusEl.textContent = `❌ Lỗi bài đăng hiện tại (${page.name}): ${err.message}`;
         await new Promise(resolve => setTimeout(resolve, 5000));
       }
     }
