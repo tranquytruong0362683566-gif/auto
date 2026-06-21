@@ -18,7 +18,7 @@
     .header-left img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
     .user-info { font-size: 13px; }
     .user-name { color: #1a73e8; font-weight: bold; display: flex; align-items: center; gap: 5px; }
-    .expire-date { color: #d93025; font-size: 12px; margin-top: 3px; }
+    .expire-date { color: #d93025; font-size: 12px; margin-top: 3px; font-weight: 600; }
     .header-title { color: #1a73e8; font-size: 20px; font-weight: 600; text-align: center; flex: 1; }
     
     /* ================= MAIN CONTAINER & TABLE ================= */
@@ -38,19 +38,15 @@
     .table-footer { padding: 15px; display: flex; align-items: center; gap: 15px; background: #fafafa; border-top: 1px solid #eee; }
     .table-footer select { padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
 
-    /* ================= CONTEXT MENU (CHUỘT PHẢI) ================= */
+    /* ================= CONTEXT MENU ================= */
     .context-menu {
       position: absolute; background: #fff; border: 1px solid #ccc; border-radius: 6px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15); width: 220px; z-index: 1000; display: none; padding: 5px 0;
     }
-    .menu-item {
-      padding: 8px 15px; font-size: 13px; color: #333; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-    }
+    .menu-item { padding: 8px 15px; font-size: 13px; color: #333; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
     .menu-item:hover { background: #f0f0f0; }
-    .menu-item i { margin-right: 8px; width: 16px; text-align: center; }
     .menu-divider { height: 1px; background: #eee; margin: 5px 0; }
     
-    /* Sub Menu */
     .has-submenu { position: relative; }
     .submenu {
       position: absolute; left: 100%; top: -10px; background: #fff; border: 1px solid #ccc;
@@ -58,18 +54,13 @@
     }
     .has-submenu:hover .submenu { display: block; }
 
-    /* ================= MODAL (POPUP) ================= */
+    /* ================= MODAL ================= */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.5); z-index: 2000; display: none; justify-content: center; align-items: center;
     }
-    .modal {
-      background: #fff; border-radius: 8px; width: 800px; max-width: 95%;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.2); display: flex; flex-direction: column;
-    }
-    .modal-header {
-      padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;
-    }
+    .modal { background: #fff; border-radius: 8px; width: 800px; max-width: 95%; box-shadow: 0 5px 20px rgba(0,0,0,0.2); display: flex; flex-direction: column; }
+    .modal-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
     .modal-header h2 { font-size: 16px; margin: 0; }
     .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #888; }
     .close-btn:hover { color: #f00; }
@@ -90,7 +81,6 @@
     textarea:focus, input:focus, select:focus { outline: none; border-color: #1a73e8; }
     
     .inline-input { width: 60px !important; text-align: center; }
-    
     .ai-badge { color: #1a73e8; font-weight: bold; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px;}
     
     .file-input-wrapper { display: flex; border: 1px solid #ccc; border-radius: 4px; overflow: hidden; background: #f9f9f9; }
@@ -101,31 +91,29 @@
       padding: 15px 20px; border-top: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fafafa; border-radius: 0 0 8px 8px;
     }
     .btn-submit {
-      background: #1a73e8; color: #fff; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px;
+      background: #1a73e8; color: #fff; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s;
     }
     .btn-submit:hover { background: #1557b0; }
+    .btn-submit:disabled { background: #ccc; cursor: not-allowed; }
 
-    /* Custom Checkbox */
     input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
     .checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
   </style>
 </head>
 <body>
 
-  <!-- HEADER -->
   <header class="header">
     <div class="header-left">
       <img src="https://ui-avatars.com/api/?name=Trường&background=random" alt="Avatar">
       <div class="user-info">
         <div class="user-name">👋 Trường</div>
-        <div class="expire-date">⏳ Hạn dùng: 4 ngày</div>
+        <div class="expire-date" id="ext-status" style="color: #f59e0b;">🔌 Đang tìm Extension...</div>
       </div>
     </div>
     <div class="header-title">DMHREELS - All In One Facebook</div>
-    <div style="width: 150px;"></div> <!-- Spacer -->
+    <div style="width: 150px;"></div>
   </header>
 
-  <!-- NỘI DUNG CHÍNH -->
   <div class="container">
     <div class="card">
       <table id="pageTable">
@@ -141,10 +129,10 @@
         </thead>
         <tbody>
           <tr>
-            <td><input type="checkbox" class="row-check"></td>
+            <td><input type="checkbox" class="row-check" value="930755460121224"></td>
             <td>1</td>
             <td>930755460121224</td>
-            <td>
+            <td style="text-align: left;">
               <div class="page-info">
                 <img src="https://ui-avatars.com/api/?name=P+N&background=0D8ABC&color=fff" alt="Avatar">
                 <span class="page-name">Pin NLMT Thanh Lý</span>
@@ -155,42 +143,14 @@
             <td></td>
           </tr>
           <tr>
-            <td><input type="checkbox" class="row-check" checked></td>
+            <td><input type="checkbox" class="row-check" checked value="879784155223944"></td>
             <td>2</td>
             <td>879784155223944</td>
-            <td>
+            <td style="text-align: left;">
               <div class="page-info">
                 <img src="https://ui-avatars.com/api/?name=T+A&background=F44336&color=fff" alt="Avatar">
                 <span class="page-name">Tâm An</span>
                 <span class="badge">💬 17</span>
-              </div>
-            </td>
-            <td>Hiện</td>
-            <td></td>
-          </tr>
-          <tr>
-            <td><input type="checkbox" class="row-check"></td>
-            <td>3</td>
-            <td>2177273855659801</td>
-            <td>
-              <div class="page-info">
-                <img src="https://ui-avatars.com/api/?name=T+Q&background=4CAF50&color=fff" alt="Avatar">
-                <span class="page-name">Trần Quý Trường</span>
-                <span class="badge">💬 17</span>
-              </div>
-            </td>
-            <td>Hiện</td>
-            <td></td>
-          </tr>
-          <tr>
-            <td><input type="checkbox" class="row-check" checked></td>
-            <td>4</td>
-            <td>950708991468083</td>
-            <td>
-              <div class="page-info">
-                <img src="https://ui-avatars.com/api/?name=P+C&background=9C27B0&color=fff" alt="Avatar">
-                <span class="page-name">Tự Biud PC Gaming</span>
-                <span class="badge">💬 19</span>
               </div>
             </td>
             <td>Hiện</td>
@@ -201,42 +161,22 @@
       
       <div class="table-footer">
         Hiển thị: 
-        <select>
-          <option>20 dòng</option>
-          <option>50 dòng</option>
-        </select>
-        <span>Tổng: 4 bản ghi</span>
+        <select><option>20 dòng</option></select>
+        <span>Tổng: 2 bản ghi</span>
       </div>
     </div>
   </div>
 
-  <!-- CONTEXT MENU (Menu chuột phải) -->
   <div id="contextMenu" class="context-menu">
-    <div class="menu-item">🔄 Tải lại dữ liệu</div>
-    <div class="menu-item">📚 Thư viện nhóm</div>
-    <div class="menu-item">⚙️ Cấu hình AI</div>
-    <div class="menu-divider"></div>
     <div class="menu-item has-submenu">
       <span>🛠️ Tính năng page</span>
       <span>▶</span>
       <div class="submenu">
-        <div class="menu-item">📸 Đăng Story (Ảnh) <span class="page-count">(0) Trang</span></div>
-        <div class="menu-item">🎥 Đăng Story (Video) <span class="page-count">(0) Trang</span></div>
-        <div class="menu-divider"></div>
         <div class="menu-item" id="btnOpenReelsModal"><b>🎬 Đăng Reels <span class="page-count">(0) Trang</span> Ver3</b></div>
-        <div class="menu-item">📝 Đăng Bài Viết <span class="page-count">(0) Trang</span></div>
-        <div class="menu-divider"></div>
-        <div class="menu-item">🌍 Cài giới hạn quốc gia <span class="page-count">(0) Trang</span></div>
-        <div class="menu-item">👑 Mời Quản Trị Viên <span class="page-count">(0) Trang</span></div>
       </div>
-    </div>
-    <div class="menu-item has-submenu">
-      <span>👥 Tính năng nhóm</span>
-      <span>▶</span>
     </div>
   </div>
 
-  <!-- MODAL ĐĂNG REELS VER 3 -->
   <div id="reelsModal" class="modal-overlay">
     <div class="modal">
       <div class="modal-header">
@@ -245,68 +185,29 @@
       </div>
       
       <div class="modal-body">
-        <!-- Cột Trái -->
         <div class="col-left">
           <div class="form-group">
             <div class="flex-row-between" style="margin-bottom: 5px;">
               <label style="margin:0;">Nội dung bài viết:</label>
               <label class="checkbox-label"><input type="checkbox"> <span class="ai-badge">🤖 AI Viết</span></label>
             </div>
-            <textarea placeholder="Nhập nội dung... (Hỗ trợ spin content {a|b|c})"></textarea>
+            <textarea id="postContent" placeholder="Nhập nội dung... (Hỗ trợ spin content {a|b|c})"></textarea>
           </div>
-
           <div class="flex-row" style="margin-bottom: 15px; align-items: flex-end;">
             <div class="form-group" style="flex: 1; margin: 0;">
               <label>Chọn Video:</label>
               <div class="file-input-wrapper">
                 <button class="file-btn" onclick="document.getElementById('videoFile').click()">Chọn tệp</button>
-                <div class="file-text">Không có tệp nào được chọn</div>
-                <input type="file" id="videoFile" style="display:none" accept="video/mp4,video/x-m4v,video/*">
+                <div class="file-text" id="fileText">Không có tệp nào được chọn</div>
+                <input type="file" id="videoFile" style="display:none" accept="video/mp4">
               </div>
-              <div style="font-size: 11px; color: #888; margin-top: 3px;">Chưa chọn video</div>
             </div>
-            <div class="form-group" style="width: 80px; margin: 0;">
-              <label>Song song:</label>
-              <input type="number" value="5">
-            </div>
-          </div>
-
-          <div class="flex-row" style="background: #f9f9f9; padding: 10px; border-radius: 4px; border: 1px solid #eee; margin-bottom: 15px;">
-            <label class="checkbox-label"><input type="checkbox"> Comments sau</label>
-            <input type="number" class="inline-input" value="90"> <span>giây</span>
-            <label class="checkbox-label" style="margin-left: 20px;"><input type="checkbox"> <span class="ai-badge">🤖 AI Viết</span></label>
-          </div>
-
-          <div class="form-group">
-            <label>Thứ tự đăng:</label>
-            <select>
-              <option>Từ A tới Z</option>
-              <option>Từ Z tới A</option>
-              <option>Ngẫu nhiên</option>
-            </select>
           </div>
         </div>
 
-        <!-- Cột Phải -->
         <div class="col-right">
           <div class="form-group">
-            <label class="checkbox-label" style="margin-bottom: 10px;"><input type="checkbox"> Lên lịch đăng</label>
             <label class="checkbox-label" style="margin-bottom: 20px;"><input type="checkbox" checked> Tên file video làm tiêu đề</label>
-          </div>
-
-          <div class="flex-row">
-            <div class="form-group" style="flex: 1;">
-              <label>Delay Min(s):</label>
-              <input type="number" value="3">
-            </div>
-            <div class="form-group" style="flex: 1;">
-              <label>Delay Max(s):</label>
-              <input type="number" value="5">
-            </div>
-            <div class="form-group" style="flex: 1.5;">
-              <label>Giới hạn số bài/1 page:</label>
-              <input type="number" value="1">
-            </div>
           </div>
         </div>
       </div>
@@ -319,7 +220,40 @@
   </div>
 
   <script>
-    // ================= XỬ LÝ CHECKBOX BẢNG =================
+    // ================= 1. GIAO TIẾP VỚI EXTENSION =================
+    let userCookie = '';
+    let userUid = '';
+
+    // Lắng nghe phản hồi từ file bridge.js của extension
+    window.addEventListener('message', function(event) {
+      // Chỉ nhận data có type là FB_COOKIES_RESPONSE
+      if (event.data && event.data.type === 'FB_COOKIES_RESPONSE') {
+        const statusEl = document.getElementById('ext-status');
+        
+        if (event.data.success) {
+          userCookie = event.data.cookie_string;
+          // Tìm UID từ mảng cookie (c_user)
+          const cUser = event.data.cookies.find(c => c.name === 'c_user');
+          userUid = cUser ? cUser.value : 'Không tìm thấy';
+          
+          statusEl.textContent = `✅ Đã nhận Cookie (UID: ${userUid})`;
+          statusEl.style.color = '#34a853'; // Xanh lá
+          console.log("Đã lưu Cookie vào biến userCookie thành công!");
+        } else {
+          statusEl.textContent = `❌ Extension báo lỗi: ${event.data.error || 'Chưa đăng nhập FB'}`;
+          statusEl.style.color = '#ea4335'; // Đỏ
+        }
+      }
+    });
+
+    // Yêu cầu Extension cung cấp cookie sau khi Web load xong 1 giây
+    // (Đợi file bridge.js được Extension chèn vào trang xong)
+    setTimeout(() => {
+      window.postMessage({ type: 'GET_FB_COOKIES' }, '*');
+    }, 1000);
+
+
+    // ================= 2. XỬ LÝ GIAO DIỆN BẢNG & MENU =================
     const checkAll = document.getElementById('checkAll');
     const rowChecks = document.querySelectorAll('.row-check');
     
@@ -334,107 +268,78 @@
       updateSelectedCount();
     });
 
-    rowChecks.forEach(cb => {
-      cb.addEventListener('change', () => {
-        const allChecked = Array.from(rowChecks).every(c => c.checked);
-        checkAll.checked = allChecked;
-        updateSelectedCount();
-      });
-    });
-
-    // Cập nhật số lượng ban đầu khi load trang
-    updateSelectedCount();
-
-    // ================= XỬ LÝ MENU CHUỘT PHẢI =================
-    const contextMenu = document.getElementById('contextMenu');
-    const tbody = document.querySelector('tbody');
-
-    tbody.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      // Nếu click vào một hàng chưa được check, tự động check hàng đó
-      const tr = e.target.closest('tr');
-      if(tr) {
-        const checkbox = tr.querySelector('.row-check');
-        if(!checkbox.checked) {
-            // Tuỳ chọn: Bỏ check các dòng khác và chỉ check dòng này, 
-            // hoặc cứ để yên và tính theo số lượng đang check. Ở đây mình giữ nguyên logic đếm tổng số checkbox đã tick.
-        }
-      }
-
+    rowChecks.forEach(cb => cb.addEventListener('change', () => {
+      checkAll.checked = Array.from(rowChecks).every(c => c.checked);
       updateSelectedCount();
-      
+    }));
+
+    updateSelectedCount(); // Khởi tạo lần đầu
+
+    // Menu chuột phải
+    const contextMenu = document.getElementById('contextMenu');
+    document.querySelector('tbody').addEventListener('contextmenu', (e) => {
+      e.preventDefault();
       contextMenu.style.display = 'block';
-      // Tránh menu bị tràn màn hình
-      const menuWidth = contextMenu.offsetWidth;
-      const menuHeight = contextMenu.offsetHeight;
-      let posX = e.pageX;
-      let posY = e.pageY;
-      
-      if (posX + menuWidth > window.innerWidth) posX = window.innerWidth - menuWidth - 10;
-      if (posY + menuHeight > window.innerHeight) posY = window.innerHeight - menuHeight - 10;
-
-      contextMenu.style.left = posX + 'px';
-      contextMenu.style.top = posY + 'px';
+      contextMenu.style.left = Math.min(e.pageX, window.innerWidth - 220) + 'px';
+      contextMenu.style.top = Math.min(e.pageY, window.innerHeight - contextMenu.offsetHeight) + 'px';
     });
+    document.addEventListener('click', (e) => { if (e.button !== 2) contextMenu.style.display = 'none'; });
 
-    // Ẩn menu khi click ra ngoài
-    document.addEventListener('click', (e) => {
-      if (e.button !== 2) {
-        contextMenu.style.display = 'none';
-      }
-    });
 
-    // ================= XỬ LÝ MODAL =================
+    // ================= 3. XỬ LÝ MODAL & HÀNH ĐỘNG ĐĂNG BÀI =================
     const modal = document.getElementById('reelsModal');
-    const btnOpenModal = document.getElementById('btnOpenReelsModal');
-    const btnCloseModal = document.getElementById('btnCloseModal');
-    const btnSubmit = document.getElementById('btnSubmitReels');
-
-    btnOpenModal.addEventListener('click', () => {
+    
+    document.getElementById('btnOpenReelsModal').addEventListener('click', () => {
       const count = document.querySelectorAll('.row-check:checked').length;
-      if (count === 0) {
-        alert("Vui lòng chọn ít nhất 1 Page để đăng!");
-        return;
-      }
+      if (count === 0) return alert("Vui lòng chọn ít nhất 1 Page!");
       modal.style.display = 'flex';
       contextMenu.style.display = 'none';
     });
 
-    btnCloseModal.addEventListener('click', () => {
-      modal.style.display = 'none';
-    });
+    document.getElementById('btnCloseModal').addEventListener('click', () => modal.style.display = 'none');
+    window.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
 
-    // Xử lý nút hiển thị tên file
     document.getElementById('videoFile').addEventListener('change', function() {
-      const textDisplay = this.parentElement.querySelector('.file-text');
-      if (this.files && this.files.length > 0) {
-        textDisplay.textContent = this.files[0].name;
-      } else {
-        textDisplay.textContent = 'Không có tệp nào được chọn';
-      }
+      document.getElementById('fileText').textContent = this.files.length > 0 ? this.files[0].name : 'Không có tệp nào được chọn';
     });
 
-    // Click ra ngoài modal để đóng
-    window.addEventListener('click', (e) => {
-      if (e.target === modal) {
+    // HÀNH ĐỘNG CLICK ĐĂNG REELS
+    document.getElementById('btnSubmitReels').addEventListener('click', () => {
+      // 1. Kiểm tra xem Web đã nhận được cookie từ extension chưa?
+      if (!userCookie) {
+        alert("❌ Chưa có Cookie Facebook!\nWeb chưa kết nối được với Extension hoặc bạn chưa đăng nhập Facebook trên trình duyệt này.");
+        return;
+      }
+
+      // 2. Lấy danh sách ID các page đã chọn
+      const selectedPages = Array.from(document.querySelectorAll('.row-check:checked')).map(cb => cb.value);
+      const content = document.getElementById('postContent').value;
+      const fileInput = document.getElementById('videoFile');
+
+      if (fileInput.files.length === 0) {
+        alert("⚠️ Vui lòng chọn 1 Video để đăng Reels!");
+        return;
+      }
+
+      // Bắt đầu mô phỏng gọi API
+      const btnSubmit = document.getElementById('btnSubmitReels');
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = '⏳ Đang tiến hành đăng...';
+
+      console.log("=== THÔNG TIN CHUẨN BỊ GỬI LÊN FACEBOOK ===");
+      console.log("UID Người dùng:", userUid);
+      console.log("Cookie sử dụng:", userCookie.substring(0, 30) + "...(đã ẩn bớt)");
+      console.log("Danh sách Page ID sẽ đăng:", selectedPages);
+      console.log("Nội dung:", content);
+      console.log("Video File:", fileInput.files[0].name);
+      console.log("==========================================");
+
+      setTimeout(() => {
+        alert(`✅ Đã dùng Cookie (UID: ${userUid}) để đẩy lệnh đăng Reels lên ${selectedPages.length} Page thành công!\n(Kiểm tra Console log để xem Data)`);
         modal.style.display = 'none';
-      }
-    });
-
-    // Nút Bắt đầu đăng
-    btnSubmit.addEventListener('click', () => {
-        const count = document.querySelectorAll('.row-check:checked').length;
-        btnSubmit.textContent = 'Đang tiến hành đăng...';
-        btnSubmit.style.background = '#fbbc05';
-        btnSubmit.style.color = '#000';
-        
-        setTimeout(() => {
-            alert(`Đã gửi lệnh đăng Reels lên ${count} Page thành công! (Đây là demo giao diện)`);
-            modal.style.display = 'none';
-            btnSubmit.innerHTML = `Bắt đầu đăng Reels <span class="btn-page-count">(${count} trang)</span>`;
-            btnSubmit.style.background = '';
-            btnSubmit.style.color = '';
-        }, 1500);
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = `Bắt đầu đăng Reels <span class="btn-page-count">(${selectedPages.length} trang)</span>`;
+      }, 2000);
     });
   </script>
 </body>
