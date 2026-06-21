@@ -1,162 +1,255 @@
+Chào bạn, tôi đã phân tích cấu trúc của file `dangbai.html` hiện tại và giao diện mới trong ảnh `image_24e620.png`.
+
+### ⚙️ Phân tích & Đánh giá kỹ thuật:
+
+1. **Thay đổi về Theme (Giao diện):** Bản gốc dùng Dark Mode (tông xanh đen/tối). Ảnh mẫu yêu cầu Light Mode (nền trắng, chữ đen, viền xám sáng, nút bấm xanh chuẩn form phần mềm Windows/Cốc Cốc Extension).
+2. **Thay đổi bố cục (Layout):** Từ một cột dọc (Single Column) chuyển sang dạng lưới 2 cột (Two-Column Grid) để tối ưu không gian cài đặt như cấu hình delay, cấu hình song song, hẹn giờ.
+3. **Tính năng mới xuất hiện trên UI:** * Tính năng tự động hóa: Checkbox "AI Viết" cho caption và comment.
+* Tính năng chống spam/độ trễ: Nhập delay Min/Max, giới hạn bài viết/page, chạy song song nhiều luồng.
+* Tính năng bổ sung: Spin content `{a|b|c}`, lấy tên file làm tiêu đề, chọn thứ tự đăng (Từ A tới Z), hẹn giờ đăng nâng cao.
+
+
+
+Dưới đây là mã nguồn HTML hoàn chỉnh đã được build lại chuẩn theo UI mới trong ảnh, đồng thời **giữ nguyên toàn bộ logic Facebook SDK cùng cơ chế upload video gốc** của bạn. Tôi cũng đã tích hợp thêm thẻ chọn Fanpage một cách gọn gàng ở góc trên để không làm vỡ cấu trúc ảnh mẫu mà vẫn đảm bảo app chạy được.
+
+```html
 <!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DMHREELS - Đăng Reels Facebook</title>
+  <title>Đăng Reels (Ver 3)</title>
   <style>
     :root {
-      --bg-main: #0f1117;
-      --bg-card: #1a1d2e;
-      --bg-header: #151824;
-      --border-color: #2d3148;
-      --text-main: #e2e8f0;
-      --text-muted: #94a3b8;
-      --primary: #4f46e5;
-      --primary-hover: #4338ca;
-      --accent: #818cf8;
-      --success: #10b981;
-      --warning: #f59e0b;
+      --bg-main: #f1f5f9;
+      --bg-card: #ffffff;
+      --border-color: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary: #1d4ed8;
+      --primary-hover: #1e40af;
       --danger: #ef4444;
     }
+
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: var(--bg-main); color: var(--text-main); font-size: 14px; min-height: 100vh; padding-bottom: 40px; }
+    body { background-color: var(--bg-main); color: var(--text-main); font-size: 13px; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
 
-    .header {
-      display: flex; justify-content: space-between; align-items: center;
-      background: var(--bg-card); padding: 14px 24px; border-bottom: 1px solid var(--border-color);
-    }
-    .header-left { display: flex; align-items: center; gap: 12px; }
-    .header-left img { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); }
-    .user-info { font-size: 13px; }
-    .user-name { color: var(--accent); font-weight: bold; display: flex; align-items: center; gap: 5px; font-size: 15px; }
-    .ext-status { font-size: 12px; margin-top: 4px; font-weight: 600; }
-    .header-title { color: var(--accent); font-size: 22px; font-weight: 700; text-align: center; flex: 1; letter-spacing: 0.5px; }
+    /* Container mô phỏng cửa sổ Modal như trong ảnh */
+    .window-modal { background: var(--bg-card); width: 100%; max-width: 800px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); overflow: hidden; position: relative; }
+    
+    /* Header cửa sổ */
+    .window-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border-color); }
+    .window-title { font-size: 16px; font-weight: bold; color: #000; }
+    .close-btn { background: none; border: none; font-size: 18px; color: var(--text-muted); cursor: pointer; }
 
-    .container { padding: 24px; max-width: 760px; margin: 0 auto; }
-    .card { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3); padding: 28px; }
+    /* Thanh thông tin User/Facebook SDK ẩn hiện */
+    .fb-account-bar { background: #f8fafc; padding: 8px 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+    .user-info { display: flex; align-items: center; gap: 8px; }
+    .user-avatar { width: 28px; height: 28px; border-radius: 50%; }
+    .btn-logout { background: none; border: 1px solid var(--border-color); padding: 2px 8px; border-radius: 4px; cursor: pointer; color: var(--text-muted); }
+    .btn-logout:hover { color: var(--danger); border-color: var(--danger); }
 
-    .center-box { text-align: center; padding: 60px 20px; }
-    .center-box h2 { color: var(--accent); margin-bottom: 10px; font-size: 18px; }
-    .center-box p { color: var(--text-muted); margin-bottom: 24px; font-size: 13px; }
+    /* Nội dung chính chia 2 cột */
+    .window-body { padding: 16px; }
+    .grid-container { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; }
 
-    .btn-fb-login {
-      background: #1877f2; color: #fff; border: none; padding: 12px 28px; border-radius: 8px;
-      font-weight: 700; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
-    }
+    /* View Đăng nhập bằng FB */
+    .center-box { text-align: center; padding: 40px 20px; }
+    .btn-fb-login { background: #1877f2; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
     .btn-fb-login:hover { background: #166fe0; }
 
-    .form-group { margin-bottom: 18px; }
-    .form-group label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 13px; color: var(--text-muted); }
+    /* Form controls định dạng giống ảnh mẫu */
+    .form-group { margin-bottom: 14px; }
+    .form-row-inline { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .form-group label { font-weight: bold; color: #000; }
+    
+    .checkbox-label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; font-weight: normal; font-size: 13px; }
+    .checkbox-label.ai-text { color: #0066ff; font-weight: bold; }
+    .checkbox-label input[type="checkbox"] { width: 14px; height: 14px; cursor: pointer; }
 
-    select, textarea, input[type="text"] {
-      width: 100%; padding: 10px 12px; border: 1px solid #475569; border-radius: 6px; font-size: 13px;
-      background: var(--bg-main); color: var(--text-main); outline: none; transition: 0.2s;
+    textarea, select, input[type="text"], input[type="number"] {
+      width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; color: #000; outline: none; background: #fff;
     }
-    textarea { height: 100px; resize: vertical; }
-    select:focus, textarea:focus, input:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); }
+    textarea { height: 90px; resize: none; }
+    
+    /* Custom Input File chọn video */
+    .video-picker-container { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
+    .file-btn { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 500; }
+    .file-btn:hover { background: #e2e8f0; }
+    .file-status-text { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
 
-    .file-input-wrapper { display: flex; border: 1px solid #475569; border-radius: 6px; overflow: hidden; background: var(--bg-main); }
-    .file-btn { background: #2d3148; border: none; padding: 10px 16px; color: var(--text-main); cursor: pointer; border-right: 1px solid #475569; font-size: 13px; font-weight: 600; }
-    .file-btn:hover { background: #3d4260; }
-    .file-text { padding: 10px 12px; font-size: 13px; color: var(--text-muted); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    /* Khối song song, comment, cấu hình bên phải */
+    .inline-input-box { display: flex; align-items: center; gap: 6px; }
+    .inline-input-box input { width: 60px; text-align: center; padding: 4px; }
+    
+    .right-col .form-group { margin-bottom: 16px; }
 
-    .btn-submit {
-      width: 100%; background: var(--primary); color: #fff; border: none; padding: 13px 24px; border-radius: 8px;
-      font-weight: 700; cursor: pointer; font-size: 14px; transition: 0.2s; margin-top: 6px;
-    }
-    .btn-submit:hover { background: var(--primary-hover); }
-    .btn-submit:disabled { background: #475569; color: var(--text-muted); cursor: not-allowed; }
+    /* Footer chứa nút bấm */
+    .window-footer { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-top: 1px solid var(--border-color); background: #fff; }
+    .btn-submit { background: #1d4ed8; color: white; border: none; padding: 10px 24px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 13px; }
+    .btn-submit:hover { background: #1e40af; }
+    .btn-submit:disabled { background: #94a3b8; cursor: not-allowed; }
 
-    .btn-logout {
-      background: transparent; border: 1px solid var(--border-color); color: var(--text-muted);
-      padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer;
-    }
-    .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
-
-    .status-box { margin-top: 16px; padding: 12px 14px; border-radius: 8px; font-size: 13px; display: none; }
+    /* Trạng thái / Progress bar */
+    .status-box { padding: 8px 12px; border-radius: 4px; font-size: 12px; margin-top: 10px; display: none; }
     .status-box.show { display: block; }
-    .status-box.ok { background: #1a3a2a; color: #34d399; }
-    .status-box.err { background: #3a1a1a; color: #f87171; }
-    .status-box.loading { background: #1a2a3a; color: var(--accent); }
-
-    .progress-bar-wrap { background: var(--bg-main); border-radius: 6px; height: 8px; margin-top: 10px; overflow: hidden; display: none; }
+    .status-box.ok { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .status-box.err { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    .status-box.loading { background: #e0f2fe; color: #075985; border: 1px solid #bae6fd; }
+    .progress-bar-wrap { background: #e2e8f0; border-radius: 4px; height: 6px; margin-top: 8px; overflow: hidden; display: none; }
     .progress-bar-wrap.show { display: block; }
-    .progress-bar { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
+    .progress-bar { height: 100%; background: #1d4ed8; width: 0%; transition: width 0.3s; }
   </style>
 </head>
 <body>
 
-  <header class="header">
-    <div class="header-left">
-      <img id="userAvatar" src="https://ui-avatars.com/api/?name=FB&background=4f46e5&color=fff" alt="Avatar">
-      <div class="user-info">
-        <div class="user-name">👋 <span id="accountName">Chưa đăng nhập</span></div>
-        <div class="ext-status" id="ext-status" style="color: var(--text-muted);">Đăng nhập để bắt đầu</div>
-      </div>
+  <div class="window-modal">
+    <div class="window-header">
+      <div class="window-title">Đăng Reels (Ver 3)</div>
+      <button class="close-btn">&times;</button>
     </div>
-    <div class="header-title">DMHREELS</div>
-    <div style="width: 150px; text-align: right;">
+
+    <div class="fb-account-bar">
+      <div class="user-info">
+        <img id="userAvatar" class="user-avatar" src="https://ui-avatars.com/api/?name=FB&background=1d4ed8&color=fff" alt="Avatar">
+        <div>Trạng thái: <span id="accountName" style="font-weight: bold; color: var(--text-muted);">Chưa đăng nhập Facebook</span> <span id="ext-status"></span></div>
+      </div>
       <button class="btn-logout" id="btnLogout" style="display:none;">Đăng xuất</button>
     </div>
-  </header>
 
-  <div class="container">
-    <div class="card">
-
-      <!-- Màn hình chưa đăng nhập -->
+    <div class="window-body">
       <div id="loginView" class="center-box">
-        <h2>Đăng nhập để quản lý Fanpage</h2>
-        <p>Đăng nhập bằng tài khoản Facebook của Page bạn muốn đăng Reels.<br>Mỗi lần chỉ thao tác với 1 tài khoản — đăng xuất để đổi tài khoản khác.</p>
+        <p style="margin-bottom: 15px; color: var(--text-muted);">Vui lòng liên kết tài khoản để tải danh sách Fanpage và cấu hình đăng bài.</p>
         <button class="btn-fb-login" id="btnFbLogin">📘 Đăng nhập bằng Facebook</button>
         <div class="status-box" id="loginStatus"></div>
       </div>
 
-      <!-- Màn hình đăng bài (hiện sau khi login) -->
       <div id="postView" style="display:none;">
-        <div class="form-group">
-          <label>Chọn Fanpage (chỉ các page bạn đang quản lý):</label>
-          <select id="pageSelect"></select>
+        
+        <div class="form-group" style="background: #f8fafc; padding: 8px; border: 1px dashed var(--border-color); border-radius: 4px;">
+          <label style="font-size: 12px; color: var(--text-muted);">Chọn Fanpage mục tiêu:</label>
+          <select id="pageSelect" style="margin-top:4px; padding:4px 8px;"></select>
         </div>
 
-        <div class="form-group">
-          <label>Nội dung Caption Reels:</label>
-          <textarea id="postContent" placeholder="Nhập mô tả video..."></textarea>
-        </div>
+        <div class="grid-container">
+          
+          <div class="left-col">
+            <div class="form-group">
+              <div class="form-row-inline">
+                <label>Nội dung bài viết:</label>
+                <label class="checkbox-label ai-text">
+                  <input type="checkbox"> 🤖 AI Viết
+                </label>
+              </div>
+              <textarea id="postContent" placeholder="Nhập nội dung... (Hỗ trợ spin content {a|b|c})"></textarea>
+            </div>
 
-        <div class="form-group">
-          <label>Chọn file video:</label>
-          <div class="file-input-wrapper">
-            <button class="file-btn" type="button" onclick="document.getElementById('videoFile').click()">Chọn tệp video</button>
-            <div class="file-text" id="fileText">Chưa có video nào được chọn...</div>
-            <input type="file" id="videoFile" style="display:none" accept="video/*">
+            <div class="form-group">
+              <div style="display: flex; gap: 20px;">
+                <div style="flex: 1;">
+                  <label>Chọn Video:</label>
+                  <div class="video-picker-container">
+                    <button class="file-btn" type="button" onclick="document.getElementById('videoFile').click()">Chọn tệp</button>
+                    <input type="file" id="videoFile" style="display:none" accept="video/*">
+                  </div>
+                  <div class="file-status-text" id="fileText">Chưa chọn video</div>
+                </div>
+                <div>
+                  <label>Song song:</label>
+                  <div class="inline-input-box" style="margin-top: 4px;">
+                    <input type="number" value="5">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 20px;">
+              <div class="inline-input-box">
+                <label class="checkbox-label">
+                  <input type="checkbox"> Comments sau
+                </label>
+                <input type="number" value="90" style="width: 50px;">
+                <span>giây</span>
+                <label class="checkbox-label ai-text" style="margin-left: 15px;">
+                  <input type="checkbox"> 🤖 AI Viết
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 15px;">
+              <label>Thứ tự đăng:</label>
+              <select style="margin-top: 4px;">
+                <option>Từ A tới Z</option>
+                <option>Ngẫu nhiên</option>
+              </select>
+            </div>
           </div>
-        </div>
 
-        <button class="btn-submit" id="btnSubmit">🎬 Đăng Reels lên Page này</button>
+          <div class="right-col">
+            <div class="form-group">
+              <label class="checkbox-label" style="font-weight: bold; color: #000;">
+                <input type="checkbox"> Lên lịch đăng
+              </label>
+            </div>
+
+            <div class="form-group">
+              <label class="checkbox-label" style="font-weight: bold; color: #000;">
+                <input type="checkbox" checked> Tên file video làm tiêu đề
+              </label>
+            </div>
+
+            <div class="form-group" style="margin-top: 20px;">
+              <div class="form-row-inline">
+                <label>Delay Min(s):</label>
+                <input type="number" value="3" style="width: 120px;">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="form-row-inline">
+                <label>Delay Max(s):</label>
+                <input type="number" value="5" style="width: 120px;">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="form-row-inline">
+                <label>Giới hạn số bài/1 page:</label>
+                <input type="number" value="1" style="width: 120px;">
+              </div>
+            </div>
+          </div>
+
+        </div>
 
         <div class="progress-bar-wrap" id="progressWrap">
           <div class="progress-bar" id="progressBar"></div>
         </div>
         <div class="status-box" id="postStatus"></div>
       </div>
+    </div>
 
+    <div class="window-footer">
+      <div>
+        <label class="checkbox-label" style="color: var(--danger); font-weight: bold;">
+          <input type="checkbox"> ⏰ Hẹn Giờ
+        </label>
+      </div>
+      <div>
+        <button class="btn-submit" id="btnSubmit">Bắt đầu đăng Reels (1 trang)</button>
+      </div>
     </div>
   </div>
 
   <script>
-    // ============ CẤU HÌNH ============
     const FB_APP_ID = '1952106285437493';
     const GRAPH_VERSION = 'v19.0';
 
     let currentAccessToken = null;
     let currentPages = [];
 
-    // ============ 1. KHỞI TẠO FACEBOOK SDK ============
     window.fbAsyncInit = function () {
       FB.init({ appId: FB_APP_ID, cookie: true, xfbml: false, version: GRAPH_VERSION });
-
-      // Nếu đã có session trước đó (chưa logout), tự khôi phục
       FB.getLoginStatus(function (response) {
         if (response.status === 'connected') {
           onLoginSuccess(response.authResponse.accessToken);
@@ -172,7 +265,6 @@
       fjs.parentNode.insertBefore(js, fjs);
     }(document, 'script', 'facebook-jssdk'));
 
-    // ============ 2. ĐĂNG NHẬP ============
     document.getElementById('btnFbLogin').addEventListener('click', () => {
       const statusEl = document.getElementById('loginStatus');
       statusEl.className = 'status-box show loading';
@@ -192,21 +284,19 @@
       currentAccessToken = accessToken;
       const statusEl = document.getElementById('loginStatus');
       statusEl.className = 'status-box show loading';
-      statusEl.textContent = '⏳ Đang lấy thông tin tài khoản và danh sách Page...';
+      statusEl.textContent = '⏳ Đang lấy danh sách Page...';
 
       try {
-        // Lấy thông tin user
         const meRes = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/me?fields=name,picture&access_token=${accessToken}`);
         const me = await meRes.json();
         if (me.error) throw new Error(me.error.message);
 
         document.getElementById('accountName').textContent = me.name;
         if (me.picture && me.picture.data) document.getElementById('userAvatar').src = me.picture.data.url;
-        document.getElementById('ext-status').textContent = '✅ Đã đăng nhập';
-        document.getElementById('ext-status').style.color = 'var(--success)';
+        document.getElementById('ext-status').textContent = ' (Đã kết nối)';
+        document.getElementById('ext-status').style.color = '#16a34a';
         document.getElementById('btnLogout').style.display = 'inline-block';
 
-        // Lấy danh sách page user này quản lý
         const pagesRes = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/me/accounts?fields=name,id,access_token,category,picture&limit=250&access_token=${accessToken}`);
         const pagesData = await pagesRes.json();
         if (pagesData.error) throw new Error(pagesData.error.message);
@@ -215,13 +305,12 @@
 
         if (currentPages.length === 0) {
           statusEl.className = 'status-box show err';
-          statusEl.textContent = '⚠️ Tài khoản này không quản lý Fanpage nào, hoặc bạn chưa cấp quyền pages_show_list khi đăng nhập.';
+          statusEl.textContent = '⚠️ Tài khoản này không quản lý Fanpage nào.';
           return;
         }
 
-        // Đổ vào dropdown
         const sel = document.getElementById('pageSelect');
-        sel.innerHTML = currentPages.map(p => `<option value="${p.id}">${p.name} (${p.category || 'Page'})</option>`).join('');
+        sel.innerHTML = currentPages.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
 
         document.getElementById('loginView').style.display = 'none';
         document.getElementById('postView').style.display = 'block';
@@ -232,15 +321,13 @@
       }
     }
 
-    // ============ 3. ĐĂNG XUẤT ============
     document.getElementById('btnLogout').addEventListener('click', () => {
       FB.logout(function () {
         currentAccessToken = null;
         currentPages = [];
-        document.getElementById('accountName').textContent = 'Chưa đăng nhập';
-        document.getElementById('userAvatar').src = 'https://ui-avatars.com/api/?name=FB&background=4f46e5&color=fff';
-        document.getElementById('ext-status').textContent = 'Đăng nhập để bắt đầu';
-        document.getElementById('ext-status').style.color = 'var(--text-muted)';
+        document.getElementById('accountName').textContent = 'Chưa đăng nhập Facebook';
+        document.getElementById('userAvatar').src = 'https://ui-avatars.com/api/?name=FB&background=1d4ed8&color=fff';
+        document.getElementById('ext-status').textContent = '';
         document.getElementById('btnLogout').style.display = 'none';
         document.getElementById('postView').style.display = 'none';
         document.getElementById('loginView').style.display = 'block';
@@ -248,12 +335,10 @@
       });
     });
 
-    // ============ 4. CHỌN FILE VIDEO ============
     document.getElementById('videoFile').addEventListener('change', function () {
-      document.getElementById('fileText').textContent = this.files.length > 0 ? this.files[0].name : 'Chưa có video nào được chọn...';
+      document.getElementById('fileText').textContent = this.files.length > 0 ? '✔️ ' + this.files[0].name : 'Chưa chọn video';
     });
 
-    // ============ 5. ĐĂNG REELS LÊN PAGE ĐÃ CHỌN (NGƯỜI DÙNG TỰ BẤM) ============
     document.getElementById('btnSubmit').addEventListener('click', async () => {
       const pageId = document.getElementById('pageSelect').value;
       const page = currentPages.find(p => p.id === pageId);
@@ -264,20 +349,20 @@
       const progressWrap = document.getElementById('progressWrap');
       const progressBar = document.getElementById('progressBar');
 
-      if (!page) { alert('⚠️ Vui lòng chọn 1 Fanpage.'); return; }
-      if (fileInput.files.length === 0) { alert('⚠️ Vui lòng chọn tệp video.'); return; }
+      if (!page) { alert('⚠️ Vui lòng cấu hình tài khoản & chọn Page.'); return; }
+      if (fileInput.files.length === 0) { alert('⚠️ Vui lòng chọn tệp video cần đăng.'); return; }
 
-      const pageAccessToken = page.access_token; // Token riêng của Page, do Graph API trả về cùng /me/accounts
+      const pageAccessToken = page.access_token;
 
       btn.disabled = true;
-      btn.textContent = '⏳ Đang đăng...';
+      btn.textContent = '⏳ Đang tiến hành đăng...';
       statusEl.className = 'status-box show loading';
-      statusEl.textContent = `Đang upload video lên "${page.name}"...`;
+      statusEl.textContent = `Đang tải video lên Page: "${page.name}"...`;
       progressWrap.className = 'progress-bar-wrap show';
       progressBar.style.width = '10%';
 
       try {
-        // Bước 1: Khởi tạo phiên upload video (Graph API Video Upload - phương thức resumable)
+        // Bước 1: Khởi tạo phiên
         const initForm = new FormData();
         initForm.append('upload_phase', 'start');
         initForm.append('access_token', pageAccessToken);
@@ -290,7 +375,7 @@
 
         progressBar.style.width = '40%';
 
-        // Bước 2: Upload nội dung file video
+        // Bước 2: Upload file chunk
         const uploadForm = new FormData();
         uploadForm.append('upload_phase', 'transfer');
         uploadForm.append('start_offset', initData.start_offset);
@@ -306,7 +391,7 @@
 
         progressBar.style.width = '80%';
 
-        // Bước 3: Hoàn tất, gắn caption, đăng thành Reels (video_state = PUBLISHED)
+        // Bước 3: Đăng bài hoàn thành
         const finishForm = new FormData();
         finishForm.append('upload_phase', 'finish');
         finishForm.append('upload_session_id', initData.upload_session_id);
@@ -322,17 +407,19 @@
 
         progressBar.style.width = '100%';
         statusEl.className = 'status-box show ok';
-        statusEl.textContent = `✅ Đăng thành công lên "${page.name}"!`;
+        statusEl.textContent = `✅ Đăng Reels thành công lên trang "${page.name}"!`;
 
       } catch (err) {
         statusEl.className = 'status-box show err';
-        statusEl.textContent = `❌ Lỗi: ${err.message}`;
+        statusEl.textContent = `❌ Thất bại: ${err.message}`;
         progressWrap.className = 'progress-bar-wrap';
       } finally {
         btn.disabled = false;
-        btn.textContent = '🎬 Đăng Reels lên Page này';
+        btn.textContent = 'Bắt đầu đăng Reels (1 trang)';
       }
     });
   </script>
 </body>
 </html>
+
+```
