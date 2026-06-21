@@ -3,9 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DMHREELS - All In One Facebook</title>
+  <title>DMHREELS - Đăng Reels Facebook</title>
   <style>
-    /* ================= HỆ THỐNG BIẾN MÀU MÀU (CHUYÊN NGHIỆP) ================= */
     :root {
       --bg-main: #0f1117;
       --bg-card: #1a1d2e;
@@ -20,11 +19,9 @@
       --warning: #f59e0b;
       --danger: #ef4444;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background-color: var(--bg-main); color: var(--text-main); font-size: 14px; min-height: 100vh; padding-bottom: 40px; }
-    
-    /* ================= HEADER ================= */
+
     .header {
       display: flex; justify-content: space-between; align-items: center;
       background: var(--bg-card); padding: 14px 24px; border-bottom: 1px solid var(--border-color);
@@ -33,404 +30,307 @@
     .header-left img { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); }
     .user-info { font-size: 13px; }
     .user-name { color: var(--accent); font-weight: bold; display: flex; align-items: center; gap: 5px; font-size: 15px; }
-    .ext-status { font-size: 12px; margin-top: 4px; font-weight: 600; transition: 0.3s; }
+    .ext-status { font-size: 12px; margin-top: 4px; font-weight: 600; }
     .header-title { color: var(--accent); font-size: 22px; font-weight: 700; text-align: center; flex: 1; letter-spacing: 0.5px; }
-    
-    /* ================= CONTAINER & TABLE ================= */
-    .container { padding: 24px; max-width: 1400px; margin: 0 auto; }
-    .card { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-    
-    table { width: 100%; border-collapse: collapse; text-align: center; }
-    th, td { padding: 14px 16px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
-    th { background: var(--bg-header); font-weight: 600; color: var(--text-muted); border-bottom: 2px solid var(--border-color); text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; }
-    tbody tr { transition: 0.2s; }
-    tbody tr:hover { background: #22263f; }
-    
-    .page-info { display: flex; align-items: center; gap: 12px; text-align: left; justify-content: flex-start; }
-    .page-info img { width: 34px; height: 34px; border-radius: 50%; border: 1px solid #475569; object-fit: cover; }
-    .page-name { font-weight: 600; color: #f1f5f9; }
-    .badge-cat { background: rgba(129, 140, 248, 0.15); color: var(--accent); padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-left: 6px; border: 1px solid rgba(129, 140, 248, 0.3); }
-    
-    /* Hiệu ứng xoay loading khi quét page */
-    .loading-state { padding: 40px !important; color: var(--accent); font-weight: 600; font-size: 15px; }
-    .spinner { display: inline-block; animation: rotate 1s linear infinite; margin-right: 8px; }
-    @keyframes rotate { 100% { transform: rotate(360deg); } }
 
-    .table-footer { padding: 16px; display: flex; align-items: center; gap: 16px; background: var(--bg-header); border-top: 1px solid var(--border-color); color: var(--text-muted); }
-    .table-footer select { background: var(--bg-card); color: var(--text-main); padding: 6px 10px; border: 1px solid #475569; border-radius: 6px; outline: none; }
+    .container { padding: 24px; max-width: 760px; margin: 0 auto; }
+    .card { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3); padding: 28px; }
 
-    /* ================= CONTEXT MENU ================= */
-    .context-menu {
-      position: absolute; background: var(--bg-card); border: 1px solid #475569; border-radius: 8px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 230px; z-index: 1000; display: none; padding: 6px 0;
-    }
-    .menu-item { padding: 10px 16px; font-size: 13px; color: var(--text-main); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-    .menu-item:hover { background: var(--primary); color: #fff; }
-    .menu-divider { height: 1px; background: var(--border-color); margin: 6px 0; }
-    
-    .has-submenu { position: relative; }
-    .submenu {
-      position: absolute; left: 100%; top: -6px; background: var(--bg-card); border: 1px solid #475569;
-      border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 260px; display: none; padding: 6px 0;
-    }
-    .has-submenu:hover .submenu { display: block; }
+    .center-box { text-align: center; padding: 60px 20px; }
+    .center-box h2 { color: var(--accent); margin-bottom: 10px; font-size: 18px; }
+    .center-box p { color: var(--text-muted); margin-bottom: 24px; font-size: 13px; }
 
-    /* ================= MODAL CẤU HÌNH ĐĂNG REELS ================= */
-    .modal-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.7); z-index: 2000; display: none; justify-content: center; align-items: center;
-      backdrop-filter: blur(3px);
+    .btn-fb-login {
+      background: #1877f2; color: #fff; border: none; padding: 12px 28px; border-radius: 8px;
+      font-weight: 700; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
     }
-    .modal {
-      background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; width: 850px; max-width: 95%;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.6); display: flex; flex-direction: column; animation: fadeIn 0.2s ease-out;
-    }
-    @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-    
-    .modal-header { padding: 16px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-header); }
-    .modal-header h2 { font-size: 16px; font-weight: 700; color: var(--accent); }
-    .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); transition: 0.2s; }
-    .close-btn:hover { color: var(--danger); }
-    
-    .modal-body { padding: 24px; display: flex; gap: 24px; max-height: 70vh; overflow-y: auto; }
-    .col-left { flex: 1.4; } .col-right { flex: 1; }
-    
+    .btn-fb-login:hover { background: #166fe0; }
+
     .form-group { margin-bottom: 18px; }
     .form-group label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 13px; color: var(--text-muted); }
-    
-    .flex-row { display: flex; gap: 12px; align-items: center; }
-    .flex-row-between { display: flex; justify-content: space-between; align-items: center; }
-    
-    textarea, input[type="text"], input[type="number"], select {
+
+    select, textarea, input[type="text"] {
       width: 100%; padding: 10px 12px; border: 1px solid #475569; border-radius: 6px; font-size: 13px;
       background: var(--bg-main); color: var(--text-main); outline: none; transition: 0.2s;
     }
-    textarea { height: 90px; resize: none; }
-    textarea:focus, input:focus, select:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); }
-    
-    .inline-input { width: 70px !important; text-align: center; }
-    .ai-badge { color: var(--accent); font-weight: bold; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; background: rgba(129, 140, 248, 0.1); padding: 2px 6px; border-radius: 4px; }
-    
+    textarea { height: 100px; resize: vertical; }
+    select:focus, textarea:focus, input:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); }
+
     .file-input-wrapper { display: flex; border: 1px solid #475569; border-radius: 6px; overflow: hidden; background: var(--bg-main); }
     .file-btn { background: #2d3148; border: none; padding: 10px 16px; color: var(--text-main); cursor: pointer; border-right: 1px solid #475569; font-size: 13px; font-weight: 600; }
     .file-btn:hover { background: #3d4260; }
     .file-text { padding: 10px 12px; font-size: 13px; color: var(--text-muted); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-header); }
     .btn-submit {
-      background: var(--primary); color: #fff; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 14px; transition: 0.2s; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+      width: 100%; background: var(--primary); color: #fff; border: none; padding: 13px 24px; border-radius: 8px;
+      font-weight: 700; cursor: pointer; font-size: 14px; transition: 0.2s; margin-top: 6px;
     }
     .btn-submit:hover { background: var(--primary-hover); }
-    .btn-submit:disabled { background: #475569; color: var(--text-muted); cursor: not-allowed; box-shadow: none; }
+    .btn-submit:disabled { background: #475569; color: var(--text-muted); cursor: not-allowed; }
 
-    input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary); }
-    .checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; color: var(--text-main); user-select: none; }
+    .btn-logout {
+      background: transparent; border: 1px solid var(--border-color); color: var(--text-muted);
+      padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer;
+    }
+    .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+    .status-box { margin-top: 16px; padding: 12px 14px; border-radius: 8px; font-size: 13px; display: none; }
+    .status-box.show { display: block; }
+    .status-box.ok { background: #1a3a2a; color: #34d399; }
+    .status-box.err { background: #3a1a1a; color: #f87171; }
+    .status-box.loading { background: #1a2a3a; color: var(--accent); }
+
+    .progress-bar-wrap { background: var(--bg-main); border-radius: 6px; height: 8px; margin-top: 10px; overflow: hidden; display: none; }
+    .progress-bar-wrap.show { display: block; }
+    .progress-bar { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
   </style>
 </head>
 <body>
 
   <header class="header">
     <div class="header-left">
-      <div id="userAvatarContainer">
-        <img id="userAvatar" src="https://ui-avatars.com/api/?name=FB&background=4f46e5&color=fff" alt="Avatar">
-      </div>
+      <img id="userAvatar" src="https://ui-avatars.com/api/?name=FB&background=4f46e5&color=fff" alt="Avatar">
       <div class="user-info">
-        <div class="user-name">👋 <span id="accountName">Tài khoản Facebook</span></div>
-        <div class="ext-status" id="ext-status" style="color: var(--warning);">🔌 Đang đợi tín hiệu từ Extension...</div>
+        <div class="user-name">👋 <span id="accountName">Chưa đăng nhập</span></div>
+        <div class="ext-status" id="ext-status" style="color: var(--text-muted);">Đăng nhập để bắt đầu</div>
       </div>
     </div>
-    <div class="header-title">DMHREELS - All In One Facebook</div>
-    <div style="width: 150px;"></div>
+    <div class="header-title">DMHREELS</div>
+    <div style="width: 150px; text-align: right;">
+      <button class="btn-logout" id="btnLogout" style="display:none;">Đăng xuất</button>
+    </div>
   </header>
 
   <div class="container">
     <div class="card">
-      <table id="pageTable">
-        <thead>
-          <tr>
-            <th style="width: 50px;"><input type="checkbox" id="checkAll"></th>
-            <th style="width: 60px;">STT</th>
-            <th>ID Fanpage</th>
-            <th style="text-align: left;">Avatar / Tên Fanpage</th>
-            <th>Quyền hạn</th>
-            <th>Trạng thái đăng bài</th>
-          </tr>
-        </thead>
-        <tbody id="pageTableBody">
-          <tr>
-            <td colspan="6" class="loading-state">
-              <span class="spinner">⏳</span> Vui lòng đợi kết nối và kiểm tra trạng thái đăng nhập Facebook từ Extension Helper...
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      
-      <div class="table-footer">
-        Hiển thị: 
-        <select><option>Tất cả các dòng</option></select>
-        <span id="totalRecords">Tổng: 0 Fanpage</span>
-      </div>
-    </div>
-  </div>
 
-  <div id="contextMenu" class="context-menu">
-    <div class="menu-item" onclick="location.reload();">🔄 Tải lại trang</div>
-    <div class="menu-divider"></div>
-    <div class="menu-item has-submenu">
-      <span>🛠️ Tính năng Page hệ thống</span>
-      <span>▶</span>
-      <div class="submenu">
-        <div class="menu-item" id="btnOpenReelsModal" style="font-weight: bold; color: var(--accent);">🎬 Đăng Reels tự động <span class="page-count">(0) Trang</span></div>
-        <div class="menu-item" style="color: var(--text-muted); cursor: not-allowed;">📝 Đăng Bài Viết thường (Sắp có)</div>
+      <!-- Màn hình chưa đăng nhập -->
+      <div id="loginView" class="center-box">
+        <h2>Đăng nhập để quản lý Fanpage</h2>
+        <p>Đăng nhập bằng tài khoản Facebook của Page bạn muốn đăng Reels.<br>Mỗi lần chỉ thao tác với 1 tài khoản — đăng xuất để đổi tài khoản khác.</p>
+        <button class="btn-fb-login" id="btnFbLogin">📘 Đăng nhập bằng Facebook</button>
+        <div class="status-box" id="loginStatus"></div>
       </div>
-    </div>
-  </div>
 
-  <div id="reelsModal" class="modal-overlay">
-    <div class="modal">
-      <div class="modal-header">
-        <h2>Cấu hình chiến dịch đăng Reels chuyên nghiệp (Thực tế)</h2>
-        <button class="close-btn" id="btnCloseModal">&times;</button>
-      </div>
-      
-      <div class="modal-body">
-        <div class="col-left">
-          <div class="form-group">
-            <div class="flex-row-between" style="margin-bottom: 6px;">
-              <label style="margin:0;">Nội dung Caption Reels:</label>
-              <label class="checkbox-label"><span class="ai-badge">🤖 Auto Spin {a|b}</span></label>
-            </div>
-            <textarea id="postContent" placeholder="Nhập mô tả video..."></textarea>
-          </div>
+      <!-- Màn hình đăng bài (hiện sau khi login) -->
+      <div id="postView" style="display:none;">
+        <div class="form-group">
+          <label>Chọn Fanpage (chỉ các page bạn đang quản lý):</label>
+          <select id="pageSelect"></select>
+        </div>
 
-          <div class="flex-row" style="margin-bottom: 18px; align-items: flex-end;">
-            <div class="form-group" style="flex: 1; margin: 0;">
-              <label>Chọn File Video vật lý trên máy tính:</label>
-              <div class="file-input-wrapper">
-                <button class="file-btn" type="button" onclick="document.getElementById('videoFile').click()">Chọn tệp video</button>
-                <div class="file-text" id="fileText">Chưa có video nào được tải lên...</div>
-                <input type="file" id="videoFile" style="display:none" accept="video/*">
-              </div>
-            </div>
-            <div class="form-group" style="width: 90px; margin: 0;">
-              <label>Số luồng:</label>
-              <input type="number" id="threadsCount" value="1" min="1">
-            </div>
+        <div class="form-group">
+          <label>Nội dung Caption Reels:</label>
+          <textarea id="postContent" placeholder="Nhập mô tả video..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Chọn file video:</label>
+          <div class="file-input-wrapper">
+            <button class="file-btn" type="button" onclick="document.getElementById('videoFile').click()">Chọn tệp video</button>
+            <div class="file-text" id="fileText">Chưa có video nào được chọn...</div>
+            <input type="file" id="videoFile" style="display:none" accept="video/*">
           </div>
         </div>
 
-        <div class="col-right">
-          <div class="form-group" style="margin-top: 10px;">
-            <label class="checkbox-label" style="margin-bottom: 12px;"><input type="checkbox" id="fileNameAsTitle" checked> Lấy tên file làm tiêu đề gốc</label>
-          </div>
-          <div class="flex-row">
-            <div class="form-group" style="flex: 1;">
-              <label>Delay Min (s):</label>
-              <input type="number" id="delayMin" value="5">
-            </div>
-            <div class="form-group" style="flex: 1;">
-              <label>Delay Max (s):</label>
-              <input type="number" id="delayMax" value="10">
-            </div>
-          </div>
+        <button class="btn-submit" id="btnSubmit">🎬 Đăng Reels lên Page này</button>
+
+        <div class="progress-bar-wrap" id="progressWrap">
+          <div class="progress-bar" id="progressBar"></div>
         </div>
+        <div class="status-box" id="postStatus"></div>
       </div>
 
-      <div class="modal-footer">
-        <span style="color: var(--text-muted); font-size: 13px;">Hãy chắc chắn các Page đã chọn ở trạng thái sẵn sàng.</span>
-        <button class="btn-submit" id="btnSubmitReels">Bắt đầu tiến trình đăng Reels <span class="btn-page-count">(0 trang)</span></button>
-      </div>
     </div>
   </div>
 
   <script>
-    let userCookie = '';
-    let userUid = '';
-    let globalPagesList = []; // Mảng chứa danh sách Page thực tế cào từ Facebook về
+    // ============ CẤU HÌNH ============
+    const FB_APP_ID = '1952106285437493';
+    const GRAPH_VERSION = 'v19.0';
 
-    // ================= 1. LẮNG NGHE EXTENSION & KÍCH HOẠT QUÉT PAGE TỰ ĐỘNG =================
-    window.addEventListener('message', function(event) {
-      if (event.source !== window) return;
+    let currentAccessToken = null;
+    let currentPages = [];
 
-      if (event.data && event.data.type === 'FB_COOKIES_RESPONSE') {
-        const statusEl = document.getElementById('ext-status');
-        
-        if (event.data.success) {
-          userCookie = event.data.cookie_string;
-          const cUser = event.data.cookies.find(c => c.name === 'c_user');
-          userUid = cUser ? cUser.value : 'Không rõ';
-          
-          statusEl.textContent = `✅ Đã nhận Cookie. Đang quét tài khoản...`;
-          statusEl.style.color = 'var(--success)';
-          
-          // Đổi Avatar & Tên tạm thời bằng UID lấy được
-          document.getElementById('userAvatar').src = `https://graph.facebook.com/${userUid}/picture?type=normal&access_token=`; 
-          document.getElementById('accountName').textContent = `UID: ${userUid}`;
+    // ============ 1. KHỞI TẠO FACEBOOK SDK ============
+    window.fbAsyncInit = function () {
+      FB.init({ appId: FB_APP_ID, cookie: true, xfbml: false, version: GRAPH_VERSION });
 
-          // GỌI HÀM QUÉT PAGE TỪ TÀI KHOẢN THẬT QUA BACKEND
-          scanFacebookPages(userCookie);
-        } else {
-          statusEl.textContent = `❌ Lỗi: Bạn chưa đăng nhập FB trên trình duyệt này!`;
-          statusEl.style.color = 'var(--danger)';
-          document.getElementById('pageTableBody').innerHTML = `<tr><td colspan="6" style="padding:30px; color:var(--danger)">Vui lòng đăng nhập Facebook.com và F5 tải lại công cụ!</td></tr>`;
+      // Nếu đã có session trước đó (chưa logout), tự khôi phục
+      FB.getLoginStatus(function (response) {
+        if (response.status === 'connected') {
+          onLoginSuccess(response.authResponse.accessToken);
         }
-      }
+      });
+    };
+
+    (function (d, s, id) {
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) return;
+      js = d.createElement(s); js.id = id;
+      js.src = "https://connect.facebook.net/vi_VN/sdk.js";
+      fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+
+    // ============ 2. ĐĂNG NHẬP ============
+    document.getElementById('btnFbLogin').addEventListener('click', () => {
+      const statusEl = document.getElementById('loginStatus');
+      statusEl.className = 'status-box show loading';
+      statusEl.textContent = '⏳ Đang mở cửa sổ đăng nhập Facebook...';
+
+      FB.login(function (response) {
+        if (response.authResponse) {
+          onLoginSuccess(response.authResponse.accessToken);
+        } else {
+          statusEl.className = 'status-box show err';
+          statusEl.textContent = '❌ Bạn đã hủy đăng nhập hoặc từ chối cấp quyền.';
+        }
+      }, { scope: 'pages_show_list,pages_manage_posts,pages_read_engagement' });
     });
 
-    // Phát lệnh tìm kiếm Cookie sau khi load trang xong
-    setTimeout(() => { window.postMessage({ type: 'GET_FB_COOKIES' }, '*'); }, 1000);
-
-    // ================= 2. API TRUY VẤN PAGE TỪ BACKEND NODE.JS =================
-    async function scanFacebookPages(cookieString) {
-      const tbody = document.getElementById('pageTableBody');
-      tbody.innerHTML = `<tr><td colspan="6" class="loading-state"><span class="spinner">⏳</span> Đang bóc tách mã thông báo hệ thống và quét danh sách Fanpage từ Facebook API...</td></tr>`;
+    async function onLoginSuccess(accessToken) {
+      currentAccessToken = accessToken;
+      const statusEl = document.getElementById('loginStatus');
+      statusEl.className = 'status-box show loading';
+      statusEl.textContent = '⏳ Đang lấy thông tin tài khoản và danh sách Page...';
 
       try {
-        const response = await fetch('http://localhost:3000/api/get-pages', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ cookie: cookieString })
-        });
-        
-        const resData = await response.json();
-        
-        if (resData.success && resData.pages && resData.pages.length > 0) {
-          globalPagesList = resData.pages;
-          renderPagesToTable(globalPagesList);
-        } else {
-          tbody.innerHTML = `<tr><td colspan="6" style="padding:40px; color:var(--warning)">⚠️ Tài khoản này hiện không sở hữu hoặc quản lý bất kỳ Fanpage nào!</td></tr>`;
-          document.getElementById('totalRecords').textContent = `Tổng: 0 Fanpage`;
+        // Lấy thông tin user
+        const meRes = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/me?fields=name,picture&access_token=${accessToken}`);
+        const me = await meRes.json();
+        if (me.error) throw new Error(me.error.message);
+
+        document.getElementById('accountName').textContent = me.name;
+        if (me.picture && me.picture.data) document.getElementById('userAvatar').src = me.picture.data.url;
+        document.getElementById('ext-status').textContent = '✅ Đã đăng nhập';
+        document.getElementById('ext-status').style.color = 'var(--success)';
+        document.getElementById('btnLogout').style.display = 'inline-block';
+
+        // Lấy danh sách page user này quản lý
+        const pagesRes = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/me/accounts?fields=name,id,access_token,category,picture&limit=250&access_token=${accessToken}`);
+        const pagesData = await pagesRes.json();
+        if (pagesData.error) throw new Error(pagesData.error.message);
+
+        currentPages = pagesData.data || [];
+
+        if (currentPages.length === 0) {
+          statusEl.className = 'status-box show err';
+          statusEl.textContent = '⚠️ Tài khoản này không quản lý Fanpage nào, hoặc bạn chưa cấp quyền pages_show_list khi đăng nhập.';
+          return;
         }
+
+        // Đổ vào dropdown
+        const sel = document.getElementById('pageSelect');
+        sel.innerHTML = currentPages.map(p => `<option value="${p.id}">${p.name} (${p.category || 'Page'})</option>`).join('');
+
+        document.getElementById('loginView').style.display = 'none';
+        document.getElementById('postView').style.display = 'block';
+
       } catch (err) {
-        console.error("Lỗi đồng bộ danh sách page:", err);
-        tbody.innerHTML = `<tr><td colspan="6" style="padding:40px; color:var(--danger)">❌ Không kết nối được với Backend Node.js tại Port 3000!<br>Bạn đã chạy lệnh "node server.js" chưa?</td></tr>`;
+        statusEl.className = 'status-box show err';
+        statusEl.textContent = `❌ Lỗi: ${err.message}`;
       }
     }
 
-    // Đổ mảng dữ liệu thật vào cấu trúc HTML
-    function renderPagesToTable(pages) {
-      const tbody = document.getElementById('pageTableBody');
-      tbody.innerHTML = '';
-      
-      document.getElementById('totalRecords').textContent = `Tổng: ${pages.length} Fanpage`;
-
-      pages.forEach((page, index) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><input type="checkbox" class="row-check" value="${page.id}"></td>
-          <td>${index + 1}</td>
-          <td style="font-family: monospace; font-weight: bold; color: var(--accent);">${page.id}</td>
-          <td>
-            <div class="page-info">
-              <img src="${page.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(page.name)}&background=4f46e5&color=fff`}" onerror="this.src='https://ui-avatars.com/api/?name=FB&background=334155'"/>
-              <span class="page-name">${page.name}</span>
-              <span class="badge-cat">${page.category || 'Trang chuyên mục'}</span>
-            </div>
-          </td>
-          <td style="color: var(--success); font-weight: 500;">Quản trị viên</td>
-          <td class="page-status" id="status-${page.id}" style="color: var(--text-muted);">Sẵn sàng</td>
-        `;
-        tbody.appendChild(tr);
+    // ============ 3. ĐĂNG XUẤT ============
+    document.getElementById('btnLogout').addEventListener('click', () => {
+      FB.logout(function () {
+        currentAccessToken = null;
+        currentPages = [];
+        document.getElementById('accountName').textContent = 'Chưa đăng nhập';
+        document.getElementById('userAvatar').src = 'https://ui-avatars.com/api/?name=FB&background=4f46e5&color=fff';
+        document.getElementById('ext-status').textContent = 'Đăng nhập để bắt đầu';
+        document.getElementById('ext-status').style.color = 'var(--text-muted)';
+        document.getElementById('btnLogout').style.display = 'none';
+        document.getElementById('postView').style.display = 'none';
+        document.getElementById('loginView').style.display = 'block';
+        document.getElementById('loginStatus').className = 'status-box';
       });
-
-      // Kích hoạt lại toàn bộ vòng đời vòng lặp Checkbox cho các dòng mới dựng xong
-      initLifecycleCheckboxes();
-    }
-
-    // ================= 3. QUẢN LÝ ĐÈN LED ĐẾM SỐ LƯỢNG PAGE (LIFECYCLE) =================
-    function initLifecycleCheckboxes() {
-      const checkAll = document.getElementById('checkAll');
-      const rowChecks = document.querySelectorAll('.row-check');
-      
-      function updateCounters() {
-        const checkedCount = document.querySelectorAll('.row-check:checked').length;
-        document.querySelectorAll('.page-count').forEach(el => el.textContent = `(${checkedCount}) Trang`);
-        document.querySelector('.btn-page-count').textContent = `(${checkedCount} trang)`;
-      }
-
-      checkAll.checked = false; // reset
-      updateCounters();
-
-      checkAll.onclick = function() {
-        document.querySelectorAll('.row-check').forEach(cb => cb.checked = this.checked);
-        updateCounters();
-      };
-
-      document.getElementById('pageTableBody').addEventListener('change', function(e) {
-        if (e.target && e.target.classList.contains('row-check')) {
-          const allBoxes = document.querySelectorAll('.row-check');
-          const checkedBoxes = document.querySelectorAll('.row-check:checked');
-          checkAll.checked = (allBoxes.length === checkedBoxes.length);
-          updateCounters();
-        }
-      });
-    }
-
-    // ================= 4. MỞ MENU CHUỘT PHẢI & POPUP MODAL =================
-    const contextMenu = document.getElementById('contextMenu');
-    const modal = document.getElementById('reelsModal');
-
-    document.getElementById('pageTable').addEventListener('contextmenu', function(e) {
-      if(e.target.closest('tbody')) {
-        e.preventDefault();
-        contextMenu.style.display = 'block';
-        contextMenu.style.left = Math.min(e.pageX, window.innerWidth - 240) + 'px';
-        contextMenu.style.top = e.pageY + 'px';
-      }
     });
 
-    document.addEventListener('click', (e) => { if (e.button !== 2) contextMenu.style.display = 'none'; });
-
-    document.getElementById('btnOpenReelsModal').addEventListener('click', () => {
-      if (document.querySelectorAll('.row-check:checked').length === 0) {
-        alert("⚠️ Vui lòng tích chọn ít nhất 1 Fanpage trên danh sách trước!");
-        return;
-      }
-      modal.style.display = 'flex';
-    });
-
-    document.getElementById('btnCloseModal').addEventListener('click', () => modal.style.display = 'none');
-    
-    document.getElementById('videoFile').addEventListener('change', function() {
+    // ============ 4. CHỌN FILE VIDEO ============
+    document.getElementById('videoFile').addEventListener('change', function () {
       document.getElementById('fileText').textContent = this.files.length > 0 ? this.files[0].name : 'Chưa có video nào được chọn...';
     });
 
-    // ================= 5. GỬI CHIẾN DỊCH SANG BACKEND XỬ LÝ ĐĂNG VIDEO =================
-    document.getElementById('btnSubmitReels').addEventListener('click', async () => {
-      const selectedPages = Array.from(document.querySelectorAll('.row-check:checked')).map(cb => cb.value);
+    // ============ 5. ĐĂNG REELS LÊN PAGE ĐÃ CHỌN (NGƯỜI DÙNG TỰ BẤM) ============
+    document.getElementById('btnSubmit').addEventListener('click', async () => {
+      const pageId = document.getElementById('pageSelect').value;
+      const page = currentPages.find(p => p.id === pageId);
+      const content = document.getElementById('postContent').value;
       const fileInput = document.getElementById('videoFile');
+      const statusEl = document.getElementById('postStatus');
+      const btn = document.getElementById('btnSubmit');
+      const progressWrap = document.getElementById('progressWrap');
+      const progressBar = document.getElementById('progressBar');
 
-      if (fileInput.files.length === 0) { return alert("⚠️ Vui lòng chọn tệp Video Reels!"); }
+      if (!page) { alert('⚠️ Vui lòng chọn 1 Fanpage.'); return; }
+      if (fileInput.files.length === 0) { alert('⚠️ Vui lòng chọn tệp video.'); return; }
 
-      const formData = new FormData();
-      formData.append('cookie', userCookie);
-      formData.append('pageIds', JSON.stringify(selectedPages));
-      formData.append('content', document.getElementById('postContent').value);
-      formData.append('video', fileInput.files[0]);
+      const pageAccessToken = page.access_token; // Token riêng của Page, do Graph API trả về cùng /me/accounts
 
-      const btn = document.getElementById('btnSubmitReels');
-      btn.disabled = true; btn.textContent = '⏳ Đang truyền dữ liệu lên luồng đăng...';
-
-      selectedPages.forEach(id => {
-        document.getElementById(`status-${id}`).innerHTML = `⏳ <span style="color:var(--warning)">Đang upload...</span>`;
-      });
+      btn.disabled = true;
+      btn.textContent = '⏳ Đang đăng...';
+      statusEl.className = 'status-box show loading';
+      statusEl.textContent = `Đang upload video lên "${page.name}"...`;
+      progressWrap.className = 'progress-bar-wrap show';
+      progressBar.style.width = '10%';
 
       try {
-        const response = await fetch('http://localhost:3000/api/upload-reels', { method: 'POST', body: formData });
-        const data = await response.json();
-        
-        if (data.success) {
-          alert("🎉 Chiến dịch hoàn tất: Toàn bộ Reels đã được xếp lịch hoặc đăng công khai!");
-          selectedPages.forEach(id => { document.getElementById(`status-${id}`).innerHTML = `✅ <span style="color:var(--success)">Thành công</span>`; });
-          modal.style.display = 'none';
-        } else {
-          alert(`❌ Lỗi hệ thống: ${data.error}`);
-        }
-      } catch (error) {
-        alert("❌ Lỗi mất kết nối Backend.");
+        // Bước 1: Khởi tạo phiên upload video (Graph API Video Upload - phương thức resumable)
+        const initForm = new FormData();
+        initForm.append('upload_phase', 'start');
+        initForm.append('access_token', pageAccessToken);
+
+        const initRes = await fetch(`https://graph-video.facebook.com/${GRAPH_VERSION}/${page.id}/videos`, {
+          method: 'POST', body: initForm
+        });
+        const initData = await initRes.json();
+        if (initData.error) throw new Error(initData.error.message);
+
+        progressBar.style.width = '40%';
+
+        // Bước 2: Upload nội dung file video
+        const uploadForm = new FormData();
+        uploadForm.append('upload_phase', 'transfer');
+        uploadForm.append('start_offset', initData.start_offset);
+        uploadForm.append('upload_session_id', initData.upload_session_id);
+        uploadForm.append('video_file_chunk', fileInput.files[0]);
+        uploadForm.append('access_token', pageAccessToken);
+
+        const uploadRes = await fetch(`https://graph-video.facebook.com/${GRAPH_VERSION}/${page.id}/videos`, {
+          method: 'POST', body: uploadForm
+        });
+        const uploadData = await uploadRes.json();
+        if (uploadData.error) throw new Error(uploadData.error.message);
+
+        progressBar.style.width = '80%';
+
+        // Bước 3: Hoàn tất, gắn caption, đăng thành Reels (video_state = PUBLISHED)
+        const finishForm = new FormData();
+        finishForm.append('upload_phase', 'finish');
+        finishForm.append('upload_session_id', initData.upload_session_id);
+        finishForm.append('description', content);
+        finishForm.append('video_state', 'PUBLISHED');
+        finishForm.append('access_token', pageAccessToken);
+
+        const finishRes = await fetch(`https://graph-video.facebook.com/${GRAPH_VERSION}/${page.id}/videos`, {
+          method: 'POST', body: finishForm
+        });
+        const finishData = await finishRes.json();
+        if (finishData.error) throw new Error(finishData.error.message);
+
+        progressBar.style.width = '100%';
+        statusEl.className = 'status-box show ok';
+        statusEl.textContent = `✅ Đăng thành công lên "${page.name}"!`;
+
+      } catch (err) {
+        statusEl.className = 'status-box show err';
+        statusEl.textContent = `❌ Lỗi: ${err.message}`;
+        progressWrap.className = 'progress-bar-wrap';
       } finally {
         btn.disabled = false;
-        initLifecycleCheckboxes();
+        btn.textContent = '🎬 Đăng Reels lên Page này';
       }
     });
   </script>
