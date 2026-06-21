@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Đăng Reels (Ver 4 - Random & Auto Comment)</title>
+  <title>Đăng Reels (Ver 4 - Chống Lỗi Upload & Auto Comment)</title>
   <style>
     :root {
       --bg-main: #f1f5f9;
@@ -302,7 +302,7 @@
         : 'Chưa có video nào được chọn';
     });
 
-    // ================= LOGIC UPLOAD & COMMENT =================
+    // ================= LOGIC UPLOAD & COMMENT (ĐÃ CHUNK UPLOAD TỐI ƯU) =================
     document.getElementById('btnSubmit').addEventListener('click', async () => {
       const pageId = document.getElementById('pageSelect').value;
       const page = currentPages.find(p => p.id === pageId);
@@ -337,39 +337,59 @@
       progressBar.style.width = '10%';
 
       try {
-        // [PHASE 1] - Khởi tạo
+        // [PHASE 1] - Khởi tạo phiên Upload (BẮT BUỘC có file_size)
         const initForm = new FormData();
         initForm.append('upload_phase', 'start');
         initForm.append('access_token', pageAccessToken);
+        initForm.append('file_size', selectedVideo.size); // Khai báo dung lượng
+
         const initRes = await fetch(`https://graph-video.facebook.com/${GRAPH_VERSION}/${page.id}/videos`, { method: 'POST', body: initForm });
         const initData = await initRes.json();
-        if (initData.error) throw new Error(initData.error.message);
+        if (initData.error) throw new Error("Lỗi Phase 1: " + initData.error.message);
 
-        progressBar.style.width = '40%';
+        progressBar.style.width = '20%';
 
-        // [PHASE 2] - Truyền dữ liệu
-        const uploadForm = new FormData();
-        uploadForm.append('upload_phase', 'transfer');
-        uploadForm.append('start_offset', initData.start_offset);
-        uploadForm.append('upload_session_id', initData.upload_session_id);
-        uploadForm.append('video_file_chunk', selectedVideo); // Dùng video ngẫu nhiên đã chọn
-        uploadForm.append('access_token', pageAccessToken);
-        const uploadRes = await fetch(`https://graph-video.facebook.com/${GRAPH_VERSION}/${page.id}/videos`, { method: 'POST', body: uploadForm });
-        const uploadData = await uploadRes.json();
-        if (uploadData.error) throw new Error(uploadData.error.message);
+        // [PHASE 2] - Truyền dữ liệu (Băm nhỏ file - Chunking)
+        let startOffset = parseInt(initData.start_offset);
+        let endOffset = parseInt(initData.end_offset);
+        let sessionId = initData.upload_session_id;
 
-        progressBar.style.width = '80%';
+        // Vòng lặp cắt file thành từng phần nhỏ để gửi lên Facebook
+        while (startOffset < selectedVideo.size) {
+          const chunk = selectedVideo.slice(startOffset, endOffset);
+          
+          const uploadForm = new FormData();
+          uploadForm.append('upload_phase', 'transfer');
+          uploadForm.append('upload_session_id', sessionId);
+          uploadForm.append('start_offset', startOffset);
+          uploadForm.append('video_file_chunk', chunk);
+          uploadForm.append('access_token', pageAccessToken);
 
-        // [PHASE 3] - Hoàn tất (Gắn tên file làm Tiêu đề)
+          const uploadRes = await fetch(`https://graph-video.facebook.com/${GRAPH_VERSION}/${page.id}/videos`, { method: 'POST', body: uploadForm });
+          const uploadData = await uploadRes.json();
+          if (uploadData.error) throw new Error("Lỗi Phase 2: " + uploadData.error.message);
+
+          // Cập nhật vị trí cắt file cho lần lặp tiếp theo
+          startOffset = parseInt(uploadData.start_offset);
+          endOffset = parseInt(uploadData.end_offset);
+          
+          // Cập nhật thanh tiến trình chạy mượt theo từng chunk
+          let progressPercent = 20 + Math.floor((startOffset / selectedVideo.size) * 60);
+          if (progressPercent > 80) progressPercent = 80;
+          progressBar.style.width = `${progressPercent}%`;
+        }
+
+        // [PHASE 3] - Hoàn tất (Gắn tên file làm Tiêu đề và Đăng)
         const finishForm = new FormData();
         finishForm.append('upload_phase', 'finish');
-        finishForm.append('upload_session_id', initData.upload_session_id);
-        finishForm.append('description', videoTitle); // Gắn tiêu đề = Tên file
+        finishForm.append('upload_session_id', sessionId);
+        finishForm.append('description', videoTitle);
         finishForm.append('video_state', 'PUBLISHED');
         finishForm.append('access_token', pageAccessToken);
+        
         const finishRes = await fetch(`https://graph-video.facebook.com/${GRAPH_VERSION}/${page.id}/videos`, { method: 'POST', body: finishForm });
         const finishData = await finishRes.json();
-        if (finishData.error) throw new Error(finishData.error.message);
+        if (finishData.error) throw new Error("Lỗi Phase 3: " + finishData.error.message);
 
         progressBar.style.width = '100%';
         
@@ -380,14 +400,12 @@
         // [PHASE 4] - Auto Comment (Nếu được bật)
         if (isEnableComment && commentContent) {
             statusEl.className = 'status-box show loading';
-            statusEl.innerHTML = `✅ Đã đăng thành công video!<br>⏳ Đang chờ <b>${commentDelay} giây</b> để thực hiện Auto-Comment vào bài viết...`;
+            statusEl.innerHTML = `✅ Đã upload thành công!<br>⏳ Đang chờ <b>${commentDelay} giây</b> để Facebook xử lý và gắn Comment...`;
             
-            // Hàm Delay chờ Facebook xử lý video
             await new Promise(resolve => setTimeout(resolve, commentDelay * 1000));
             
             statusEl.innerHTML = `⏳ Đang gửi comment...`;
             
-            // Gọi Graph API Post Comment
             const commentRes = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/${videoId}/comments`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -402,16 +420,16 @@
             statusEl.className = 'status-box show ok';
             statusEl.innerHTML = `
               🎉 <b>HOÀN TẤT TOÀN BỘ QUÁ TRÌNH!</b><br>
-              - Đã đăng video ngẫu nhiên: <i>${videoTitle}</i><br>
-              - Đã tự động thả comment.<br>
-              🔗 Link bài viết: <a href="${postLink}" target="_blank" class="post-link">${postLink}</a>
+              - Đã đăng Reels: <i>${videoTitle}</i><br>
+              - Đã thả comment tự động.<br>
+              🔗 Link Reels: <a href="${postLink}" target="_blank" class="post-link">${postLink}</a>
             `;
         } else {
             statusEl.className = 'status-box show ok';
             statusEl.innerHTML = `
-              ✅ <b>ĐĂNG THÀNH CÔNG!</b> (Không thực hiện Comment)<br>
+              ✅ <b>ĐĂNG THÀNH CÔNG!</b><br>
               - Video đăng: <i>${videoTitle}</i><br>
-              🔗 Link bài viết: <a href="${postLink}" target="_blank" class="post-link">${postLink}</a>
+              🔗 Link Reels: <a href="${postLink}" target="_blank" class="post-link">${postLink}</a>
             `;
         }
 
