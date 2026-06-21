@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Đăng Reels (Ver 4 - Chống Lỗi Upload & Auto Comment)</title>
+  <title>Đăng Reels (Ver 4 - Hoàn Chỉnh Fix Lỗi Comment)</title>
   <style>
     :root {
       --bg-main: #f1f5f9;
@@ -302,7 +302,7 @@
         : 'Chưa có video nào được chọn';
     });
 
-    // ================= LOGIC UPLOAD & COMMENT (ĐÃ CHUNK UPLOAD TỐI ƯU) =================
+    // ================= LOGIC UPLOAD & COMMENT =================
     document.getElementById('btnSubmit').addEventListener('click', async () => {
       const pageId = document.getElementById('pageSelect').value;
       const page = currentPages.find(p => p.id === pageId);
@@ -337,15 +337,18 @@
       progressBar.style.width = '10%';
 
       try {
-        // [PHASE 1] - Khởi tạo phiên Upload (BẮT BUỘC có file_size)
+        // [PHASE 1] - Khởi tạo phiên Upload
         const initForm = new FormData();
         initForm.append('upload_phase', 'start');
         initForm.append('access_token', pageAccessToken);
-        initForm.append('file_size', selectedVideo.size); // Khai báo dung lượng
+        initForm.append('file_size', selectedVideo.size);
 
         const initRes = await fetch(`https://graph-video.facebook.com/${GRAPH_VERSION}/${page.id}/videos`, { method: 'POST', body: initForm });
         const initData = await initRes.json();
         if (initData.error) throw new Error("Lỗi Phase 1: " + initData.error.message);
+
+        // Lấy video_id ngay từ Phase 1
+        const videoId = initData.video_id; 
 
         progressBar.style.width = '20%';
 
@@ -354,7 +357,6 @@
         let endOffset = parseInt(initData.end_offset);
         let sessionId = initData.upload_session_id;
 
-        // Vòng lặp cắt file thành từng phần nhỏ để gửi lên Facebook
         while (startOffset < selectedVideo.size) {
           const chunk = selectedVideo.slice(startOffset, endOffset);
           
@@ -369,11 +371,9 @@
           const uploadData = await uploadRes.json();
           if (uploadData.error) throw new Error("Lỗi Phase 2: " + uploadData.error.message);
 
-          // Cập nhật vị trí cắt file cho lần lặp tiếp theo
           startOffset = parseInt(uploadData.start_offset);
           endOffset = parseInt(uploadData.end_offset);
           
-          // Cập nhật thanh tiến trình chạy mượt theo từng chunk
           let progressPercent = 20 + Math.floor((startOffset / selectedVideo.size) * 60);
           if (progressPercent > 80) progressPercent = 80;
           progressBar.style.width = `${progressPercent}%`;
@@ -393,11 +393,10 @@
 
         progressBar.style.width = '100%';
         
-        // Thu thập Video ID & Build Link
-        const videoId = finishData.video_id || finishData.id;
+        // Tạo Link bài viết sử dụng videoId đã lấy được ở Phase 1
         const postLink = `https://www.facebook.com/${page.id}/videos/${videoId}/`;
 
-        // [PHASE 4] - Auto Comment (Nếu được bật)
+        // [PHASE 4] - Auto Comment
         if (isEnableComment && commentContent) {
             statusEl.className = 'status-box show loading';
             statusEl.innerHTML = `✅ Đã upload thành công!<br>⏳ Đang chờ <b>${commentDelay} giây</b> để Facebook xử lý và gắn Comment...`;
