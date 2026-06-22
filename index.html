@@ -559,7 +559,7 @@
     }
 
     // ================= AUTO-REPLY COMMENT (QUÉT TOÀN BỘ VIDEO CỦA PAGE, CẢ CŨ VÀ MỚI) =================
-    // Dùng repliedCommentIds trong pageLoops để không trả lời trùng 1 comment 2 lần qua các chu kỳ.
+    // Fix: bỏ qua comment của chính page (page owner), không reply trùng lần 2, hiển thị status bar realtime.
     async function replyToUnansweredComments(pageId) {
       const loop = pageLoops[pageId];
       const page = currentPages.find(p => p.id === pageId);
@@ -571,9 +571,26 @@
 
       replyStatusEl.style.display = 'block';
       replyStatusEl.className = 'page-card-status show loading';
-      replyStatusEl.innerHTML = `💬 Đang quét comment chưa trả lời trên các video của <b>${page.name}</b>...`;
+      replyStatusEl.innerHTML = `
+        💬 Đang quét comment chưa trả lời trên các video của <b>${page.name}</b>...
+        <div style="margin-top:8px;">
+          <div style="background:#bae6fd;border-radius:4px;height:6px;overflow:hidden;">
+            <div id="replyProgressBar_${pageId}" style="height:100%;background:#0369a1;width:0%;transition:width 0.4s;"></div>
+          </div>
+          <div id="replyProgressText_${pageId}" style="margin-top:4px;font-size:11px;color:#075985;">Đang khởi động...</div>
+        </div>
+      `;
+
+      const setReplyProgress = (percent, text) => {
+        const bar = document.getElementById(`replyProgressBar_${pageId}`);
+        const label = document.getElementById(`replyProgressText_${pageId}`);
+        if (bar) bar.style.width = `${Math.min(percent, 100)}%`;
+        if (label) label.textContent = text;
+      };
 
       try {
+        setReplyProgress(5, 'Đang lấy danh sách video...');
+
         // Lấy toàn bộ video của page (cũ + mới), không chỉ video vừa đăng lượt này
         const videosRes = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/${page.id}/videos?fields=id&limit=50&access_token=${page.access_token}`);
         const videosData = await videosRes.json();
@@ -581,17 +598,45 @@
 
         const videoIds = (videosData.data || []).map(v => v.id);
         let repliedCount = 0;
+        let skippedOwn = 0;
+        let skippedAlready = 0;
+        let totalComments = 0;
 
-        for (const videoId of videoIds) {
+        setReplyProgress(10, `Tìm thấy ${videoIds.length} video — bắt đầu quét comment...`);
+
+        for (let vi = 0; vi < videoIds.length; vi++) {
           if (!loop.active) return;
 
-          const commentsRes = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/${videoId}/comments?fields=id,from&filter=stream&limit=100&access_token=${page.access_token}`);
+          const videoId = videoIds[vi];
+          const videoProgress = 10 + Math.floor((vi / videoIds.length) * 85);
+          setReplyProgress(videoProgress, `Đang quét video ${vi + 1}/${videoIds.length}...`);
+
+          // Lấy comment kèm from.id để lọc comment của page owner
+          const commentsRes = await fetch(
+            `https://graph.facebook.com/${GRAPH_VERSION}/${videoId}/comments?fields=id,from&filter=stream&limit=100&access_token=${page.access_token}`
+          );
           const commentsData = await commentsRes.json();
           if (commentsData.error) continue; // Video lỗi quyền đọc comment thì bỏ qua, không chặn cả vòng quét
 
-          for (const comment of (commentsData.data || [])) {
+          const comments = commentsData.data || [];
+          totalComments += comments.length;
+
+          for (const comment of comments) {
             if (!loop.active) return;
-            if (loop.repliedCommentIds.has(comment.id)) continue;
+
+            // BUG FIX #1: Bỏ qua comment của chính page — không tự reply vào bình luận của mình
+            if (comment.from && comment.from.id === page.id) {
+              skippedOwn++;
+              continue;
+            }
+
+            // BUG FIX #2: Bỏ qua comment đã được reply trước đó trong session này
+            if (loop.repliedCommentIds.has(comment.id)) {
+              skippedAlready++;
+              continue;
+            }
+
+            setReplyProgress(videoProgress, `Video ${vi + 1}/${videoIds.length} — Đang reply comment của ${comment.from ? comment.from.name || 'người dùng' : 'người dùng'}...`);
 
             const replyRes = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/${comment.id}/comments`, {
               method: 'POST',
@@ -609,10 +654,18 @@
           }
         }
 
+        setReplyProgress(100, 'Hoàn tất.');
+
+        // Tóm tắt kết quả sau khi quét xong
+        const summaryLines = [];
+        if (repliedCount > 0) summaryLines.push(`✅ Đã auto-reply <b>${repliedCount}</b> comment mới`);
+        else summaryLines.push(`✅ Không có comment mới nào cần trả lời`);
+        if (skippedOwn > 0) summaryLines.push(`⏭️ Bỏ qua <b>${skippedOwn}</b> comment của chính page`);
+        if (skippedAlready > 0) summaryLines.push(`⏭️ Bỏ qua <b>${skippedAlready}</b> comment đã reply trước đó`);
+        summaryLines.push(`📊 Tổng: ${totalComments} comment trên ${videoIds.length} video`);
+
         replyStatusEl.className = 'page-card-status show ok';
-        replyStatusEl.innerHTML = repliedCount > 0
-          ? `✅ Đã auto-reply <b>${repliedCount}</b> comment mới trên ${videoIds.length} video.`
-          : `✅ Đã quét ${videoIds.length} video — không có comment mới cần trả lời.`;
+        replyStatusEl.innerHTML = summaryLines.join('<br>');
 
       } catch (err) {
         replyStatusEl.className = 'page-card-status show err';
