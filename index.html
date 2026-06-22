@@ -433,9 +433,14 @@
               <div class="form-group" style="margin-top: 14px;">
                 <label style="color: var(--warning);">Auto-reply người đã comment:</label>
                 <textarea id="autoReply_${pageId}" placeholder="Câu trả lời cố định cho mọi comment trên video của page này..."></textarea>
-                <label class="checkbox-label" style="margin-top: 6px;">
-                  <input type="checkbox" id="enableAutoReply_${pageId}"> Bật auto-reply (quét theo chu kỳ vòng lặp đăng bài)
-                </label>
+                <div class="inline-input-box" style="margin-top: 6px;">
+                  <button class="file-btn" type="button" id="btnToggleReply_${pageId}" style="font-weight:bold;">▶️ Bật auto-reply</button>
+                  <input type="number" id="replyIntervalSec_${pageId}" value="45" min="30" max="60" style="width: 50px;">
+                  <span>giây/lượt quét</span>
+                </div>
+                <div class="page-card-progress-wrap" id="replyProgressWrap_${pageId}">
+                  <div class="page-card-progress" id="replyProgressBarOuter_${pageId}" style="background: var(--warning);"></div>
+                </div>
               </div>
             </div>
             <div>
@@ -445,6 +450,10 @@
                 <input type="file" id="videoFile_${pageId}" style="display:none" accept="video/*" multiple>
               </div>
               <div class="file-status-text" id="fileText_${pageId}">Chưa có video nào được chọn</div>
+              <div class="form-group" style="margin-top: 10px;">
+                <label style="color: var(--success);">Tiêu đề tự viết (ghép thêm sau tên file):</label>
+                <input type="text" id="customTitle_${pageId}" placeholder="Ví dụ: #reels #trending">
+              </div>
             </div>
           </div>
           <div class="page-card-progress-wrap" id="progressWrap_${pageId}">
@@ -462,9 +471,22 @@
             : 'Chưa có video nào được chọn';
         });
 
-        pageLoops[pageId] = { active: false, timeoutId: null, repliedCommentIds: new Set() };
+        pageLoops[pageId] = { active: false, timeoutId: null, repliedCommentIds: new Set(), replyActive: false, replyTimeoutId: null };
+
+        document.getElementById(`btnToggleReply_${pageId}`).addEventListener('click', () => {
+          const loop = pageLoops[pageId];
+          if (!loop) return;
+          if (loop.replyActive) {
+            stopReplyLoop(pageId);
+          } else {
+            const replyMessage = document.getElementById(`autoReply_${pageId}`).value.trim();
+            if (!replyMessage) { alert('⚠️ Hãy nhập nội dung auto-reply trước khi bật.'); return; }
+            startReplyLoop(pageId);
+          }
+        });
       } else {
         stopPageLoop(pageId);
+        stopReplyLoop(pageId);
         delete pageLoops[pageId];
         if (existing) existing.remove();
       }
@@ -507,6 +529,48 @@
       if (progressWrap) progressWrap.className = 'page-card-progress-wrap';
     }
 
+    // ================= ĐIỀU KHIỂN ĐỘC LẬP: VÒNG LẶP AUTO-REPLY RIÊNG TỪNG PAGE =================
+    // Tách hoàn toàn khỏi nút "Bắt đầu đăng liên tục" — bật/tắt riêng, chu kỳ riêng (30-60s), thanh tiến trình riêng.
+    function startReplyLoop(pageId) {
+      const loop = pageLoops[pageId];
+      if (!loop || loop.replyActive) return;
+
+      loop.replyActive = true;
+      const btn = document.getElementById(`btnToggleReply_${pageId}`);
+      btn.textContent = '⏸️ Tắt auto-reply';
+      btn.style.color = 'var(--danger)';
+
+      triggerNextReplyForPage(pageId);
+    }
+
+    function stopReplyLoop(pageId) {
+      const loop = pageLoops[pageId];
+      if (!loop) return;
+      loop.replyActive = false;
+      clearTimeout(loop.replyTimeoutId);
+
+      const btn = document.getElementById(`btnToggleReply_${pageId}`);
+      if (btn) { btn.textContent = '▶️ Bật auto-reply'; btn.style.color = ''; }
+
+      const replyProgressWrap = document.getElementById(`replyProgressWrap_${pageId}`);
+      if (replyProgressWrap) replyProgressWrap.className = 'page-card-progress-wrap';
+    }
+
+    // Lập lịch đệ quy riêng cho auto-reply — chu kỳ 30-60s lấy từ input của từng page, không phụ thuộc loopInterval đăng bài
+    async function triggerNextReplyForPage(pageId) {
+      const loop = pageLoops[pageId];
+      if (!loop || !loop.replyActive) return;
+
+      await replyToUnansweredComments(pageId);
+
+      if (!loop.replyActive) return;
+
+      let intervalSec = parseInt(document.getElementById(`replyIntervalSec_${pageId}`).value) || 45;
+      intervalSec = Math.min(Math.max(intervalSec, 30), 60); // ràng buộc cứng 30-60 giây theo yêu cầu
+
+      loop.replyTimeoutId = setTimeout(() => triggerNextReplyForPage(pageId), intervalSec * 1000);
+    }
+
     async function startAllLoops() {
       const selectedIds = Object.keys(pageLoops);
 
@@ -543,10 +607,6 @@
 
       if (!loop.active) return;
 
-      await replyToUnansweredComments(pageId);
-
-      if (!loop.active) return;
-
       const intervalMins = parseInt(document.getElementById('loopInterval').value) || 60;
       const statusEl = document.getElementById(`status_${pageId}`);
 
@@ -559,44 +619,50 @@
     }
 
     // ================= AUTO-REPLY COMMENT (QUÉT TOÀN BỘ VIDEO CỦA PAGE, CẢ CŨ VÀ MỚI) =================
-    // Fix: bỏ qua comment của chính page (page owner), không reply trùng lần 2, hiển thị status bar realtime.
+    // Độc lập hoàn toàn với vòng lặp đăng bài — có nút bật/tắt riêng, chu kỳ riêng, thanh tiến trình riêng.
     async function replyToUnansweredComments(pageId) {
       const loop = pageLoops[pageId];
       const page = currentPages.find(p => p.id === pageId);
-      const enableAutoReply = document.getElementById(`enableAutoReply_${pageId}`).checked;
       const replyMessage = document.getElementById(`autoReply_${pageId}`).value.trim();
       const replyStatusEl = document.getElementById(`replyStatus_${pageId}`);
+      const replyProgressWrap = document.getElementById(`replyProgressWrap_${pageId}`);
+      const replyProgressBar = document.getElementById(`replyProgressBarOuter_${pageId}`);
 
-      if (!enableAutoReply || !replyMessage) return;
+      if (!replyMessage) { stopReplyLoop(pageId); return; }
 
+      replyProgressWrap.className = 'page-card-progress-wrap show';
       replyStatusEl.style.display = 'block';
       replyStatusEl.className = 'page-card-status show loading';
-      replyStatusEl.innerHTML = `
-        💬 Đang quét comment chưa trả lời trên các video của <b>${page.name}</b>...
-        <div style="margin-top:8px;">
-          <div style="background:#bae6fd;border-radius:4px;height:6px;overflow:hidden;">
-            <div id="replyProgressBar_${pageId}" style="height:100%;background:#0369a1;width:0%;transition:width 0.4s;"></div>
-          </div>
-          <div id="replyProgressText_${pageId}" style="margin-top:4px;font-size:11px;color:#075985;">Đang khởi động...</div>
-        </div>
-      `;
+      replyStatusEl.innerHTML = `💬 Đang quét comment chưa trả lời trên các video của <b>${page.name}</b>...`;
 
       const setReplyProgress = (percent, text) => {
-        const bar = document.getElementById(`replyProgressBar_${pageId}`);
-        const label = document.getElementById(`replyProgressText_${pageId}`);
-        if (bar) bar.style.width = `${Math.min(percent, 100)}%`;
-        if (label) label.textContent = text;
+        if (replyProgressBar) replyProgressBar.style.width = `${Math.min(percent, 100)}%`;
+        if (text) replyStatusEl.innerHTML = `💬 ${text}`;
       };
 
       try {
-        setReplyProgress(5, 'Đang lấy danh sách video...');
+        setReplyProgress(2, 'Đang lấy danh sách video (toàn bộ, có phân trang)...');
 
-        // Lấy toàn bộ video của page (cũ + mới), không chỉ video vừa đăng lượt này
-        const videosRes = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/${page.id}/videos?fields=id&limit=50&access_token=${page.access_token}`);
-        const videosData = await videosRes.json();
-        if (videosData.error) throw new Error(videosData.error.message);
+        // Lấy TOÀN BỘ video của page (cũ + mới) bằng pagination — không giới hạn 1 trang
+        // Facebook trả tối đa ~100/trang dù limit cao hơn, nên phải đi theo paging.next tới khi hết
+        const videoIds = [];
+        let nextUrl = `https://graph.facebook.com/${GRAPH_VERSION}/${page.id}/videos?fields=id&limit=100&access_token=${page.access_token}`;
+        let pageCount = 0;
 
-        const videoIds = (videosData.data || []).map(v => v.id);
+        while (nextUrl) {
+          if (!loop.replyActive) return;
+          pageCount++;
+          setReplyProgress(Math.min(2 + pageCount, 10), `Đang tải trang video thứ ${pageCount} (đã có ${videoIds.length} video)...`);
+
+          const videosRes = await fetch(nextUrl);
+          const videosData = await videosRes.json();
+          if (videosData.error) throw new Error(videosData.error.message);
+
+          videoIds.push(...(videosData.data || []).map(v => v.id));
+          nextUrl = (videosData.paging && videosData.paging.next) ? videosData.paging.next : null;
+
+          if (nextUrl) await new Promise(resolve => setTimeout(resolve, 300)); // né rate limit giữa các trang
+        }
         let repliedCount = 0;
         let skippedOwn = 0;
         let skippedAlready = 0;
@@ -605,24 +671,32 @@
         setReplyProgress(10, `Tìm thấy ${videoIds.length} video — bắt đầu quét comment...`);
 
         for (let vi = 0; vi < videoIds.length; vi++) {
-          if (!loop.active) return;
+          if (!loop.replyActive) return;
 
           const videoId = videoIds[vi];
           const videoProgress = 10 + Math.floor((vi / videoIds.length) * 85);
           setReplyProgress(videoProgress, `Đang quét video ${vi + 1}/${videoIds.length}...`);
 
-          // Lấy comment kèm from.id để lọc comment của page owner
-          const commentsRes = await fetch(
-            `https://graph.facebook.com/${GRAPH_VERSION}/${videoId}/comments?fields=id,from&filter=stream&limit=100&access_token=${page.access_token}`
-          );
-          const commentsData = await commentsRes.json();
-          if (commentsData.error) continue; // Video lỗi quyền đọc comment thì bỏ qua, không chặn cả vòng quét
+          // Lấy comment kèm from.id và comment_count (số reply đã có) để biết comment nào đã được trả lời
+          const videoComments = [];
+          let nextCommentsUrl = `https://graph.facebook.com/${GRAPH_VERSION}/${videoId}/comments?fields=id,from,comment_count&filter=stream&limit=100&access_token=${page.access_token}`;
 
-          const comments = commentsData.data || [];
+          while (nextCommentsUrl) {
+            if (!loop.replyActive) return;
+            const commentsRes = await fetch(nextCommentsUrl);
+            const commentsData = await commentsRes.json();
+            if (commentsData.error) break; // Video lỗi quyền đọc comment thì bỏ qua, không chặn cả vòng quét
+
+            videoComments.push(...(commentsData.data || []));
+            nextCommentsUrl = (commentsData.paging && commentsData.paging.next) ? commentsData.paging.next : null;
+            if (nextCommentsUrl) await new Promise(resolve => setTimeout(resolve, 300));
+          }
+
+          const comments = videoComments;
           totalComments += comments.length;
 
           for (const comment of comments) {
-            if (!loop.active) return;
+            if (!loop.replyActive) return;
 
             // BUG FIX #1: Bỏ qua comment của chính page — không tự reply vào bình luận của mình
             if (comment.from && comment.from.id === page.id) {
@@ -630,8 +704,9 @@
               continue;
             }
 
-            // BUG FIX #2: Bỏ qua comment đã được reply trước đó trong session này
-            if (loop.repliedCommentIds.has(comment.id)) {
+            // BUG FIX #2: Bỏ qua comment đã reply trong session này, HOẶC đã có reply thật trên Facebook
+            // (kiểm tra comment_count > 0 để không bị reply trùng nếu trang được tải lại / chạy lại từ đầu)
+            if (loop.repliedCommentIds.has(comment.id) || (comment.comment_count && comment.comment_count > 0)) {
               skippedAlready++;
               continue;
             }
@@ -655,6 +730,7 @@
         }
 
         setReplyProgress(100, 'Hoàn tất.');
+        replyProgressWrap.className = 'page-card-progress-wrap';
 
         // Tóm tắt kết quả sau khi quét xong
         const summaryLines = [];
@@ -664,10 +740,15 @@
         if (skippedAlready > 0) summaryLines.push(`⏭️ Bỏ qua <b>${skippedAlready}</b> comment đã reply trước đó`);
         summaryLines.push(`📊 Tổng: ${totalComments} comment trên ${videoIds.length} video`);
 
+        let intervalSec = parseInt(document.getElementById(`replyIntervalSec_${pageId}`).value) || 45;
+        intervalSec = Math.min(Math.max(intervalSec, 30), 60);
+        summaryLines.push(`⏳ Quét lại sau <b>${intervalSec} giây</b>...`);
+
         replyStatusEl.className = 'page-card-status show ok';
         replyStatusEl.innerHTML = summaryLines.join('<br>');
 
       } catch (err) {
+        replyProgressWrap.className = 'page-card-progress-wrap';
         replyStatusEl.className = 'page-card-status show err';
         replyStatusEl.textContent = `❌ Lỗi auto-reply (${page.name}): ${err.message}`;
       }
@@ -690,8 +771,10 @@
       const randomIndex = Math.floor(Math.random() * fileInput.files.length);
       const selectedVideo = fileInput.files[randomIndex];
 
-      // 2. Tách tên file làm tiêu đề Reels
-      const videoTitle = selectedVideo.name.replace(/\.[^/.]+$/, "");
+      // 2. Tách tên file làm tiêu đề Reels, ghép thêm tiêu đề tự viết (nếu có)
+      const fileNameTitle = selectedVideo.name.replace(/\.[^/.]+$/, "");
+      const customTitlePart = document.getElementById(`customTitle_${pageId}`).value.trim();
+      const videoTitle = customTitlePart ? `${fileNameTitle} ${customTitlePart}` : fileNameTitle;
       const pageAccessToken = page.access_token;
 
       setBadge(pageId, 'running', 'Đang upload');
