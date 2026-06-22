@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Đăng Reels (Ver 6 - Multi-Page Song Song - Long-lived Token)</title>
+  <title>Đăng Reels (Ver 6 - Multi-Page Song Song)</title>
   <style>
     :root {
       --bg-main: #f1f5f9;
@@ -113,7 +113,7 @@
 
   <div class="window-modal">
     <div class="window-header">
-      <div class="window-title">Đăng Reels (Ver 6 - Tự Động Đổi Token 60 Ngày)</div>
+      <div class="window-title">Đăng Reels (Ver 5 - Vòng Lặp Liên Tục Tự Động)</div>
       <button class="close-btn">&times;</button>
     </div>
 
@@ -130,6 +130,18 @@
         <p style="margin-bottom: 15px; color: var(--text-muted);">Vui lòng liên kết tài khoản để tải danh sách Fanpage và cấu hình đăng bài.</p>
         <button class="btn-fb-login" id="btnFbLogin">📘 Đăng nhập bằng Facebook</button>
         <div class="status-box" id="loginStatus"></div>
+
+        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px dashed var(--border-color); text-align: left;">
+          <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 6px;">
+            Hoặc dán Long-lived Page Tokens (JSON từ <code>me/accounts</code>) — lưu vào trình duyệt này, không commit vào code:
+          </label>
+          <textarea id="manualTokenInput" style="height: 110px; font-family: monospace; font-size: 12px;" placeholder='[{"id":"123456","name":"Page A","access_token":"EAA..."},{"id":"789012","name":"Page B","access_token":"EAA..."}]'></textarea>
+          <div style="display: flex; gap: 8px; margin-top: 8px;">
+            <button class="file-btn" type="button" id="btnSaveManualTokens">💾 Lưu vào trình duyệt này</button>
+            <button class="file-btn" type="button" id="btnClearManualTokens" style="color: var(--danger);">🗑️ Xóa token đã lưu</button>
+          </div>
+          <div class="status-box" id="manualTokenStatus"></div>
+        </div>
       </div>
 
       <div id="postView" style="display:none;">
@@ -169,21 +181,116 @@
 
   <script>
     const FB_APP_ID = '1952106285437493';
-    const FB_APP_SECRET = 'NHẬP_APP_SECRET_CỦA_BẠN_VÀO_ĐÂY'; // ⚠️ ĐIỀN APP SECRET CỦA BẠN VÀO ĐÂY
     const GRAPH_VERSION = 'v19.0';
+    const TOKEN_STORAGE_KEY = 'fb_manual_long_lived_pages';
 
     let currentAccessToken = null;
     let currentPages = [];
 
+    // ================= LONG-LIVED TOKEN THỦ CÔNG (lưu trong localStorage trình duyệt, KHÔNG nằm trong code) =================
+    // Lấy theo 3 bước: FB.getAccessToken() -> oauth/access_token (fb_exchange_token) -> me/accounts
+    // page.access_token lấy từ bước 3 đã tự động là long-lived, KHÔNG cần đổi lại lần nữa.
+    function readStoredPages() {
+      try {
+        const raw = localStorage.getItem(TOKEN_STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed.filter(p => p && p.id && p.name && p.access_token);
+      } catch (err) {
+        return [];
+      }
+    }
+
     // ================= KHỞI TẠO SDK =================
     window.fbAsyncInit = function () {
       FB.init({ appId: FB_APP_ID, cookie: true, xfbml: false, version: GRAPH_VERSION });
+
+      const storedPages = readStoredPages();
+      if (storedPages.length > 0) {
+        loadManualPages(storedPages);
+        return;
+      }
+
       FB.getLoginStatus(function (response) {
         if (response.status === 'connected') {
           onLoginSuccess(response.authResponse.accessToken);
         }
       });
     };
+
+    // Nạp page list từ token long-lived đã lưu trong localStorage, bỏ qua hẳn FB.login
+    function loadManualPages(pages) {
+      currentPages = pages;
+
+      document.getElementById('accountName').textContent = 'Long-lived Token (lưu trình duyệt)';
+      document.getElementById('ext-status').textContent = ' (Đã kết nối)';
+      document.getElementById('ext-status').style.color = '#16a34a';
+      document.getElementById('btnLogout').style.display = 'inline-block';
+
+      const ms = document.getElementById('pageMultiselect');
+      ms.innerHTML = currentPages.map(p => `
+        <label class="page-multiselect-item" for="pagechk_${p.id}">
+          <input type="checkbox" id="pagechk_${p.id}" value="${p.id}">
+          <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}" alt="">
+          <span class="pname">${p.name}</span>
+        </label>
+      `).join('');
+      ms.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+        chk.addEventListener('change', () => togglePageCard(chk.value, chk.checked));
+      });
+
+      document.getElementById('loginView').style.display = 'none';
+      document.getElementById('postView').style.display = 'block';
+    }
+
+    // Lưu JSON dán tay vào localStorage — không bao giờ chạm vào file hay Git
+    document.getElementById('btnSaveManualTokens').addEventListener('click', () => {
+      const statusEl = document.getElementById('manualTokenStatus');
+      const raw = document.getElementById('manualTokenInput').value.trim();
+
+      if (!raw) {
+        statusEl.className = 'status-box show err';
+        statusEl.textContent = '❌ Chưa dán gì vào ô JSON.';
+        return;
+      }
+
+      let parsed;
+      try {
+        parsed = JSON.parse(raw);
+      } catch (err) {
+        statusEl.className = 'status-box show err';
+        statusEl.textContent = '❌ JSON không hợp lệ: ' + err.message;
+        return;
+      }
+
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        statusEl.className = 'status-box show err';
+        statusEl.textContent = '❌ Cần là một mảng chứa ít nhất 1 page.';
+        return;
+      }
+
+      const invalidIndex = parsed.findIndex(p => !p || !p.id || !p.name || !p.access_token);
+      if (invalidIndex !== -1) {
+        statusEl.className = 'status-box show err';
+        statusEl.textContent = `❌ Page tại vị trí ${invalidIndex} thiếu id, name hoặc access_token.`;
+        return;
+      }
+
+      localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(parsed));
+      statusEl.className = 'status-box show ok';
+      statusEl.textContent = `✅ Đã lưu ${parsed.length} page vào trình duyệt này. Đang nạp...`;
+      setTimeout(() => loadManualPages(parsed), 600);
+    });
+
+    // Xóa token khỏi localStorage, quay lại trạng thái chưa đăng nhập
+    document.getElementById('btnClearManualTokens').addEventListener('click', () => {
+      localStorage.removeItem(TOKEN_STORAGE_KEY);
+      document.getElementById('manualTokenInput').value = '';
+      const statusEl = document.getElementById('manualTokenStatus');
+      statusEl.className = 'status-box show ok';
+      statusEl.textContent = '🗑️ Đã xóa token đã lưu khỏi trình duyệt này.';
+    });
 
     (function (d, s, id) {
       var js, fjs = d.getElementsByTagName(s)[0];
@@ -209,37 +316,24 @@
       }, { scope: 'pages_show_list,pages_manage_posts,pages_read_engagement' });
     });
 
-    async function onLoginSuccess(shortLivedToken) {
+    async function onLoginSuccess(accessToken) {
+      currentAccessToken = accessToken;
       const statusEl = document.getElementById('loginStatus');
       statusEl.className = 'status-box show loading';
-      statusEl.textContent = '⏳ Đang nâng cấp lên Long-lived Token (60 ngày)...';
+      statusEl.textContent = '⏳ Đang lấy danh sách Page...';
 
       try {
-        // [CẬP NHẬT] Đổi Short-lived Token sang Long-lived Token thông qua API
-        const exchangeUrl = `https://graph.facebook.com/${GRAPH_VERSION}/oauth/access_token?grant_type=fb_exchange_token&client_id=${FB_APP_ID}&client_secret=${FB_APP_SECRET}&fb_exchange_token=${shortLivedToken}`;
-        const exchangeRes = await fetch(exchangeUrl);
-        const exchangeData = await exchangeRes.json();
-
-        if (exchangeData.error) throw new Error("Lỗi nâng cấp Long-lived Token: " + exchangeData.error.message);
-
-        // Lưu Token dài hạn vào biến toàn cục để sử dụng cho toàn bộ ứng dụng
-        currentAccessToken = exchangeData.access_token;
-
-        statusEl.textContent = '⏳ Đang kết nối tài khoản và lấy danh sách Fanpage...';
-
-        // Lấy thông tin User sử dụng Token dài hạn
-        const meRes = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/me?fields=name,picture&access_token=${currentAccessToken}`);
+        const meRes = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/me?fields=name,picture&access_token=${accessToken}`);
         const me = await meRes.json();
         if (me.error) throw new Error(me.error.message);
 
         document.getElementById('accountName').textContent = me.name;
         if (me.picture && me.picture.data) document.getElementById('userAvatar').src = me.picture.data.url;
-        document.getElementById('ext-status').textContent = ' (Token 60 ngày - VIP)';
+        document.getElementById('ext-status').textContent = ' (Đã kết nối)';
         document.getElementById('ext-status').style.color = '#16a34a';
         document.getElementById('btnLogout').style.display = 'inline-block';
 
-        // Lấy danh sách Page. Vì User Token đã chuyển thành Long-lived, hệ thống Facebook sẽ trả về các Page Token có thời hạn vĩnh viễn (Never Expires)
-        const pagesRes = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/me/accounts?fields=name,id,access_token,category,picture&limit=250&access_token=${currentAccessToken}`);
+        const pagesRes = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/me/accounts?fields=name,id,access_token,category,picture&limit=250&access_token=${accessToken}`);
         const pagesData = await pagesRes.json();
         if (pagesData.error) throw new Error(pagesData.error.message);
 
@@ -268,27 +362,41 @@
 
       } catch (err) {
         statusEl.className = 'status-box show err';
-        statusEl.textContent = `❌ Lỗi hệ thống: ${err.message}`;
+        statusEl.textContent = `❌ Lỗi: ${err.message}`;
       }
     }
 
+    function resetToLoginView() {
+      currentAccessToken = null;
+      currentPages = [];
+      document.getElementById('accountName').textContent = 'Chưa đăng nhập Facebook';
+      document.getElementById('userAvatar').src = 'https://ui-avatars.com/api/?name=FB&background=1d4ed8&color=fff';
+      document.getElementById('ext-status').textContent = '';
+      document.getElementById('btnLogout').style.display = 'none';
+      document.getElementById('postView').style.display = 'none';
+      document.getElementById('loginView').style.display = 'block';
+      document.getElementById('loginStatus').className = 'status-box';
+      stopAllLoops();
+      document.getElementById('pageCardsWrap').innerHTML = '';
+    }
+
     document.getElementById('btnLogout').addEventListener('click', () => {
+      const hasManualTokens = readStoredPages().length > 0;
+
+      if (hasManualTokens) {
+        localStorage.removeItem(TOKEN_STORAGE_KEY);
+        document.getElementById('manualTokenInput').value = '';
+        resetToLoginView();
+        return;
+      }
+
       FB.logout(function () {
-        currentAccessToken = null;
-        currentPages = [];
-        document.getElementById('accountName').textContent = 'Chưa đăng nhập Facebook';
-        document.getElementById('userAvatar').src = 'https://ui-avatars.com/api/?name=FB&background=1d4ed8&color=fff';
-        document.getElementById('ext-status').textContent = '';
-        document.getElementById('btnLogout').style.display = 'none';
-        document.getElementById('postView').style.display = 'none';
-        document.getElementById('loginView').style.display = 'block';
-        document.getElementById('loginStatus').className = 'status-box';
-        stopAllLoops();
-        document.getElementById('pageCardsWrap').innerHTML = '';
+        resetToLoginView();
       });
     });
 
     // ================= QUẢN LÝ THẺ PAGE ĐỘNG (MULTI-PAGE) =================
+    // Mỗi page có trạng thái loop độc lập: { active, timeoutId }
     const pageLoops = {};
 
     function togglePageCard(pageId, isChecked) {
@@ -354,7 +462,14 @@
       }
     }
 
-    // ================= ĐIỀU KHIỂN VÒNG LẶP SONG SONG =================
+    function setBadge(pageId, state, text) {
+      const badge = document.getElementById(`badge_${pageId}`);
+      if (!badge) return;
+      badge.className = `page-card-badge ${state}`;
+      badge.textContent = text;
+    }
+
+    // ================= ĐIỀU KHIỂN BẬT / TẮT VÒNG LẶP SONG SONG TẤT CẢ PAGE =================
     let isRunning = false;
 
     document.getElementById('btnSubmit').addEventListener('click', async () => {
@@ -379,11 +494,7 @@
       if (!loop) return;
       loop.active = false;
       clearTimeout(loop.timeoutId);
-      const badge = document.getElementById(`badge_${pageId}`);
-      if (badge) {
-        badge.className = `page-card-badge idle`;
-        badge.textContent = 'Đã dừng';
-      }
+      setBadge(pageId, 'idle', 'Đã dừng');
       const progressWrap = document.getElementById(`progressWrap_${pageId}`);
       if (progressWrap) progressWrap.className = 'page-card-progress-wrap';
     }
@@ -408,12 +519,14 @@
       btn.textContent = '🔴 Dừng tất cả Page';
       btn.style.background = 'var(--danger)';
 
+      // Mỗi page khởi động vòng lặp riêng, chạy song song độc lập (không await tuần tự)
       selectedIds.forEach(pageId => {
         pageLoops[pageId].active = true;
         triggerNextPostForPage(pageId);
       });
     }
 
+    // Cơ chế lập lịch đệ quy theo từng page, độc lập với các page khác
     async function triggerNextPostForPage(pageId) {
       const loop = pageLoops[pageId];
       if (!loop || !loop.active) return;
@@ -424,21 +537,16 @@
 
       const intervalMins = parseInt(document.getElementById('loopInterval').value) || 60;
       const statusEl = document.getElementById(`status_${pageId}`);
-      const badge = document.getElementById(`badge_${pageId}`);
 
       statusEl.style.display = 'block';
       statusEl.className = 'page-card-status show loading';
       statusEl.innerHTML += `<br><br>✅ <b>Chu kỳ hoàn tất!</b><br>⏳ Đếm ngược <b>${intervalMins} phút</b> tới lượt kế tiếp...`;
-      
-      if (badge) {
-        badge.className = `page-card-badge running`;
-        badge.textContent = `Chờ ${intervalMins}p`;
-      }
+      setBadge(pageId, 'running', `Chờ ${intervalMins}p`);
 
       loop.timeoutId = setTimeout(() => triggerNextPostForPage(pageId), intervalMins * 60 * 1000);
     }
 
-    // ================= QUY TRÌNH ĐĂNG BÀI & COMMENT (ĐÃ ĐƯỢC BẢO VỆ BỞI TOKEN VĨNH VIỄN) =================
+    // ================= QUY TRÌNH ĐĂNG 1 BÀI & CƠ CHẾ COMMENT (THEO TỪNG PAGE) =================
     async function runPostSequenceForPage(pageId) {
       const loop = pageLoops[pageId];
       const page = currentPages.find(p => p.id === pageId);
@@ -450,19 +558,16 @@
       const statusEl = document.getElementById(`status_${pageId}`);
       const progressWrap = document.getElementById(`progressWrap_${pageId}`);
       const progressBar = document.getElementById(`progressBar_${pageId}`);
-      const badge = document.getElementById(`badge_${pageId}`);
 
+      // 1. Bốc ngẫu nhiên 1 video từ kho riêng của page này
       const randomIndex = Math.floor(Math.random() * fileInput.files.length);
       const selectedVideo = fileInput.files[randomIndex];
-      const videoTitle = selectedVideo.name.replace(/\.[^/.]+$/, "");
-      
-      // Token ở đây luôn đảm bảo không bị hết hạn giữa chừng
-      const pageAccessToken = page.access_token; 
 
-      if (badge) {
-        badge.className = `page-card-badge running`;
-        badge.textContent = 'Đang upload';
-      }
+      // 2. Tách tên file làm tiêu đề Reels
+      const videoTitle = selectedVideo.name.replace(/\.[^/.]+$/, "");
+      const pageAccessToken = page.access_token;
+
+      setBadge(pageId, 'running', 'Đang upload');
       statusEl.style.display = 'block';
       statusEl.className = 'page-card-status show loading';
       statusEl.innerHTML = `🚀 [Lượt mới] Đang bốc ngẫu nhiên video: <b>"${videoTitle}"</b> để tải lên...`;
@@ -470,7 +575,7 @@
       progressBar.style.width = '10%';
 
       try {
-        // [PHASE 1]
+        // [PHASE 1] - Khởi tạo phiên Upload
         const initForm = new FormData();
         initForm.append('upload_phase', 'start');
         initForm.append('access_token', pageAccessToken);
@@ -483,15 +588,16 @@
         const videoId = initData.video_id;
         progressBar.style.width = '20%';
 
-        // [PHASE 2]
+        // [PHASE 2] - Truyền dữ liệu dạng Chunking (băm file lớn)
         let startOffset = parseInt(initData.start_offset);
         let endOffset = parseInt(initData.end_offset);
         let sessionId = initData.upload_session_id;
 
         while (startOffset < selectedVideo.size) {
-          if (!loop.active) return;
+          if (!loop.active) return; // Kiểm tra ngắt giữa chừng khi user bấm Dừng page này
 
           const chunk = selectedVideo.slice(startOffset, endOffset);
+
           const uploadForm = new FormData();
           uploadForm.append('upload_phase', 'transfer');
           uploadForm.append('upload_session_id', sessionId);
@@ -511,7 +617,7 @@
           progressBar.style.width = `${progressPercent}%`;
         }
 
-        // [PHASE 3]
+        // [PHASE 3] - Hoàn tất & Xuất bản bài viết
         const finishForm = new FormData();
         finishForm.append('upload_phase', 'finish');
         finishForm.append('upload_session_id', sessionId);
@@ -526,12 +632,13 @@
         progressBar.style.width = '100%';
         const postLink = `https://www.facebook.com/${page.id}/videos/${videoId}/`;
 
-        // [PHASE 4] - Bình luận tự động
+        // [PHASE 4] - Tự động Comment sau khi đăng
         if (isEnableComment && commentContent) {
-            if (badge) badge.textContent = `Chờ comment`;
+            setBadge(pageId, 'running', `Chờ comment`);
             statusEl.className = 'page-card-status show loading';
             statusEl.innerHTML = `✅ Đã upload video thành công!<br>⏳ Đang chờ <b>${commentDelay} giây</b> để Facebook index bài đăng trước khi nhét comment...`;
 
+            // Đếm ngược an toàn có kiểm tra lệnh Ngắt riêng cho page này
             for (let i = 0; i < commentDelay; i++) {
                 if (!loop.active) return;
                 await new Promise(resolve => setTimeout(resolve, 1000));
@@ -543,12 +650,15 @@
             const commentRes = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/${videoId}/comments`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: commentContent, access_token: pageAccessToken })
+                body: JSON.stringify({
+                    message: commentContent,
+                    access_token: pageAccessToken
+                })
             });
             const commentData = await commentRes.json();
             if (commentData.error) throw new Error("Lỗi khi Comment: " + commentData.error.message);
 
-            if (badge) { badge.className = `page-card-badge ok`; badge.textContent = 'Thành công'; }
+            setBadge(pageId, 'ok', 'Thành công');
             statusEl.className = 'page-card-status show ok';
             statusEl.innerHTML = `
               🎉 <b>ĐĂNG THÀNH CÔNG!</b><br>
@@ -558,7 +668,7 @@
               🔗 Link Reels: <a href="${postLink}" target="_blank" class="post-link">${postLink}</a>
             `;
         } else {
-            if (badge) { badge.className = `page-card-badge ok`; badge.textContent = 'Thành công'; }
+            setBadge(pageId, 'ok', 'Thành công');
             statusEl.className = 'page-card-status show ok';
             statusEl.innerHTML = `
               🎉 <b>ĐĂNG THÀNH CÔNG!</b><br>
@@ -569,7 +679,8 @@
         }
 
       } catch (err) {
-        if (badge) { badge.className = `page-card-badge err`; badge.textContent = 'Lỗi'; }
+        // Nếu bị lỗi 1 bài trên page này, báo lỗi và vẫn trả quy trình về Trigger Loop tiếp theo của riêng page đó
+        setBadge(pageId, 'err', 'Lỗi');
         statusEl.style.display = 'block';
         statusEl.className = 'page-card-status show err';
         statusEl.textContent = `❌ Lỗi bài đăng hiện tại (${page.name}): ${err.message}`;
