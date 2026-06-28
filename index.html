@@ -1,318 +1,353 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Douyin Video Downloader | Pro Dev</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-        /* =========================================
-           CSS STYLES
-           ========================================= */
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --primary: #ec4899;
-            --primary-hover: #db2777;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --error: #ef4444;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Douyin Downloader | No Watermark</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
+:root{
+  --bg:#0f172a;--card:#1e293b;--input-bg:#0f172a;--border:#334155;
+  --pink:#ec4899;--pink-h:#db2777;--muted:#94a3b8;--text:#f8fafc;
+  --err:#ef4444;--green:#10b981;--green-h:#059669;--panel:#334155;
+  --amber:#f59e0b;
+}
+body{background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.container{background:var(--card);width:100%;max-width:640px;padding:40px 32px;border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,.55)}
+header h1{font-size:1.8rem;color:var(--pink);margin-bottom:8px;text-align:center}
+header p{color:var(--muted);font-size:.9rem;margin-bottom:22px;text-align:center}
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+.api-status{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px;justify-content:center}
+.api-badge{font-size:.74rem;padding:4px 11px;border-radius:20px;font-weight:600;display:flex;align-items:center;gap:5px;border:1px solid transparent}
+.api-badge.checking{background:#1e293b;color:var(--muted);border-color:#334155}
+.api-badge.online{background:#064e3b;color:#34d399;border-color:#065f46}
+.api-badge.offline{background:#450a0a;color:#f87171;border-color:#7f1d1d}
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
+.input-group{display:flex;position:relative;gap:10px}
+.input-group .icon{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--muted)}
+input[type=url]{flex:1;padding:14px 15px 14px 45px;border:2px solid var(--border);background:var(--input-bg);color:var(--text);border-radius:10px;font-size:1rem;outline:none;transition:border-color .3s}
+input[type=url]:focus{border-color:var(--pink)}
+input[type=url]:disabled{opacity:.6}
+.fetch-btn{padding:0 24px;background:var(--pink);color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;min-width:130px;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .3s}
+.fetch-btn:hover{background:var(--pink-h)}
+.fetch-btn:disabled{opacity:.65;cursor:not-allowed}
+.error-msg{color:var(--err);font-size:.88rem;margin-top:10px;min-height:18px}
 
-        .container {
-            background-color: var(--card-bg);
-            width: 100%;
-            max-width: 600px;
-            padding: 40px 30px;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            text-align: center;
-        }
+.result-section{margin-top:26px;background:var(--panel);border-radius:14px;padding:22px;display:none}
+.video-info{display:flex;gap:18px;align-items:flex-start}
+#videoThumb{width:120px;height:120px;object-fit:cover;border-radius:10px;flex-shrink:0;background:#1e293b}
+.details{flex:1;min-width:0}
+#videoTitle{font-size:.97rem;font-weight:500;line-height:1.45;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+#videoAuthor{font-size:.82rem;color:var(--muted);margin-bottom:14px}
 
-        header h1 {
-            font-size: 1.8rem;
-            margin-bottom: 8px;
-            color: var(--primary);
-        }
+.dl-actions{display:flex;gap:10px;flex-wrap:wrap}
+.dl-btn{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:8px;font-weight:600;font-size:.88rem;text-decoration:none;transition:background .25s;cursor:pointer;border:none}
+.dl-btn.video{background:var(--green);color:#fff}
+.dl-btn.video:hover{background:var(--green-h)}
+.dl-btn.audio{background:#1d4ed8;color:#fff}
+.dl-btn.audio:hover{background:#1e40af}
 
-        header p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            margin-bottom: 30px;
-        }
+.meta-stats{margin-top:14px;padding-top:14px;border-top:1px solid #475569;display:flex;gap:18px;flex-wrap:wrap}
+.stat{font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:5px}
+.stat span{color:var(--text);font-weight:600}
+.source-tag{font-size:.72rem;margin-top:10px;color:var(--muted);text-align:right}
+.source-tag b{color:var(--amber)}
 
-        .input-group {
-            display: flex;
-            position: relative;
-            gap: 10px;
-        }
-
-        .input-group .icon {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-        }
-
-        input {
-            flex: 1;
-            padding: 14px 15px 14px 45px;
-            border: 2px solid #334155;
-            background-color: #0f172a;
-            color: var(--text-main);
-            border-radius: 8px;
-            font-size: 1rem;
-            outline: none;
-            transition: border-color 0.3s ease;
-        }
-
-        input:focus {
-            border-color: var(--primary);
-        }
-
-        button {
-            padding: 0 25px;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 120px;
-        }
-
-        button:hover {
-            background-color: var(--primary-hover);
-        }
-
-        button:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-
-        .error-message {
-            color: var(--error);
-            margin-top: 10px;
-            font-size: 0.9rem;
-            text-align: left;
-        }
-
-        /* Result Section */
-        .result-section {
-            margin-top: 30px;
-            background-color: #334155;
-            border-radius: 12px;
-            padding: 20px;
-            text-align: left;
-            transition: all 0.3s ease;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .video-info {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-
-        #videoThumb {
-            width: 100px;
-            height: 100px;
-            object-fit: cover;
-            border-radius: 8px;
-        }
-
-        .details {
-            flex: 1;
-        }
-
-        #videoTitle {
-            font-size: 1rem;
-            margin-bottom: 15px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .download-btn {
-            display: inline-block;
-            background-color: #10b981;
-            color: white;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: background 0.3s;
-        }
-
-        .download-btn:hover {
-            background-color: #059669;
-        }
-
-        @media (max-width: 480px) {
-            .input-group {
-                flex-direction: column;
-            }
-            button {
-                padding: 14px;
-            }
-            .video-info {
-                flex-direction: column;
-                text-align: center;
-            }
-            #videoThumb {
-                width: 100%;
-                height: auto;
-                aspect-ratio: 16/9;
-            }
-        }
-    </style>
+@media(max-width:480px){
+  .input-group{flex-direction:column}
+  .fetch-btn{padding:13px;min-width:unset}
+  .video-info{flex-direction:column}
+  #videoThumb{width:100%;height:auto;aspect-ratio:16/9}
+  .dl-actions{flex-direction:column}
+}
+</style>
 </head>
 <body>
-    <main class="container">
-        <header>
-            <h1><i class="fa-brands fa-tiktok"></i> Douyin Downloader</h1>
-            <p>Tải video Douyin không watermark chất lượng cao</p>
-        </header>
+<main class="container">
+  <header>
+    <h1><i class="fa-brands fa-tiktok"></i> Douyin Downloader</h1>
+    <p>Tải video Douyin không watermark · chất lượng cao</p>
+  </header>
 
-        <section class="input-section">
-            <div class="input-group">
-                <i class="fa-solid fa-link icon"></i>
-                <input type="url" id="videoUrl" placeholder="Dán link video Douyin vào đây..." required autocomplete="off">
-                <button id="fetchBtn" onclick="processVideo()">
-                    <span class="btn-text">Lấy Video</span>
-                    <i class="fa-solid fa-spinner fa-spin loader" style="display: none;"></i>
-                </button>
-            </div>
-            <div id="errorMsg" class="error-message"></div>
-        </section>
+  <div class="api-status" id="apiStatus">
+    <div class="api-badge checking" id="badge-wtf"><i class="fa-solid fa-circle-notch fa-spin"></i> douyin.wtf</div>
+    <div class="api-badge checking" id="badge-snap"><i class="fa-solid fa-circle-notch fa-spin"></i> snapdouyin</div>
+    <div class="api-badge checking" id="badge-worker"><i class="fa-solid fa-circle-notch fa-spin"></i> Worker</div>
+  </div>
 
-        <section id="resultSection" class="result-section hidden">
-            <div class="video-info">
-                <img id="videoThumb" src="" alt="Thumbnail">
-                <div class="details">
-                    <h3 id="videoTitle">Đang tải...</h3>
-                    <div class="actions">
-                        <a id="downloadBtn" href="#" target="_blank" class="download-btn">
-                            <i class="fa-solid fa-cloud-arrow-down"></i> Tải Video
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
+  <section>
+    <div class="input-group">
+      <i class="fa-solid fa-link icon"></i>
+      <input type="url" id="videoUrl" placeholder="Dán link Douyin vào đây..." autocomplete="off">
+      <button class="fetch-btn" id="fetchBtn" onclick="processVideo()">
+        <span id="btnText">Lấy Video</span>
+        <i class="fa-solid fa-spinner fa-spin" id="loader" style="display:none"></i>
+      </button>
+    </div>
+    <div class="error-msg" id="errorMsg"></div>
+  </section>
 
-    <script>
-        // CẤU HÌNH API
-        const API_URL = 'https://your-rapidapi-endpoint.com/douyin/download'; 
-        const API_KEY = 'https://lingering-surf-a4d7.tranquytruong0362683566.workers.dev/';
+  <section class="result-section" id="resultSection">
+    <div class="video-info">
+      <img id="videoThumb" src="" alt="thumbnail">
+      <div class="details">
+        <h3 id="videoTitle">Đang tải...</h3>
+        <p id="videoAuthor"></p>
+        <div class="dl-actions">
+          <a id="dlVideo" class="dl-btn video" href="#" target="_blank" style="display:none">
+            <i class="fa-solid fa-cloud-arrow-down"></i> Tải Video
+          </a>
+          <a id="dlAudio" class="dl-btn audio" href="#" target="_blank" style="display:none">
+            <i class="fa-solid fa-music"></i> Tải Audio
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="meta-stats" id="metaStats"></div>
+    <div class="source-tag" id="sourceTag"></div>
+  </section>
+</main>
 
-        const elements = {
-            urlInput: document.getElementById('videoUrl'),
-            fetchBtn: document.getElementById('fetchBtn'),
-            btnText: document.querySelector('.btn-text'),
-            loader: document.querySelector('.loader'),
-            errorMsg: document.getElementById('errorMsg'),
-            resultSection: document.getElementById('resultSection'),
-            videoThumb: document.getElementById('videoThumb'),
-            videoTitle: document.getElementById('videoTitle'),
-            downloadBtn: document.getElementById('downloadBtn')
-        };
+<script>
+// ═══════════════════════════════════════════════════
+// CONFIG — đổi WORKER_URL thành Worker của bạn
+// ═══════════════════════════════════════════════════
+const WORKER_URL = 'https://lingering-surf-a4d7.tranquytruong0362683566.workers.dev';
 
-        async function processVideo() {
-            const url = elements.urlInput.value.trim();
-            
-            if (!url) {
-                showError('Vui lòng nhập đường dẫn video Douyin.');
-                return;
-            }
-            if (!url.includes('douyin.com')) {
-                showError('Link không hợp lệ. Vui lòng nhập link Douyin.');
-                return;
-            }
+// ── 3 PUBLIC API, KHÔNG CẦN KEY ─────────────────────
+// 1. api.douyin.wtf  — open source, Evil0ctal, hybrid parsing, free
+// 2. snapdouyin.app  — web-based parser, POST ajaxSearch
+// 3. Worker          — douyin-worker.js tự deploy (session này)
+// Chain: thử 1 → thất bại → thử 2 → thất bại → thử 3
 
-            showError('');
-            setLoading(true);
-            elements.resultSection.classList.add('hidden');
+const APIS = [
+  { name: 'douyin.wtf',  badge: 'badge-wtf',    fn: fetchFromWtf    },
+  { name: 'snapdouyin',  badge: 'badge-snap',   fn: fetchFromSnap   },
+  { name: 'Worker',      badge: 'badge-worker', fn: fetchFromWorker },
+];
 
-            try {
-                // Fetch request mẫu (cần thay thế bằng specs API thực tế của bạn)
-                const response = await fetch(`${API_URL}?url=${encodeURIComponent(url)}`, {
-                    method: 'GET',
-                    headers: {
-                        'X-RapidAPI-Key': API_KEY,
-                        'X-RapidAPI-Host': 'your-api-host.p.rapidapi.com'
-                    }
-                });
+// ─── HEALTH CHECK ────────────────────────────────────
+const PING_URLS = {
+  'douyin.wtf': 'https://api.douyin.wtf/',
+  'snapdouyin': 'https://snapdouyin.app/',
+  'Worker':     WORKER_URL + '/',
+};
 
-                if (!response.ok) throw new Error('Lỗi kết nối đến server.');
+async function checkHealth(api) {
+  const el = document.getElementById(api.badge);
+  try {
+    const res = await Promise.race([
+      fetch(PING_URLS[api.name], { method: 'GET' }),
+      new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 5000)),
+    ]);
+    const ok = res.status < 500;
+    el.className = 'api-badge ' + (ok ? 'online' : 'offline');
+    el.innerHTML = `<i class="fa-solid fa-${ok ? 'circle-check' : 'circle-xmark'}"></i> ${api.name}`;
+  } catch {
+    el.className = 'api-badge offline';
+    el.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> ${api.name}`;
+  }
+}
 
-                const data = await response.json();
+// ─── SOURCE 1: api.douyin.wtf ────────────────────────
+// GET /api/hybrid/video_data?url=<URL>&minimal=false
+// Response shape: { aweme_detail: { desc, author, video, statistics, music } }
+async function fetchFromWtf(raw) {
+  const url = `https://api.douyin.wtf/api/hybrid/video_data?url=${encodeURIComponent(raw)}&minimal=false`;
+  const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
+  if (!res.ok) throw new Error('wtf ' + res.status);
+  const json = await res.json();
 
-                if (data && data.video_url_no_watermark) {
-                    renderResult(data);
-                } else {
-                    throw new Error('Không thể bóc tách video. Link có thể bị lỗi hoặc riêng tư.');
-                }
+  const d = json.aweme_detail || json;
+  if (!d) throw new Error('wtf: empty');
+  const video = d.video || {};
+  const author = d.author || {};
+  const stats  = d.statistics || {};
+  const music  = d.music || {};
 
-            } catch (error) {
-                showError(error.message || 'Đã xảy ra lỗi không xác định.');
-            } finally {
-                setLoading(false);
-            }
-        }
+  const videoUrl =
+    video.bit_rate?.[0]?.play_addr?.url_list?.[0] ||
+    video.play_addr?.url_list?.[0] ||
+    video.download_addr?.url_list?.[0] ||
+    null;
 
-        function renderResult(data) {
-            elements.videoThumb.src = data.thumbnail_url || 'https://via.placeholder.com/150x150?text=No+Image';
-            elements.videoTitle.textContent = data.title || 'Video Douyin';
-            elements.downloadBtn.href = data.video_url_no_watermark;
-            elements.downloadBtn.setAttribute('download', 'douyin-video.mp4'); 
-            
-            elements.resultSection.classList.remove('hidden');
-        }
+  if (!videoUrl) throw new Error('wtf: no video_url');
 
-        function setLoading(isLoading) {
-            elements.urlInput.disabled = isLoading;
-            elements.fetchBtn.disabled = isLoading;
-            elements.btnText.style.display = isLoading ? 'none' : 'block';
-            elements.loader.style.display = isLoading ? 'block' : 'none';
-        }
+  return {
+    source: 'douyin.wtf',
+    title:  d.desc || '',
+    author: author.nickname || '',
+    cover:  video.origin_cover?.url_list?.[0] || video.cover?.url_list?.[0] || null,
+    video_url: videoUrl,
+    audio_url: music.play_url?.url_list?.[0] || null,
+    stats:  { plays: stats.play_count||0, likes: stats.digg_count||0,
+              comments: stats.comment_count||0, shares: stats.share_count||0 },
+    duration_ms: video.duration || 0,
+  };
+}
 
-        function showError(msg) {
-            elements.errorMsg.textContent = msg;
-        }
+// ─── SOURCE 2: snapdouyin.app ────────────────────────
+// POST https://snapdouyin.app/api/ajaxSearch
+// body: q=<URL>&lang=vi   Content-Type: application/x-www-form-urlencoded
+// Returns HTML snippet inside json.data — parse <a href> for MP4 links
+async function fetchFromSnap(raw) {
+  const res = await fetch('https://snapdouyin.app/api/ajaxSearch', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ q: raw, lang: 'vi' }).toString(),
+    signal: AbortSignal.timeout(14000),
+  });
+  if (!res.ok) throw new Error('snap ' + res.status);
+  const json = await res.json();
+  if (!json.data) throw new Error('snap: no data');
 
-        elements.urlInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') processVideo();
-        });
-    </script>
+  const doc = new DOMParser().parseFromString(json.data, 'text/html');
+  const links = [...doc.querySelectorAll('a[href]')]
+    .map(a => a.getAttribute('href'))
+    .filter(h => h && (h.includes('.mp4') || h.includes('douyinvod') || h.includes('cdn')));
+  if (!links.length) throw new Error('snap: no download links');
+
+  const thumb = doc.querySelector('img')?.src || null;
+  const title = doc.querySelector('.video-title, h3, p')?.textContent?.trim() || '';
+
+  return {
+    source: 'snapdouyin',
+    title,
+    author: '',
+    cover: thumb,
+    video_url: links[0],
+    audio_url: null,
+    stats: {},
+    duration_ms: 0,
+  };
+}
+
+// ─── SOURCE 3: Cloudflare Worker ─────────────────────
+// GET <WORKER_URL>/api/download?url=<URL>
+// Response: { status:'ok', video_url, audio_url, cover, author:{nickname}, stats, duration_ms }
+async function fetchFromWorker(raw) {
+  const url = `${WORKER_URL}/api/download?url=${encodeURIComponent(raw)}`;
+  const res = await fetch(url, { signal: AbortSignal.timeout(18000) });
+  const json = await res.json();
+  if (json.status !== 'ok') throw new Error(json.message || 'Worker error');
+  return {
+    source: 'Worker',
+    title:  json.title || '',
+    author: json.author?.nickname || '',
+    cover:  json.cover || null,
+    video_url: json.video_url || null,
+    audio_url: json.audio_url || null,
+    stats:  json.stats || {},
+    duration_ms: json.duration_ms || 0,
+  };
+}
+
+// ─── MAIN ────────────────────────────────────────────
+async function processVideo() {
+  const raw = document.getElementById('videoUrl').value.trim();
+  setError('');
+  if (!raw) { setError('Vui lòng nhập đường dẫn video.'); return; }
+  if (!raw.includes('douyin.com') && !raw.includes('iesdouyin.com')) {
+    setError('Link không hợp lệ — cần là link Douyin / v.douyin.com.');
+    return;
+  }
+
+  setLoading(true);
+  document.getElementById('resultSection').style.display = 'none';
+
+  let lastErr = '';
+  for (const api of APIS) {
+    try {
+      const data = await api.fn(raw);
+      renderResult(data);
+      return;
+    } catch (e) {
+      lastErr = e.message;
+      console.warn(`[${api.name}] failed:`, e.message);
+    }
+  }
+  setError('Tất cả API thất bại. Lỗi cuối: ' + lastErr);
+  setLoading(false);
+}
+
+// ─── RENDER ──────────────────────────────────────────
+function renderResult(d) {
+  const thumb = document.getElementById('videoThumb');
+  thumb.style.opacity = '1';
+  thumb.src = d.cover || '';
+  thumb.onerror = () => { thumb.style.opacity = '0'; };
+
+  document.getElementById('videoTitle').textContent  = d.title || 'Video Douyin';
+  document.getElementById('videoAuthor').textContent = d.author ? '@' + d.author : '';
+
+  const dlV = document.getElementById('dlVideo');
+  const dlA = document.getElementById('dlAudio');
+
+  if (d.video_url) {
+    const proxy = (d.source === 'Worker')
+      ? `${WORKER_URL}/api/proxy?target=${encodeURIComponent(d.video_url)}`
+      : d.video_url;
+    dlV.href = proxy;
+    dlV.setAttribute('download', 'douyin_' + Date.now() + '.mp4');
+    dlV.style.display = 'inline-flex';
+  } else { dlV.style.display = 'none'; }
+
+  if (d.audio_url) {
+    dlA.href = d.audio_url;
+    dlA.setAttribute('download', 'douyin_audio_' + Date.now() + '.mp3');
+    dlA.style.display = 'inline-flex';
+  } else { dlA.style.display = 'none'; }
+
+  const meta = document.getElementById('metaStats');
+  meta.innerHTML = '';
+  const s = d.stats || {};
+  [['▶', fmt(s.plays), 'Lượt xem'], ['❤', fmt(s.likes), 'Thích'],
+   ['💬', fmt(s.comments), 'Bình luận'], ['↗', fmt(s.shares), 'Chia sẻ']]
+  .forEach(([ic, v, lb]) => {
+    if (!v || v === '0') return;
+    const el = document.createElement('div');
+    el.className = 'stat';
+    el.innerHTML = `${ic} <span>${v}</span> ${lb}`;
+    meta.appendChild(el);
+  });
+  if (d.duration_ms > 0) {
+    const sec = Math.round(d.duration_ms / 1000);
+    const dur = sec >= 60 ? Math.floor(sec/60) + ':' + String(sec%60).padStart(2,'0') : sec + 's';
+    const el = document.createElement('div');
+    el.className = 'stat';
+    el.innerHTML = `⏱ <span>${dur}</span> Thời lượng`;
+    meta.appendChild(el);
+  }
+
+  document.getElementById('sourceTag').innerHTML = 'Nguồn API: <b>' + d.source + '</b>';
+  document.getElementById('resultSection').style.display = 'block';
+  setLoading(false);
+}
+
+// ─── HELPERS ─────────────────────────────────────────
+function fmt(n) {
+  if (!n) return '0';
+  if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(1) + 'K';
+  return String(n);
+}
+function setLoading(on) {
+  document.getElementById('videoUrl').disabled = on;
+  document.getElementById('fetchBtn').disabled = on;
+  document.getElementById('btnText').style.display = on ? 'none'         : 'inline';
+  document.getElementById('loader').style.display  = on ? 'inline-block' : 'none';
+}
+function setError(msg) {
+  document.getElementById('errorMsg').textContent = msg;
+  if (msg) setLoading(false);
+}
+
+// ─── INIT ─────────────────────────────────────────────
+document.getElementById('videoUrl').addEventListener('keydown', e => {
+  if (e.key === 'Enter') processVideo();
+});
+APIS.forEach(api => checkHealth(api));
+</script>
 </body>
 </html>
