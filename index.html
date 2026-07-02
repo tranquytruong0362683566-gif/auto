@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>AI Auto Content Facebook Pro - ChatGPT API Local</title>
+  <title>AI Auto Content Facebook Pro - By Trường Saker</title>
+  <script src="https://js.puter.com/v2/"></script>
   <style>
     :root {
       --bg: #f4f6fb;
@@ -421,7 +422,7 @@
       <section class="card templates-card" aria-labelledby="leftTplTitle">
         <div class="section-title">
           <span id="leftTplTitle">📦 Kho mẫu trái</span>
-          <button class="btn btn-primary btn-sm" id="btnAddTplLeft" type="button">+ Thêm</button>
+          <button class="btn btn-soft btn-sm" id="btnAddTplLeft" type="button">Cách thêm</button>
         </div>
         <div class="tpl-list" id="tplListLeft" aria-live="polite"></div>
       </section>
@@ -434,7 +435,7 @@
             <div class="brand-logo" aria-hidden="true">🤖</div>
             <div>
               <h1>AI Auto Content Facebook</h1>
-              <p>Dùng ChatGPT API trực tiếp, lưu API key trên trình duyệt cá nhân.</p>
+              <p>Viết bình luận tự nhiên, có ngữ cảnh, gắn link sản phẩm mượt hơn.</p>
             </div>
           </div>
           <span class="pro-badge">⚡ PRO V2</span>
@@ -444,35 +445,24 @@
           <div class="auth-left">
             <div class="auth-avatar" id="authAvatar" aria-hidden="true">👤</div>
             <div class="auth-info">
-              <div class="auth-status" id="authStatus">✅ Sẵn sàng dùng ChatGPT API</div>
+              <div class="auth-status" id="authStatus">⏳ Đang kiểm tra Puter...</div>
               <div class="auth-username hidden" id="authUsername"></div>
             </div>
           </div>
           <div class="auth-actions">
-            <button class="btn btn-soft btn-sm" id="testApiBtn" type="button">🔌 Kiểm tra API</button>
+            <button class="btn btn-primary btn-sm hidden" id="loginBtn" type="button">🔑 Đăng nhập</button>
+            <button class="btn btn-warning btn-sm hidden" id="switchBtn" type="button">🔄 Đổi tài khoản</button>
+            <button class="btn btn-danger btn-sm hidden" id="logoutBtn" type="button">↩ Đăng xuất</button>
           </div>
         </div>
 
         <div class="notice" id="tokenBanner" role="alert">
           <div aria-hidden="true">⚠️</div>
           <div>
-            <strong>Chưa cấu hình đúng OpenAI API Key</strong>
-            Hãy nhập đúng OpenAI API Key. Nếu lỗi quota/billing, kiểm tra tài khoản OpenAI của bạn.
+            <strong>Tài khoản Puter có thể đã hết token miễn phí</strong>
+            Hãy đổi tài khoản Puter khác hoặc thử lại sau nếu gặp giới hạn sử dụng.
           </div>
-          <button class="btn btn-warning btn-sm" id="btnRelogin" type="button">Ẩn</button>
-        </div>
-
-        <div class="form-group" style="margin-bottom:16px">
-          <label for="apiKeyInput">OpenAI API Key</label>
-          <input type="password" id="apiKeyInput" placeholder="Dán API key dạng sk-... hoặc sk-proj-...">
-          <div class="field-status">
-            <span class="hint">Chỉ nên dùng trên máy cá nhân. Key sẽ lưu trong localStorage của trình duyệt này.</span>
-          </div>
-          <div class="auth-actions" style="justify-content:flex-start; margin-top:8px">
-            <button class="btn btn-primary btn-sm" id="saveApiKeyBtn" type="button">💾 Lưu API key</button>
-            <button class="btn btn-muted btn-sm" id="toggleApiKeyBtn" type="button">👁️ Hiện/ẩn key</button>
-            <button class="btn btn-danger btn-sm" id="deleteApiKeyBtn" type="button">🗑️ Xóa key đã lưu</button>
-          </div>
+          <button class="btn btn-warning btn-sm" id="btnRelogin" type="button">Đổi</button>
         </div>
 
         <div class="form-grid">
@@ -540,7 +530,7 @@
       <section class="card templates-card" aria-labelledby="rightTplTitle">
         <div class="section-title">
           <span id="rightTplTitle">📦 Kho mẫu phải</span>
-          <button class="btn btn-primary btn-sm" id="btnAddTpl" type="button">+ Thêm</button>
+          <button class="btn btn-soft btn-sm" id="btnAddTpl" type="button">Cách thêm</button>
         </div>
         <div class="tpl-list" id="tplList" aria-live="polite"></div>
       </section>
@@ -555,31 +545,14 @@
     </aside>
   </div>
 
-  <div class="modal-overlay" id="templateModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal">
-      <h2 id="modalTitle">Thêm mẫu mới</h2>
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="tplNameInput">Tên mẫu</label>
-          <input type="text" id="tplNameInput" maxlength="90" placeholder="VD: Đèn NLMT - khách hỏi mua">
-        </div>
-        <div class="form-group">
-          <label for="tplProductInput">Tên sản phẩm</label>
-          <input type="text" id="tplProductInput" maxlength="160" placeholder="VD: Đèn năng lượng mặt trời 300W">
-        </div>
-        <div class="form-group">
-          <label for="tplLinksInput">Danh sách link</label>
-          <textarea id="tplLinksInput" placeholder="Mỗi link một dòng"></textarea>
-        </div>
-      </div>
-      <div class="modal-btns">
-        <button class="btn btn-primary" id="btnSaveTpl" type="button">💾 Lưu mẫu</button>
-        <button class="btn btn-muted" id="btnCancelTpl" type="button">Huỷ</button>
-      </div>
+  <div class="modal-overlay" id="switchModal" role="dialog" aria-modal="true" aria-labelledby="switchTitle">
+    <div class="modal modal-center">
+      <h2 id="switchTitle">🔄 Đổi tài khoản Puter</h2>
+      <p>Bạn sẽ đăng xuất khỏi tài khoản hiện tại rồi đăng nhập tài khoản mới. Kho mẫu sản phẩm được lấy trực tiếp từ code web; lịch sử và bản nháp vẫn lưu riêng trên trình duyệt.</p>
+      <button class="btn btn-warning" id="btnConfirmSwitch" type="button" style="width:100%; margin-bottom:10px">Xác nhận đổi tài khoản</button>
+      <button class="btn btn-muted" id="btnCancelSwitch" type="button" style="width:100%">Huỷ</button>
     </div>
   </div>
-
-
 
   <div class="toast-host" id="toastHost" aria-live="polite"></div>
 
@@ -587,13 +560,46 @@
     'use strict';
 
     const APP = {
-      model: 'gpt-5-mini',
+      model: 'gpt-4o',
       storage: {
-        leftTemplates: 'truong_ai_commenter_templates_left_v2',
-        rightTemplates: 'truong_ai_commenter_templates_right_v2',
         history: 'truong_ai_commenter_history_v2',
-        draft: 'truong_ai_commenter_draft_v2',
-        openaiApiKey: 'truong_ai_commenter_openai_api_key_v1'
+        draft: 'truong_ai_commenter_draft_v2'
+      },
+      manualTemplates: {
+        left: [
+          {
+            name: 'Đèn NLMT 300W',
+            product: 'Đèn năng lượng mặt trời 300W',
+            links: ''
+          },
+          {
+            name: 'Tấm pin mặt trời 300W',
+            product: 'Tấm pin năng lượng mặt trời 300W',
+            links: ''
+          },
+          {
+            name: 'Sạc MPPT năng lượng mặt trời',
+            product: 'Sạc MPPT năng lượng mặt trời',
+            links: ''
+          }
+        ],
+        right: [
+          {
+            name: 'Inverter LuxPower GETA 3.6K',
+            product: 'Inverter LuxPower GETA 3.6K Off-Grid 24V 3600W',
+            links: ''
+          },
+          {
+            name: 'Pin LuxPowerTek LI-7.5E',
+            product: 'Pin lưu trữ LuxPowerTek LI-7.5E 25.6V 300Ah',
+            links: ''
+          },
+          {
+            name: 'Combo Off-Grid 24V',
+            product: 'Combo Inverter LuxPower GETA 3.6K và pin LuxPowerTek LI-7.5E',
+            links: ''
+          }
+        ]
       },
       tokenErrorPatterns: [
         'quota', 'rate limit', 'rate_limit', 'insufficient', 'limit exceeded',
@@ -609,13 +615,14 @@
       authStatus: $('#authStatus'),
       authUsername: $('#authUsername'),
       authAvatar: $('#authAvatar'),
-      testApiBtn: $('#testApiBtn'),
-      apiKeyInput: $('#apiKeyInput'),
-      saveApiKeyBtn: $('#saveApiKeyBtn'),
-      toggleApiKeyBtn: $('#toggleApiKeyBtn'),
-      deleteApiKeyBtn: $('#deleteApiKeyBtn'),
+      loginBtn: $('#loginBtn'),
+      switchBtn: $('#switchBtn'),
+      logoutBtn: $('#logoutBtn'),
       tokenBanner: $('#tokenBanner'),
       btnRelogin: $('#btnRelogin'),
+      switchModal: $('#switchModal'),
+      btnConfirmSwitch: $('#btnConfirmSwitch'),
+      btnCancelSwitch: $('#btnCancelSwitch'),
       articleInput: $('#articleInput'),
       productNameInput: $('#productNameInput'),
       productLinkInput: $('#productLinkInput'),
@@ -634,19 +641,10 @@
       leftTplStat: $('#leftTplStat'),
       rightTplStat: $('#rightTplStat'),
       historyStat: $('#historyStat'),
-      templateModal: $('#templateModal'),
-      modalTitle: $('#modalTitle'),
-      tplNameInput: $('#tplNameInput'),
-      tplProductInput: $('#tplProductInput'),
-      tplLinksInput: $('#tplLinksInput'),
-      btnSaveTpl: $('#btnSaveTpl'),
-      btnCancelTpl: $('#btnCancelTpl'),
       toastHost: $('#toastHost')
     };
 
     const state = {
-      activeManager: null,
-      editingIndex: -1,
       selectedTemplateKey: null,
       managers: {}
     };
@@ -677,55 +675,12 @@
       els.output.className = className;
     }
 
-    function getApiKey() {
-      return (els.apiKeyInput.value || localStorage.getItem(APP.storage.openaiApiKey) || '').trim();
+    function isPuterReady() {
+      return typeof window.puter !== 'undefined' && window.puter.auth && window.puter.ai;
     }
 
-    function saveApiKey() {
-      const value = getApiKey();
-      if (!value) {
-        toast('Vui lòng dán OpenAI API key trước khi lưu.', 'warning');
-        els.apiKeyInput.focus();
-        return false;
-      }
-      if (!/^sk-/.test(value)) {
-        toast('API key thường bắt đầu bằng sk- hoặc sk-proj-. Hãy kiểm tra lại.', 'warning');
-      }
-      localStorage.setItem(APP.storage.openaiApiKey, value);
-      updateApiUI(true, 'Đã lưu API key trên trình duyệt này');
-      toast('Đã lưu API key');
-      return true;
-    }
-
-    function restoreApiKey() {
-      const saved = localStorage.getItem(APP.storage.openaiApiKey) || '';
-      els.apiKeyInput.value = saved;
-    }
-
-    function deleteApiKey() {
-      localStorage.removeItem(APP.storage.openaiApiKey);
-      els.apiKeyInput.value = '';
-      updateApiUI(false, 'Chưa có API key');
-      toast('Đã xóa API key khỏi trình duyệt', 'warning');
-    }
-
-    function toggleApiKeyVisibility() {
-      els.apiKeyInput.type = els.apiKeyInput.type === 'password' ? 'text' : 'password';
-    }
-
-    function maskKey(key) {
-      if (!key) return 'Chưa có API key';
-      if (key.length <= 14) return 'Đã nhập API key';
-      return key.slice(0, 7) + '••••••••••' + key.slice(-4);
-    }
-
-    function updateApiUI(ok = true, message = '') {
-      const key = getApiKey();
-      els.authAvatar.textContent = ok ? '🤖' : '⚠️';
-      els.authStatus.textContent = ok && key ? '✅ Đang dùng ChatGPT API trực tiếp' : '⚠️ Chưa có API key';
-      els.authStatus.className = ok && key ? 'auth-status ok' : 'auth-status';
-      els.authUsername.textContent = message || maskKey(key);
-      els.authUsername.classList.remove('hidden');
+    function isSignedIn() {
+      return isPuterReady() && window.puter.auth.isSignedIn();
     }
 
     function getErrorText(error) {
@@ -748,62 +703,153 @@
         .trim();
     }
 
-    function extractOpenAIText(data) {
-      if (typeof data?.output_text === 'string') return data.output_text;
-      const output = data?.output || [];
-      for (const item of output) {
-        const content = item?.content || [];
-        for (const part of content) {
-          if (part?.type === 'output_text' && part?.text) return part.text;
-          if (part?.text) return part.text;
+    function extractResponseText(response) {
+      if (typeof response === 'string') return response;
+      return response?.message?.content
+        || response?.content
+        || response?.text
+        || 'Không có phản hồi từ AI.';
+    }
+
+    function parseLinks(raw) {
+      const chunks = String(raw || '')
+        .split(/[\n,\s]+/)
+        .map(item => item.trim())
+        .filter(Boolean);
+
+      const unique = [];
+      const invalid = [];
+      const seen = new Set();
+
+      for (const item of chunks) {
+        try {
+          const url = new URL(item);
+          if (!/^https?:$/.test(url.protocol)) throw new Error('Invalid protocol');
+          const clean = url.toString();
+          if (!seen.has(clean)) {
+            seen.add(clean);
+            unique.push(clean);
+          }
+        } catch {
+          invalid.push(item);
         }
       }
-      return data?.choices?.[0]?.message?.content || data?.text || '';
+      return { valid: unique, invalid };
     }
 
-    async function callOpenAI(prompt) {
-      const apiKey = getApiKey();
-      if (!apiKey) {
-        throw new Error('Chưa nhập OpenAI API key. Hãy dán key rồi bấm Lưu API key.');
-      }
-      localStorage.setItem(APP.storage.openaiApiKey, apiKey);
-
-      const response = await fetch('https://api.openai.com/v1/responses', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: APP.model,
-          input: prompt,
-          max_output_tokens: 320
-        })
-      });
-
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.error) {
-        throw new Error(data.error?.message || `OpenAI API lỗi HTTP ${response.status}`);
-      }
-      return extractOpenAIText(data);
+    function randomFrom(array) {
+      return array[Math.floor(Math.random() * array.length)] || '';
     }
 
-    async function testApi() {
-      els.testApiBtn.disabled = true;
-      els.testApiBtn.textContent = '⏳ Đang kiểm tra...';
-      els.tokenBanner.classList.remove('show');
+    function updateCounters() {
+      els.articleCounter.textContent = `${els.articleInput.value.length}/6000`;
+      els.productCounter.textContent = `${els.productNameInput.value.length}/160`;
+
+      const { valid, invalid } = parseLinks(els.productLinkInput.value);
+      els.linkCounter.textContent = `${valid.length} link`;
+      els.validLinkStat.textContent = String(valid.length);
+
+      if (!els.productLinkInput.value.trim()) {
+        els.linkStatus.textContent = 'Chưa có link sản phẩm';
+        els.linkStatus.className = 'link-preview';
+      } else if (invalid.length) {
+        els.linkStatus.textContent = `Có ${invalid.length} link chưa hợp lệ, hệ thống sẽ bỏ qua`;
+        els.linkStatus.className = 'link-preview warn';
+      } else {
+        els.linkStatus.textContent = 'Tất cả link đều hợp lệ';
+        els.linkStatus.className = 'link-preview ok';
+      }
+    }
+
+    function updateStats() {
+      els.leftTplStat.textContent = String(state.managers.left?.items.length || 0);
+      els.rightTplStat.textContent = String(state.managers.right?.items.length || 0);
+      els.historyStat.textContent = String(loadStorage(APP.storage.history, []).length);
+      updateCounters();
+    }
+
+    function renderAvatar(user) {
+      els.authAvatar.textContent = '👤';
+      if (!user?.avatar_url) return;
+
+      const img = document.createElement('img');
+      img.alt = 'Avatar Puter';
+      img.referrerPolicy = 'no-referrer';
+      img.src = user.avatar_url;
+      img.onerror = () => { els.authAvatar.textContent = '👤'; };
+      els.authAvatar.replaceChildren(img);
+    }
+
+    async function updateAuthUI() {
+      if (!isPuterReady()) {
+        els.authStatus.textContent = '⚠️ Chưa tải được Puter SDK';
+        els.authStatus.className = 'auth-status';
+        els.authUsername.classList.add('hidden');
+        els.authAvatar.textContent = '👤';
+        els.loginBtn.classList.remove('hidden');
+        els.switchBtn.classList.add('hidden');
+        els.logoutBtn.classList.add('hidden');
+        return;
+      }
+
+      if (!isSignedIn()) {
+        els.authStatus.textContent = '⚠️ Chưa đăng nhập Puter';
+        els.authStatus.className = 'auth-status';
+        els.authUsername.classList.add('hidden');
+        els.authAvatar.textContent = '👤';
+        els.loginBtn.classList.remove('hidden');
+        els.switchBtn.classList.add('hidden');
+        els.logoutBtn.classList.add('hidden');
+        return;
+      }
+
+      els.authStatus.textContent = '✅ Đã đăng nhập Puter';
+      els.authStatus.className = 'auth-status ok';
+      els.loginBtn.classList.add('hidden');
+      els.switchBtn.classList.remove('hidden');
+      els.logoutBtn.classList.remove('hidden');
+
       try {
-        const result = await callOpenAI('Trả lời đúng 1 câu ngắn bằng tiếng Việt: API đã kết nối thành công');
-        updateApiUI(true, 'API OK: ' + maskKey(getApiKey()));
-        toast(result || 'API đã kết nối thành công');
-      } catch (error) {
-        updateApiUI(false, getErrorText(error));
-        els.tokenBanner.classList.add('show');
-        toast('API lỗi: ' + getErrorText(error), 'error');
-      } finally {
-        els.testApiBtn.disabled = false;
-        els.testApiBtn.textContent = '🔌 Kiểm tra API';
+        const user = await window.puter.auth.getUser();
+        const name = user?.username || user?.email || 'Puter User';
+        els.authUsername.textContent = name;
+        els.authUsername.classList.remove('hidden');
+        renderAvatar(user);
+      } catch {
+        els.authUsername.classList.add('hidden');
+        els.authAvatar.textContent = '👤';
       }
+    }
+
+    async function doSignIn() {
+      if (!isPuterReady()) {
+        toast('Puter SDK chưa sẵn sàng. Hãy kiểm tra kết nối mạng hoặc mở file qua HTTPS/server.', 'warning');
+        return false;
+      }
+      try {
+        await window.puter.auth.signIn();
+        els.tokenBanner.classList.remove('show');
+        await updateAuthUI();
+        toast('Đăng nhập Puter thành công');
+        return true;
+      } catch (error) {
+        setOutput('❌ Đăng nhập thất bại: ' + getErrorText(error), 'error');
+        return false;
+      }
+    }
+
+    async function doSignOut() {
+      try {
+        if (isPuterReady()) await window.puter.auth.signOut();
+      } catch {}
+      els.tokenBanner.classList.remove('show');
+      await updateAuthUI();
+    }
+
+    async function doSwitchAccount() {
+      closeModal(els.switchModal);
+      await doSignOut();
+      await doSignIn();
     }
 
     function buildPrompt({ article, productName, selectedLink, selectedTone }) {
@@ -850,6 +896,11 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
         toast(`Đã bỏ qua ${invalid.length} link chưa hợp lệ.`, 'warning');
       }
 
+      if (!isSignedIn()) {
+        const ok = await doSignIn();
+        if (!ok) return;
+      }
+
       els.generateBtn.disabled = true;
       els.generateBtn.textContent = '⏳ Đang xử lý...';
       els.tokenBanner.classList.remove('show');
@@ -857,8 +908,8 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
 
       try {
         const prompt = buildPrompt({ article, productName, selectedLink, selectedTone });
-        const responseText = await callOpenAI(prompt);
-        const result = stripAiWrapper(responseText);
+        const response = await window.puter.ai.chat(prompt, { model: APP.model });
+        const result = stripAiWrapper(extractResponseText(response));
         setOutput(result || 'Không có phản hồi từ AI.', result ? '' : 'error');
 
         if (result) {
@@ -877,11 +928,13 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
       } catch (error) {
         const errText = getErrorText(error);
         if (isTokenError(errText)) {
-          setOutput('⚠️ OpenAI API có thể bị hết quota, sai API key hoặc bị giới hạn tốc độ. Kiểm tra API key, quota hoặc billing trong tài khoản OpenAI.', 'error');
+          setOutput('⚠️ Tài khoản Puter hiện tại có thể đã hết token hoặc bị giới hạn. Hãy đổi tài khoản hoặc thử lại sau.', 'error');
           els.tokenBanner.classList.add('show');
+        } else if (/sign|auth|unauthorized|401/i.test(errText)) {
+          setOutput('🔑 Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.', 'error');
+          await doSignOut();
         } else {
-          setOutput('❌ Lỗi OpenAI API: ' + errText, 'error');
-          els.tokenBanner.classList.add('show');
+          setOutput('❌ Lỗi: ' + errText, 'error');
         }
       } finally {
         els.generateBtn.disabled = false;
@@ -984,18 +1037,33 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
       if (!$$('.modal-overlay.show').length) document.body.style.overflow = '';
     }
 
-    function createTemplateManager({ key, listEl, storageKey, label }) {
+    function normalizeManualTemplates(items) {
+      return (Array.isArray(items) ? items : [])
+        .map((tpl, index) => {
+          const rawLinks = Array.isArray(tpl.links)
+            ? tpl.links.filter(Boolean).join('\n')
+            : String(tpl.links || '');
+
+          return {
+            name: String(tpl.name || `Mẫu ${index + 1}`).trim(),
+            product: String(tpl.product || '').trim(),
+            links: rawLinks.trim()
+          };
+        })
+        .filter(tpl => tpl.name || tpl.product || tpl.links);
+    }
+
+    function showManualTemplateGuide(key, label) {
+      const path = `APP.manualTemplates.${key}`;
+      toast(`Muốn thêm/sửa ${label}: mở file HTML, tìm ${path}, nhập name/product/links rồi upload lại web.`, 'warning');
+    }
+
+    function createTemplateManager({ key, listEl, label }) {
       const manager = {
         key,
         label,
         listEl,
-        storageKey,
-        items: loadStorage(storageKey, []),
-
-        save() {
-          saveStorage(storageKey, this.items);
-          updateStats();
-        },
+        items: normalizeManualTemplates(APP.manualTemplates[key]),
 
         render() {
           listEl.replaceChildren();
@@ -1003,7 +1071,7 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
           if (!this.items.length) {
             const empty = document.createElement('div');
             empty.className = 'tpl-empty';
-            empty.textContent = 'Chưa có mẫu nào. Nhấn “+ Thêm” để tạo mẫu sản phẩm.';
+            empty.textContent = `Chưa có mẫu cố định trong ${label}. Mở file HTML và thêm tại APP.manualTemplates.${key}.`;
             listEl.appendChild(empty);
             updateStats();
             return;
@@ -1034,21 +1102,14 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
 
             const actions = document.createElement('div');
             actions.className = 'tpl-actions';
-            const edit = document.createElement('button');
-            edit.type = 'button';
-            edit.className = 'btn btn-soft btn-icon';
-            edit.textContent = '✏️';
-            edit.title = 'Sửa mẫu';
-            edit.dataset.action = 'edit';
+            const applyBtn = document.createElement('button');
+            applyBtn.type = 'button';
+            applyBtn.className = 'btn btn-soft btn-icon';
+            applyBtn.textContent = '➜';
+            applyBtn.title = 'Áp dụng mẫu';
+            applyBtn.dataset.action = 'apply';
+            actions.append(applyBtn);
 
-            const del = document.createElement('button');
-            del.type = 'button';
-            del.className = 'btn btn-danger btn-icon';
-            del.textContent = '🗑️';
-            del.title = 'Xoá mẫu';
-            del.dataset.action = 'delete';
-
-            actions.append(edit, del);
             item.append(icon, info, actions);
             listEl.appendChild(item);
           });
@@ -1069,49 +1130,14 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
         },
 
         openAdd() {
-          state.activeManager = this;
-          state.editingIndex = -1;
-          els.modalTitle.textContent = `Thêm mẫu mới — ${label}`;
-          els.tplNameInput.value = '';
-          els.tplProductInput.value = '';
-          els.tplLinksInput.value = '';
-          openModal(els.templateModal);
-          requestAnimationFrame(() => els.tplNameInput.focus());
-        },
-
-        openEdit(index) {
-          const tpl = this.items[index];
-          if (!tpl) return;
-          state.activeManager = this;
-          state.editingIndex = index;
-          els.modalTitle.textContent = `Sửa mẫu — ${label}`;
-          els.tplNameInput.value = tpl.name || '';
-          els.tplProductInput.value = tpl.product || '';
-          els.tplLinksInput.value = tpl.links || '';
-          openModal(els.templateModal);
-          requestAnimationFrame(() => els.tplNameInput.focus());
-        },
-
-        delete(index) {
-          const tpl = this.items[index];
-          if (!tpl) return;
-          if (!confirm(`Xoá mẫu "${tpl.name}"?`)) return;
-          this.items.splice(index, 1);
-          if (state.selectedTemplateKey === `${key}:${index}`) state.selectedTemplateKey = null;
-          this.save();
-          this.render();
-          toast('Đã xoá mẫu');
+          showManualTemplateGuide(key, label);
         }
       };
 
       listEl.addEventListener('click', (event) => {
         const item = event.target.closest('.tpl-item');
         if (!item) return;
-        const index = Number(item.dataset.index);
-        const action = event.target.closest('[data-action]')?.dataset.action;
-        if (action === 'edit') return manager.openEdit(index);
-        if (action === 'delete') return manager.delete(index);
-        manager.apply(index);
+        manager.apply(Number(item.dataset.index));
       });
 
       listEl.addEventListener('keydown', (event) => {
@@ -1126,61 +1152,20 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
       return manager;
     }
 
-    function saveTemplateFromModal() {
-      const manager = state.activeManager;
-      if (!manager) return;
-
-      const name = els.tplNameInput.value.trim();
-      const product = els.tplProductInput.value.trim();
-      const links = els.tplLinksInput.value.trim();
-
-      if (!name) {
-        toast('Vui lòng nhập tên mẫu.', 'warning');
-        els.tplNameInput.focus();
-        return;
-      }
-      if (!product) {
-        toast('Vui lòng nhập tên sản phẩm.', 'warning');
-        els.tplProductInput.focus();
-        return;
-      }
-
-      const parsed = parseLinks(links);
-      if (links && !parsed.valid.length) {
-        toast('Danh sách link chưa có URL hợp lệ.', 'warning');
-        els.tplLinksInput.focus();
-        return;
-      }
-
-      const payload = {
-        name,
-        product,
-        links: parsed.valid.join('\n') || links,
-        updatedAt: new Date().toISOString()
-      };
-
-      if (state.editingIndex >= 0) manager.items[state.editingIndex] = payload;
-      else manager.items.push(payload);
-
-      manager.save();
-      manager.render();
-      closeModal(els.templateModal);
-      toast('Đã lưu mẫu sản phẩm');
-    }
-
     function wireEvents() {
-      els.testApiBtn.addEventListener('click', testApi);
-      els.saveApiKeyBtn.addEventListener('click', saveApiKey);
-      els.toggleApiKeyBtn.addEventListener('click', toggleApiKeyVisibility);
-      els.deleteApiKeyBtn.addEventListener('click', deleteApiKey);
-      els.btnRelogin.addEventListener('click', () => els.tokenBanner.classList.remove('show'));
+      els.loginBtn.addEventListener('click', doSignIn);
+      els.logoutBtn.addEventListener('click', async () => {
+        if (confirm('Đăng xuất khỏi Puter?')) await doSignOut();
+      });
+      els.switchBtn.addEventListener('click', () => openModal(els.switchModal));
+      els.btnRelogin.addEventListener('click', () => openModal(els.switchModal));
+      els.btnConfirmSwitch.addEventListener('click', doSwitchAccount);
+      els.btnCancelSwitch.addEventListener('click', () => closeModal(els.switchModal));
       els.generateBtn.addEventListener('click', generateComment);
       els.clearBtn.addEventListener('click', clearForm);
       els.pasteBtn.addEventListener('click', pasteArticle);
       els.copyBtn.addEventListener('click', () => copyText(els.output.textContent));
       els.saveHistoryBtn.addEventListener('click', saveHistory);
-      els.btnSaveTpl.addEventListener('click', saveTemplateFromModal);
-      els.btnCancelTpl.addEventListener('click', () => closeModal(els.templateModal));
       $('#btnAddTplLeft').addEventListener('click', () => state.managers.left.openAdd());
       $('#btnAddTpl').addEventListener('click', () => state.managers.right.openAdd());
 
@@ -1192,16 +1177,12 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
         input.addEventListener('change', saveDraft);
       });
 
-      els.apiKeyInput.addEventListener('input', () => {
-        updateApiUI(Boolean(getApiKey()));
-      });
-
-      els.templateModal.addEventListener('click', event => {
-        if (event.target === els.templateModal) closeModal(els.templateModal);
+      els.switchModal.addEventListener('click', event => {
+        if (event.target === els.switchModal) closeModal(els.switchModal);
       });
 
       document.addEventListener('keydown', event => {
-        if (event.key === 'Escape') closeModal(els.templateModal);
+        if (event.key === 'Escape') closeModal(els.switchModal);
         if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
           event.preventDefault();
           generateComment();
@@ -1213,21 +1194,18 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
       state.managers.left = createTemplateManager({
         key: 'left',
         listEl: $('#tplListLeft'),
-        storageKey: APP.storage.leftTemplates,
         label: 'Kho mẫu trái'
       });
       state.managers.right = createTemplateManager({
         key: 'right',
         listEl: $('#tplList'),
-        storageKey: APP.storage.rightTemplates,
         label: 'Kho mẫu phải'
       });
 
-      restoreApiKey();
       restoreDraft();
       wireEvents();
       updateStats();
-      updateApiUI(Boolean(getApiKey()));
+      await updateAuthUI();
     }
 
     window.addEventListener('DOMContentLoaded', init);
