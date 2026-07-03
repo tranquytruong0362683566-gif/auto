@@ -293,9 +293,9 @@
     <header class="header">
       <div class="title">
         <h1>Facebook Link → UID Converter</h1>
-        <p>Dán nhiều link Facebook, web sẽ tự lọc trùng, lấy UID trực tiếp nếu link có sẵn UID, còn lại gửi API Traodoisub theo đa luồng có retry/backoff để nhanh nhưng hạn chế lỗi.</p>
+        <p>Dán nhiều link Facebook, web sẽ tự lọc trùng, lấy UID trực tiếp nếu link có sẵn UID, còn lại gửi API Traodoisub với 20 link chạy cùng lúc, có retry/backoff để giữ tốc độ cao.</p>
       </div>
-      <div class="badge">Static Web • Multi-thread • Retry</div>
+      <div class="badge">Static Web • 20 Threads • Retry</div>
     </header>
 
     <section class="panel">
@@ -305,12 +305,12 @@
           <input id="apiUrl" value="https://id.traodoisub.com/api.php" spellcheck="false" />
         </div>
         <div class="field">
-          <label for="concurrency">Số luồng</label>
-          <input id="concurrency" type="number" min="1" max="20" value="5" />
+          <label for="concurrency">Số link gửi cùng lúc</label>
+          <input id="concurrency" type="number" min="1" max="20" value="20" />
         </div>
         <div class="field">
-          <label for="delayMs">Giãn cách mỗi request (ms)</label>
-          <input id="delayMs" type="number" min="0" max="10000" step="100" value="500" />
+          <label for="delayMs">Delay nhẹ trước request (ms)</label>
+          <input id="delayMs" type="number" min="0" max="10000" step="100" value="0" />
         </div>
         <div class="field">
           <label for="retryCount">Retry mỗi link</label>
@@ -358,7 +358,7 @@
             <div class="stat"><div id="statSpeed" class="n">0/s</div><div class="t">Tốc độ</div></div>
           </div>
           <div class="progressOuter"><div id="progress" class="progressInner"></div></div>
-          <div id="message" class="message">Sẵn sàng. Nên để 3–5 luồng, delay 500–1000ms để đỡ lỗi API.</div>
+          <div id="message" class="message">Sẵn sàng. Mặc định gửi 20 link cùng lúc. Nếu API lỗi nhiều, hạ xuống 10 hoặc thêm delay 300–700ms.</div>
         </div>
       </div>
 
@@ -414,7 +414,7 @@
       detailRows: $('detailRows')
     };
 
-    const STORAGE_KEY = 'linkToUidWebStateV1';
+    const STORAGE_KEY = 'linkToUidWebStateV1_20Thread';
     const DIRECT_SOURCE = 'direct';
     const API_SOURCE = 'api';
 
@@ -428,8 +428,7 @@
     let startedAt = 0;
     let finishedCountAtStart = 0;
     let renderTimer = 0;
-    let requestGate = Promise.resolve();
-
+    
     function sleep(ms) {
       return new Promise((resolve) => setTimeout(resolve, ms));
     }
@@ -568,8 +567,8 @@
     function getSettings() {
       return {
         apiUrl: String(els.apiUrl.value || '').trim() || 'https://id.traodoisub.com/api.php',
-        concurrency: clamp(els.concurrency.value, 1, 20, 5),
-        delayMs: clamp(els.delayMs.value, 0, 10000, 500),
+        concurrency: clamp(els.concurrency.value, 1, 20, 20),
+        delayMs: clamp(els.delayMs.value, 0, 10000, 0),
         retryCount: clamp(els.retryCount.value, 0, 10, 4),
         timeoutMs: 25000
       };
@@ -601,19 +600,13 @@
       return { links, seenUid };
     }
 
-    async function gateRequest(delayMs) {
-      const jitter = delayMs > 0 ? Math.floor(Math.random() * Math.min(350, Math.max(80, delayMs))) : 0;
-      const wait = Math.max(0, delayMs + jitter);
-      const previous = requestGate;
-      let release;
-      requestGate = new Promise((resolve) => { release = resolve; });
-      await previous;
-      if (wait) await sleep(wait);
-      release();
-    }
-
     async function fetchUid(link, settings) {
-      await gateRequest(settings.delayMs);
+      // Chạy đúng đa luồng: các worker gửi request song song theo số link cùng lúc.
+      // Delay này không khóa hàng đợi toàn cục, chỉ nghỉ nhẹ trong từng worker nếu người dùng bật.
+      if (settings.delayMs > 0) {
+        const jitter = Math.floor(Math.random() * Math.min(250, Math.max(80, settings.delayMs)));
+        await sleep(settings.delayMs + jitter);
+      }
 
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), settings.timeoutMs);
@@ -745,10 +738,8 @@
       active = 0;
       startedAt = Date.now();
       finishedCountAtStart = results.filter((row) => row.status === 'done').length;
-      requestGate = Promise.resolve();
-
       setControls();
-      setMessage(`Bắt đầu đổi ${queue.length} link cần gọi API. Link có UID sẵn đã được lấy trực tiếp.`);
+      setMessage(`Bắt đầu đổi ${queue.length} link cần gọi API, gửi tối đa ${settings.concurrency} link cùng lúc. Link có UID sẵn đã được lấy trực tiếp.`);
       render();
       saveState();
 
