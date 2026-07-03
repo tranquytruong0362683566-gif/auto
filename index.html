@@ -1,1577 +1,990 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light">
-  <title>AI Auto Content Facebook Pro - By Trường Saker</title>
-  <script src="https://js.puter.com/v2/"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Link Facebook → UID Converter</title>
   <style>
     :root {
-      --bg: #f4f6fb;
-      --surface: #ffffff;
-      --surface-soft: #f8faff;
-      --surface-strong: #eef2ff;
-      --text: #111827;
-      --muted: #667085;
-      --subtle: #98a2b3;
-      --border: #e4e7ec;
-      --border-strong: #c7d2fe;
-      --primary: #4f46e5;
-      --primary-hover: #4338ca;
-      --primary-soft: #eef2ff;
-      --success: #15803d;
-      --success-soft: #ecfdf3;
-      --warning: #b45309;
-      --warning-soft: #fff7ed;
-      --danger: #dc2626;
-      --danger-soft: #fef2f2;
-      --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
-      --shadow-md: 0 12px 28px rgba(16, 24, 40, 0.10);
-      --radius-lg: 18px;
-      --radius-md: 12px;
-      --radius-sm: 9px;
-      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      --bg: #07111f;
+      --panel: rgba(15, 23, 42, .88);
+      --panel2: rgba(2, 6, 23, .78);
+      --line: rgba(148, 163, 184, .22);
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --brand: #38bdf8;
+      --good: #22c55e;
+      --warn: #facc15;
+      --bad: #fb7185;
+      --btnText: #03131f;
+      --shadow: 0 18px 60px rgba(0, 0, 0, .38);
     }
 
     * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
+
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: var(--font);
-      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
       background:
-        radial-gradient(circle at top left, rgba(79,70,229,0.14), transparent 32%),
-        radial-gradient(circle at top right, rgba(245,158,11,0.14), transparent 30%),
-        var(--bg);
-    }
-
-    button, input, textarea, select { font: inherit; }
-    button { -webkit-tap-highlight-color: transparent; }
-    button:focus-visible,
-    input:focus-visible,
-    textarea:focus-visible,
-    select:focus-visible {
-      outline: 3px solid rgba(79, 70, 229, 0.22);
-      outline-offset: 2px;
-    }
-
-    .app-shell {
-      width: min(100%, 1320px);
-      margin: 0 auto;
-      padding: 22px;
-      display: grid;
-      grid-template-columns: 290px minmax(0, 1fr) 290px;
-      gap: 18px;
-      align-items: start;
-    }
-
-    .main-col, .side-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-    .card {
-      background: rgba(255,255,255,0.94);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-sm);
-      padding: 20px;
-      backdrop-filter: blur(14px);
-    }
-
-    .hero {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 14px;
-      align-items: center;
-      padding-bottom: 18px;
-      margin-bottom: 18px;
-      border-bottom: 1px solid var(--border);
-    }
-    .brand { display: flex; gap: 12px; align-items: center; min-width: 0; }
-    .brand-logo {
-      width: 44px; height: 44px;
-      display: grid; place-items: center;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #4f46e5, #7c3aed);
-      color: #fff;
-      box-shadow: 0 10px 22px rgba(79, 70, 229, 0.25);
-      font-size: 22px;
-      flex: 0 0 auto;
-    }
-    .brand h1 {
-      margin: 0;
-      font-size: 18px;
-      line-height: 1.2;
-      letter-spacing: -0.02em;
-      color: #24205d;
-    }
-    .brand p {
-      margin: 4px 0 0;
-      font-size: 12px;
-      color: var(--muted);
-    }
-    .pro-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
-      color: #7c2d12;
-      background: #ffedd5;
-      border: 1px solid #fed7aa;
-      border-radius: 999px;
-      padding: 7px 11px;
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: 0.02em;
-    }
-
-    .auth-bar {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 12px;
-      align-items: center;
-      background: var(--surface-soft);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 12px;
-      margin-bottom: 16px;
-    }
-    .auth-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
-    .auth-avatar {
-      width: 38px; height: 38px; border-radius: 50%;
-      display: grid; place-items: center;
-      background: #eaecf0;
-      color: var(--muted);
-      overflow: hidden;
-      flex: 0 0 auto;
-    }
-    .auth-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .auth-info { min-width: 0; }
-    .auth-status { font-size: 13px; font-weight: 700; color: var(--warning); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .auth-status.ok { color: var(--success); }
-    .auth-username { margin-top: 2px; color: var(--subtle); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .auth-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
-
-    .btn {
-      border: 1px solid transparent;
-      border-radius: 11px;
-      padding: 10px 13px;
-      font-size: 13px;
-      font-weight: 800;
-      cursor: pointer;
-      transition: transform .14s ease, background .14s ease, border-color .14s ease, color .14s ease, opacity .14s ease;
-      user-select: none;
-      min-height: 40px;
-    }
-    .btn:hover:not(:disabled) { transform: translateY(-1px); }
-    .btn:active:not(:disabled) { transform: translateY(0); }
-    .btn:disabled { cursor: not-allowed; opacity: .62; }
-    .btn-primary { color: #fff; background: var(--primary); box-shadow: 0 10px 18px rgba(79, 70, 229, .18); }
-    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
-    .btn-soft { color: var(--primary); background: var(--primary-soft); border-color: #d9ddff; }
-    .btn-soft:hover:not(:disabled) { background: #e0e7ff; }
-    .btn-muted { color: #475467; background: #fff; border-color: var(--border); }
-    .btn-muted:hover:not(:disabled) { background: #f9fafb; }
-    .btn-warning { color: #fff; background: #f59e0b; }
-    .btn-warning:hover:not(:disabled) { background: #d97706; }
-    .btn-danger { color: var(--danger); background: var(--danger-soft); border-color: #fecaca; }
-    .btn-danger:hover:not(:disabled) { background: #fee2e2; }
-    .btn-sm { min-height: 30px; padding: 6px 10px; border-radius: 9px; font-size: 12px; }
-    .btn-icon { min-height: 32px; padding: 6px 9px; border-radius: 9px; }
-    .hidden { display: none !important; }
-
-    .notice {
-      display: none;
-      grid-template-columns: auto minmax(0, 1fr) auto;
-      gap: 10px;
-      align-items: start;
-      color: var(--warning);
-      background: var(--warning-soft);
-      border: 1px solid #fed7aa;
-      border-radius: 14px;
-      padding: 12px;
-      margin-bottom: 16px;
-      font-size: 13px;
-      line-height: 1.45;
-    }
-    .notice.show { display: grid; }
-    .notice strong { display: block; color: #7c2d12; margin-bottom: 2px; }
-
-    .form-grid { display: grid; gap: 14px; }
-    .form-group { display: grid; gap: 7px; }
-    .label-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-    label {
-      color: #475467;
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-    .hint { color: var(--subtle); font-size: 12px; line-height: 1.4; }
-    .counter { color: var(--subtle); font-size: 11px; white-space: nowrap; }
-
-    textarea, input[type="text"], select {
-      width: 100%;
+        radial-gradient(circle at top left, rgba(56, 189, 248, .16), transparent 38%),
+        radial-gradient(circle at top right, rgba(34, 197, 94, .12), transparent 34%),
+        linear-gradient(145deg, #020617, var(--bg));
       color: var(--text);
-      background: #fff;
-      border: 1px solid #d0d5dd;
-      border-radius: 13px;
-      padding: 11px 12px;
-      font-size: 14px;
-      line-height: 1.5;
-      box-shadow: 0 1px 0 rgba(16, 24, 40, 0.02);
-      transition: border-color .14s ease, box-shadow .14s ease;
     }
-    textarea:focus, input[type="text"]:focus, select:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 4px rgba(79, 70, 229, .09);
-      outline: none;
-    }
-    textarea::placeholder, input::placeholder { color: #98a2b3; }
-    textarea { min-height: 96px; resize: vertical; }
-    #productLinkInput { min-height: 78px; }
 
-    .field-status {
+    .app {
+      width: min(1180px, calc(100vw - 24px));
+      margin: 0 auto;
+      padding: 22px 0 28px;
+    }
+
+    .header {
       display: flex;
       justify-content: space-between;
-      gap: 10px;
-      align-items: center;
-      min-height: 16px;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 14px;
     }
-    .link-preview {
-      color: #475467;
-      font-size: 12px;
-      overflow: hidden;
-      text-overflow: ellipsis;
+
+    .title h1 {
+      margin: 0;
+      font-size: clamp(22px, 3.2vw, 34px);
+      letter-spacing: -.04em;
+      line-height: 1.05;
+    }
+
+    .title p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+      max-width: 760px;
+    }
+
+    .badge {
       white-space: nowrap;
+      border: 1px solid rgba(56, 189, 248, .35);
+      color: #bae6fd;
+      background: rgba(14, 165, 233, .12);
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
     }
-    .link-preview.warn { color: var(--warning); }
-    .link-preview.ok { color: var(--success); }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 10px;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(2, 6, 23, .36);
+    }
+
+    .field label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: rgba(2, 6, 23, .84);
+      color: var(--text);
+      border-radius: 12px;
+      outline: none;
+      padding: 10px 11px;
+      font: inherit;
+      font-size: 13px;
+    }
+
+    textarea {
+      min-height: 320px;
+      resize: vertical;
+      line-height: 1.45;
+      font-family: Consolas, Monaco, 'Courier New', monospace;
+      font-size: 12px;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: rgba(56, 189, 248, .72);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, .12);
+    }
+
+    .body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .boxHead {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .boxHead label {
+      color: var(--text);
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .mini {
+      color: var(--muted);
+      font-size: 12px;
+    }
 
     .actions {
       display: grid;
-      grid-template-columns: 1.7fr 1fr;
+      grid-template-columns: repeat(6, 1fr);
       gap: 10px;
-      margin-top: 2px;
+      padding: 0 14px 14px;
     }
-    #generateBtn { min-height: 48px; font-size: 15px; }
 
-    .output-box {
-      margin-top: 16px;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-      background: var(--surface-soft);
-    }
-    .output-header {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      justify-content: space-between;
-      padding: 11px 13px;
-      border-bottom: 1px solid var(--border);
-    }
-    .output-title { color: var(--primary); font-size: 13px; font-weight: 900; }
-    .output-actions { display: flex; gap: 7px; flex-wrap: wrap; justify-content: flex-end; }
-    #output {
-      min-height: 90px;
-      padding: 16px;
-      color: var(--text);
-      font-size: 14px;
-      line-height: 1.68;
-      white-space: pre-wrap;
-      word-break: break-word;
-      overflow-wrap: anywhere;
-    }
-    #output.placeholder { color: var(--subtle); }
-    #output.loading { color: var(--primary); }
-    #output.error { color: var(--danger); }
-
-    .section-title {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 14px;
-      color: #475467;
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
-    .tpl-list { display: grid; gap: 9px; }
-    .tpl-empty {
-      color: var(--subtle);
-      background: var(--surface-soft);
-      border: 1px dashed #d0d5dd;
-      border-radius: 14px;
-      padding: 16px;
-      text-align: center;
-      font-size: 13px;
-      line-height: 1.45;
-    }
-    .tpl-item {
-      display: grid;
-      grid-template-columns: auto minmax(0,1fr) auto;
-      gap: 10px;
-      align-items: center;
-      padding: 12px;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      background: #fff;
-      cursor: pointer;
-      transition: border-color .14s ease, background .14s ease, transform .14s ease;
-    }
-    .tpl-item:hover { border-color: var(--border-strong); transform: translateY(-1px); }
-    .tpl-item.active { border-color: var(--primary); background: var(--primary-soft); }
-    .tpl-icon { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 10px; background: #f2f4f7; }
-    .tpl-name { color: var(--text); font-size: 13px; font-weight: 800; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-    .tpl-meta { margin-top: 2px; color: var(--subtle); font-size: 11px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-    .tpl-actions { display: flex; gap: 5px; }
-
-    .stats-card { display: grid; gap: 10px; }
-    .stat-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      color: var(--muted);
-      font-size: 13px;
-      padding: 8px 0;
-      border-bottom: 1px solid #f0f2f5;
-    }
-    .stat-row:last-child { border-bottom: 0; }
-    .stat-row strong { color: var(--text); }
-
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 18px;
-      background: rgba(15, 23, 42, 0.48);
-      z-index: 50;
-    }
-    .modal-overlay.show { display: flex; }
-    .modal {
-      width: min(100%, 470px);
-      max-height: min(90vh, 760px);
-      overflow: auto;
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 22px;
-      box-shadow: var(--shadow-md);
-    }
-    .modal h2 { margin: 0 0 16px; color: #24205d; font-size: 18px; }
-    .modal-btns { display: grid; grid-template-columns: 1.4fr 1fr; gap: 10px; margin-top: 18px; }
-    .modal-center { text-align: center; }
-    .modal-center p { margin: 8px 0 18px; color: var(--muted); font-size: 13px; line-height: 1.55; }
-
-    .toast-host {
-      position: fixed;
-      right: 18px;
-      bottom: 18px;
-      z-index: 90;
-      display: grid;
-      gap: 10px;
-      pointer-events: none;
-    }
-    .toast {
-      pointer-events: auto;
-      width: min(360px, calc(100vw - 36px));
-      color: #344054;
-      background: #fff;
-      border: 1px solid var(--border);
-      border-left: 5px solid var(--primary);
-      border-radius: 14px;
-      box-shadow: var(--shadow-md);
-      padding: 12px 13px;
-      font-size: 13px;
-      line-height: 1.45;
-      animation: toastIn .18s ease-out;
-    }
-    .toast.success { border-left-color: var(--success); }
-    .toast.error { border-left-color: var(--danger); }
-    .toast.warning { border-left-color: #f59e0b; }
-    @keyframes toastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-
-
-    .builder-help {
-      color: var(--muted);
-      background: var(--surface-soft);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 12px;
-      font-size: 13px;
-      line-height: 1.5;
-      margin-bottom: 14px;
-    }
-    .builder-toolbar {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 12px;
-    }
-    .builder-list {
-      display: grid;
-      gap: 8px;
-      margin-top: 14px;
-      max-height: 220px;
-      overflow: auto;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 8px;
-      background: var(--surface-soft);
-    }
-    .builder-item {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 8px;
-      align-items: center;
-      background: #fff;
-      border: 1px solid var(--border);
+    button {
+      border: 0;
       border-radius: 12px;
-      padding: 10px;
-    }
-    .builder-item strong {
-      display: block;
-      color: var(--text);
-      font-size: 13px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .builder-item span {
-      display: block;
-      color: var(--subtle);
-      font-size: 11px;
-      margin-top: 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .builder-item-actions { display: flex; gap: 6px; }
-    .builder-export {
-      display: grid;
-      gap: 8px;
-      margin-top: 14px;
-      padding-top: 14px;
-      border-top: 1px solid var(--border);
-    }
-    @media (max-width: 520px) {
-      .builder-toolbar { grid-template-columns: 1fr; }
+      padding: 11px 12px;
+      font-weight: 800;
+      cursor: pointer;
+      background: var(--brand);
+      color: var(--btnText);
+      transition: transform .12s ease, opacity .12s ease, filter .12s ease;
+      min-height: 42px;
     }
 
-    @media (max-width: 1120px) {
-      .app-shell { grid-template-columns: 245px minmax(0, 1fr) 245px; padding: 18px; }
-      .card { padding: 17px; }
+    button:hover { filter: brightness(1.05); }
+    button:active { transform: translateY(1px); }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    button.good { background: var(--good); color: #052e16; }
+    button.warn { background: var(--warn); color: #422006; }
+    button.bad { background: var(--bad); color: #450a0a; }
+    button.ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--line);
     }
-    @media (max-width: 860px) {
-      .app-shell { grid-template-columns: 1fr; max-width: 660px; }
-      .main-col { order: 1; }
-      .side-left { order: 2; }
-      .side-right { order: 3; }
-      .auth-bar, .hero { grid-template-columns: 1fr; }
-      .auth-actions { justify-content: flex-start; }
+
+    .statusWrap {
+      padding: 0 14px 14px;
     }
-    @media (max-width: 520px) {
-      .app-shell { padding: 12px; gap: 12px; }
-      .card { padding: 15px; border-radius: 16px; }
-      .actions, .modal-btns { grid-template-columns: 1fr; }
-      .output-header { align-items: flex-start; flex-direction: column; }
-      .brand h1 { font-size: 16px; }
+
+    .status {
+      border: 1px solid var(--line);
+      background: var(--panel2);
+      border-radius: 14px;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+    }
+
+    .stat {
+      border: 1px solid var(--line);
+      background: rgba(15, 23, 42, .62);
+      border-radius: 12px;
+      padding: 9px;
+      min-width: 0;
+    }
+
+    .stat .n {
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--brand);
+      line-height: 1;
+    }
+
+    .stat .t {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .message {
+      color: var(--muted);
+      font-size: 13px;
+      min-height: 18px;
+      white-space: pre-wrap;
+      line-height: 1.45;
+    }
+
+    .progressOuter {
+      height: 9px;
+      background: rgba(148, 163, 184, .16);
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, .18);
+    }
+
+    .progressInner {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--brand), var(--good));
+      border-radius: 999px;
+      transition: width .18s ease;
+    }
+
+    .tableWrap {
+      padding: 0 14px 14px;
+      display: none;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel2);
+      font-size: 12px;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th { color: #bae6fd; background: rgba(56, 189, 248, .08); }
+    td { color: var(--muted); word-break: break-all; }
+    tr:last-child td { border-bottom: 0; }
+
+    .ok { color: var(--good); font-weight: 800; }
+    .fail { color: var(--bad); font-weight: 800; }
+    .wait { color: var(--warn); font-weight: 800; }
+
+    @media (max-width: 900px) {
+      .topbar, .body, .actions, .stats { grid-template-columns: 1fr 1fr; }
+      .header { flex-direction: column; }
+      .badge { white-space: normal; }
+    }
+
+    @media (max-width: 560px) {
+      .topbar, .body, .actions, .stats { grid-template-columns: 1fr; }
+      textarea { min-height: 220px; }
     }
   </style>
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="side-col side-left">
-      <section class="card templates-card" aria-labelledby="leftTplTitle">
-        <div class="section-title">
-          <span id="leftTplTitle">📦 Kho mẫu trái</span>
-          <button class="btn btn-soft btn-sm" id="btnAddTplLeft" type="button">Quản lý mẫu</button>
+  <main class="app">
+    <header class="header">
+      <div class="title">
+        <h1>Facebook Link → UID Converter</h1>
+        <p>Dán nhiều link Facebook, web sẽ tự lọc trùng, lấy UID trực tiếp nếu link có sẵn UID, còn lại gửi API Traodoisub theo đa luồng có retry/backoff để nhanh nhưng hạn chế lỗi.</p>
+      </div>
+      <div class="badge">Static Web • Multi-thread • Retry</div>
+    </header>
+
+    <section class="panel">
+      <div class="topbar">
+        <div class="field">
+          <label for="apiUrl">API URL</label>
+          <input id="apiUrl" value="https://id.traodoisub.com/api.php" spellcheck="false" />
         </div>
-        <div class="tpl-list" id="tplListLeft" aria-live="polite"></div>
-      </section>
-    </aside>
-
-    <main class="main-col">
-      <section class="card">
-        <header class="hero">
-          <div class="brand">
-            <div class="brand-logo" aria-hidden="true">🤖</div>
-            <div>
-              <h1>AI Auto Content Facebook</h1>
-              <p>Viết bình luận tự nhiên, có ngữ cảnh, gắn link sản phẩm mượt hơn.</p>
-            </div>
-          </div>
-          <span class="pro-badge">⚡ PRO V2</span>
-        </header>
-
-        <div class="auth-bar">
-          <div class="auth-left">
-            <div class="auth-avatar" id="authAvatar" aria-hidden="true">👤</div>
-            <div class="auth-info">
-              <div class="auth-status" id="authStatus">⏳ Đang kiểm tra Puter...</div>
-              <div class="auth-username hidden" id="authUsername"></div>
-            </div>
-          </div>
-          <div class="auth-actions">
-            <button class="btn btn-primary btn-sm hidden" id="loginBtn" type="button">🔑 Đăng nhập</button>
-            <button class="btn btn-warning btn-sm hidden" id="switchBtn" type="button">🔄 Đổi tài khoản</button>
-            <button class="btn btn-danger btn-sm hidden" id="logoutBtn" type="button">↩ Đăng xuất</button>
-          </div>
+        <div class="field">
+          <label for="concurrency">Số luồng</label>
+          <input id="concurrency" type="number" min="1" max="20" value="5" />
         </div>
-
-        <div class="notice" id="tokenBanner" role="alert">
-          <div aria-hidden="true">⚠️</div>
-          <div>
-            <strong>Tài khoản Puter có thể đã hết token miễn phí</strong>
-            Hãy đổi tài khoản Puter khác hoặc thử lại sau nếu gặp giới hạn sử dụng.
-          </div>
-          <button class="btn btn-warning btn-sm" id="btnRelogin" type="button">Đổi</button>
+        <div class="field">
+          <label for="delayMs">Giãn cách mỗi request (ms)</label>
+          <input id="delayMs" type="number" min="0" max="10000" step="100" value="500" />
         </div>
-
-        <div class="form-grid">
-          <div class="form-group">
-            <div class="label-row">
-              <label for="articleInput">Nội dung bài viết gốc</label>
-              <button class="btn btn-soft btn-sm" id="pasteBtn" type="button">📋 Dán nội dung</button>
-            </div>
-            <textarea id="articleInput" maxlength="6000" placeholder="Dán nội dung bài viết cần trả lời vào đây..."></textarea>
-            <div class="field-status">
-              <span class="hint">AI sẽ đọc ngữ cảnh để viết câu đầu tự nhiên hơn.</span>
-              <span class="counter" id="articleCounter">0/6000</span>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="productNameInput">Tên sản phẩm</label>
-            <input type="text" id="productNameInput" maxlength="160" placeholder="VD: Đèn năng lượng mặt trời 300W, Inverter LuxPower...">
-            <div class="field-status">
-              <span class="hint">Không bắt buộc, nhưng nên nhập để bình luận rõ ý hơn.</span>
-              <span class="counter" id="productCounter">0/160</span>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="productLinkInput">Danh sách link Shopee / link sản phẩm</label>
-            <textarea id="productLinkInput" placeholder="Mỗi link một dòng. Hệ thống sẽ chọn ngẫu nhiên 1 link hợp lệ."></textarea>
-            <div class="field-status">
-              <span class="link-preview" id="linkStatus">Chưa có link sản phẩm</span>
-              <span class="counter" id="linkCounter">0 link</span>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="toneSelect">🎭 Phong cách bình luận</label>
-            <select id="toneSelect">
-              <option value="đời thường, gần gũi, tự nhiên như người thật bình luận">🌱 Đời thường & tự nhiên</option>
-              <option value="hài hước nhẹ, bắt trend vừa phải, không lố và không spam">🔥 Hài hước & bắt trend</option>
-              <option value="chuyên gia tư vấn, có logic, ngắn gọn và đáng tin">💼 Chuyên gia tư vấn</option>
-              <option value="tích cực, đồng cảm, khen vừa đủ, không sáo rỗng">❤️ Tích cực & đồng cảm</option>
-              <option value="bán hàng mềm, gợi ý khéo, không ép mua và không phóng đại">🛒 Bán hàng mềm</option>
-            </select>
-          </div>
-
-          <div class="actions">
-            <button class="btn btn-primary" id="generateBtn" type="button">✨ Tạo bình luận</button>
-            <button class="btn btn-muted" id="clearBtn" type="button">🔄 Làm mới</button>
-          </div>
+        <div class="field">
+          <label for="retryCount">Retry mỗi link</label>
+          <input id="retryCount" type="number" min="0" max="10" value="4" />
         </div>
+      </div>
 
-        <section class="output-box" aria-live="polite">
-          <div class="output-header">
-            <span class="output-title">✨ Kết quả bình luận</span>
-            <div class="output-actions">
-              <button class="btn btn-soft btn-sm" id="copyBtn" type="button">Sao chép</button>
-              <button class="btn btn-muted btn-sm" id="saveHistoryBtn" type="button">Lưu lịch sử</button>
-            </div>
+      <div class="body">
+        <div>
+          <div class="boxHead">
+            <label for="inputLinks">Link đầu vào</label>
+            <span id="inputCount" class="mini">0 dòng</span>
           </div>
-          <div id="output" class="placeholder">Bình luận sẽ xuất hiện tại đây...</div>
-        </section>
-      </section>
-    </main>
-
-    <aside class="side-col side-right">
-      <section class="card templates-card" aria-labelledby="rightTplTitle">
-        <div class="section-title">
-          <span id="rightTplTitle">📦 Kho mẫu phải</span>
-          <button class="btn btn-soft btn-sm" id="btnAddTpl" type="button">Quản lý mẫu</button>
+          <textarea id="inputLinks" placeholder="Dán link Facebook tại đây, mỗi dòng một link...&#10;https://www.facebook.com/zuck&#10;https://www.facebook.com/profile.php?id=100000000000000"></textarea>
         </div>
-        <div class="tpl-list" id="tplList" aria-live="polite"></div>
-      </section>
+        <div>
+          <div class="boxHead">
+            <label for="outputUids">UID kết quả</label>
+            <span id="outputCount" class="mini">0 UID</span>
+          </div>
+          <textarea id="outputUids" readonly placeholder="UID sẽ hiện ở đây..."></textarea>
+        </div>
+      </div>
 
-      <section class="card stats-card" aria-labelledby="statsTitle">
-        <div class="section-title" id="statsTitle">📊 Trạng thái nhanh</div>
-        <div class="stat-row"><span>Link hợp lệ</span><strong id="validLinkStat">0</strong></div>
-        <div class="stat-row"><span>Mẫu bên trái</span><strong id="leftTplStat">0</strong></div>
-        <div class="stat-row"><span>Mẫu bên phải</span><strong id="rightTplStat">0</strong></div>
-        <div class="stat-row"><span>Lịch sử đã lưu</span><strong id="historyStat">0</strong></div>
-      </section>
-    </aside>
-  </div>
+      <div class="actions">
+        <button id="startBtn" class="good">Bắt đầu đổi</button>
+        <button id="pauseBtn" class="warn" disabled>Tạm dừng</button>
+        <button id="stopBtn" class="bad" disabled>Dừng</button>
+        <button id="copyUidBtn" class="ghost">Copy UID</button>
+        <button id="downloadTxtBtn" class="ghost">Tải TXT</button>
+        <button id="downloadCsvBtn" class="ghost">Tải CSV</button>
+        <button id="clearBtn" class="ghost">Xóa</button>
+        <button id="sampleBtn" class="ghost">Dán mẫu</button>
+        <button id="showDetailBtn" class="ghost">Bảng chi tiết</button>
+      </div>
 
-  <div class="modal-overlay" id="switchModal" role="dialog" aria-modal="true" aria-labelledby="switchTitle">
-    <div class="modal modal-center">
-      <h2 id="switchTitle">🔄 Đổi tài khoản Puter</h2>
-      <p>Bạn sẽ đăng xuất khỏi tài khoản hiện tại rồi đăng nhập tài khoản mới. Kho mẫu sản phẩm nằm trong file web. Bạn có thể sửa nhanh bằng form quản lý mẫu rồi tải file web mới.</p>
-      <button class="btn btn-warning" id="btnConfirmSwitch" type="button" style="width:100%; margin-bottom:10px">Xác nhận đổi tài khoản</button>
-      <button class="btn btn-muted" id="btnCancelSwitch" type="button" style="width:100%">Huỷ</button>
-    </div>
-  </div>
+      <div class="statusWrap">
+        <div class="status">
+          <div class="stats">
+            <div class="stat"><div id="statTotal" class="n">0</div><div class="t">Tổng link</div></div>
+            <div class="stat"><div id="statDone" class="n">0</div><div class="t">Đã xử lý</div></div>
+            <div class="stat"><div id="statUid" class="n">0</div><div class="t">Có UID</div></div>
+            <div class="stat"><div id="statFail" class="n">0</div><div class="t">Lỗi</div></div>
+            <div class="stat"><div id="statActive" class="n">0</div><div class="t">Đang chạy</div></div>
+            <div class="stat"><div id="statSpeed" class="n">0/s</div><div class="t">Tốc độ</div></div>
+          </div>
+          <div class="progressOuter"><div id="progress" class="progressInner"></div></div>
+          <div id="message" class="message">Sẵn sàng. Nên để 3–5 luồng, delay 500–1000ms để đỡ lỗi API.</div>
+        </div>
+      </div>
 
-  <div class="toast-host" id="toastHost" aria-live="polite"></div>
+      <div id="tableWrap" class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:44px">#</th>
+              <th>Link</th>
+              <th style="width:150px">UID</th>
+              <th style="width:120px">Trạng thái</th>
+              <th>Lỗi</th>
+            </tr>
+          </thead>
+          <tbody id="detailRows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
 
   <script>
     'use strict';
 
-    const APP = {
-      model: 'gpt-4o',
-      storage: {
-        history: 'truong_ai_commenter_history_v2',
-        draft: 'truong_ai_commenter_draft_v2'
-      },
-      manualTemplates: {
-        left: [
-          {
-            name: 'Đèn NLMT 300W',
-            product: 'Đèn năng lượng mặt trời 300W',
-            links: ''
-          },
-          {
-            name: 'Tấm pin mặt trời 300W',
-            product: 'Tấm pin năng lượng mặt trời 300W',
-            links: ''
-          },
-          {
-            name: 'Sạc MPPT năng lượng mặt trời',
-            product: 'Sạc MPPT năng lượng mặt trời',
-            links: ''
-          }
-        ],
-        right: [
-          {
-            name: 'Inverter LuxPower GETA 3.6K',
-            product: 'Inverter LuxPower GETA 3.6K Off-Grid 24V 3600W',
-            links: ''
-          },
-          {
-            name: 'Pin LuxPowerTek LI-7.5E',
-            product: 'Pin lưu trữ LuxPowerTek LI-7.5E 25.6V 300Ah',
-            links: ''
-          },
-          {
-            name: 'Combo Off-Grid 24V',
-            product: 'Combo Inverter LuxPower GETA 3.6K và pin LuxPowerTek LI-7.5E',
-            links: ''
-          }
-        ]
-      },
-      tokenErrorPatterns: [
-        'quota', 'rate limit', 'rate_limit', 'insufficient', 'limit exceeded',
-        'token', 'credits', 'billing', 'usage', '429', 'too many requests',
-        'hết', 'vượt quá', 'giới hạn', 'credit'
-      ]
-    };
-
-    const $ = (selector, root = document) => root.querySelector(selector);
-    const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+    const $ = (id) => document.getElementById(id);
 
     const els = {
-      authStatus: $('#authStatus'),
-      authUsername: $('#authUsername'),
-      authAvatar: $('#authAvatar'),
-      loginBtn: $('#loginBtn'),
-      switchBtn: $('#switchBtn'),
-      logoutBtn: $('#logoutBtn'),
-      tokenBanner: $('#tokenBanner'),
-      btnRelogin: $('#btnRelogin'),
-      switchModal: $('#switchModal'),
-      btnConfirmSwitch: $('#btnConfirmSwitch'),
-      btnCancelSwitch: $('#btnCancelSwitch'),
-      articleInput: $('#articleInput'),
-      productNameInput: $('#productNameInput'),
-      productLinkInput: $('#productLinkInput'),
-      toneSelect: $('#toneSelect'),
-      generateBtn: $('#generateBtn'),
-      clearBtn: $('#clearBtn'),
-      pasteBtn: $('#pasteBtn'),
-      copyBtn: $('#copyBtn'),
-      saveHistoryBtn: $('#saveHistoryBtn'),
-      output: $('#output'),
-      articleCounter: $('#articleCounter'),
-      productCounter: $('#productCounter'),
-      linkCounter: $('#linkCounter'),
-      linkStatus: $('#linkStatus'),
-      validLinkStat: $('#validLinkStat'),
-      leftTplStat: $('#leftTplStat'),
-      rightTplStat: $('#rightTplStat'),
-      historyStat: $('#historyStat'),
-      toastHost: $('#toastHost')
+      apiUrl: $('apiUrl'),
+      concurrency: $('concurrency'),
+      delayMs: $('delayMs'),
+      retryCount: $('retryCount'),
+      inputLinks: $('inputLinks'),
+      outputUids: $('outputUids'),
+      inputCount: $('inputCount'),
+      outputCount: $('outputCount'),
+      startBtn: $('startBtn'),
+      pauseBtn: $('pauseBtn'),
+      stopBtn: $('stopBtn'),
+      copyUidBtn: $('copyUidBtn'),
+      downloadTxtBtn: $('downloadTxtBtn'),
+      downloadCsvBtn: $('downloadCsvBtn'),
+      clearBtn: $('clearBtn'),
+      sampleBtn: $('sampleBtn'),
+      showDetailBtn: $('showDetailBtn'),
+      statTotal: $('statTotal'),
+      statDone: $('statDone'),
+      statUid: $('statUid'),
+      statFail: $('statFail'),
+      statActive: $('statActive'),
+      statSpeed: $('statSpeed'),
+      progress: $('progress'),
+      message: $('message'),
+      tableWrap: $('tableWrap'),
+      detailRows: $('detailRows')
     };
 
-    const state = {
-      selectedTemplateKey: null,
-      managers: {},
-      builderSide: 'left',
-      builderEditingIndex: -1
-    };
+    const STORAGE_KEY = 'linkToUidWebStateV1';
+    const DIRECT_SOURCE = 'direct';
+    const API_SOURCE = 'api';
 
-    function safeJsonParse(value, fallback) {
-      try { return JSON.parse(value) ?? fallback; }
-      catch { return fallback; }
+    let queue = [];
+    let results = [];
+    let running = false;
+    let paused = false;
+    let stopped = false;
+    let active = 0;
+    let cursor = 0;
+    let startedAt = 0;
+    let finishedCountAtStart = 0;
+    let renderTimer = 0;
+    let requestGate = Promise.resolve();
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
-    function loadStorage(key, fallback) {
-      return safeJsonParse(localStorage.getItem(key), fallback);
+    function clamp(number, min, max, fallback) {
+      const value = Number(number);
+      if (!Number.isFinite(value)) return fallback;
+      return Math.max(min, Math.min(max, value));
     }
 
-    function saveStorage(key, value) {
-      localStorage.setItem(key, JSON.stringify(value));
+    function nowText() {
+      return new Date().toLocaleTimeString('vi-VN', { hour12: false });
     }
 
-    function toast(message, type = 'success') {
-      const item = document.createElement('div');
-      item.className = `toast ${type}`;
-      item.textContent = message;
-      els.toastHost.appendChild(item);
-      setTimeout(() => item.remove(), 3300);
+    function setMessage(text) {
+      els.message.textContent = text;
     }
 
-    function setOutput(message, className = '') {
-      els.output.textContent = message;
-      els.output.className = className;
+    function normalizeFacebookUrl(raw) {
+      let value = String(raw || '').trim();
+      if (!value) return '';
+
+      value = value.replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
+      value = value.replace(/^fb:\/\//i, 'https://www.facebook.com/');
+
+      if (/^www\./i.test(value)) value = 'https://' + value;
+      if (/^facebook\.com\//i.test(value)) value = 'https://www.' + value;
+
+      try {
+        const url = new URL(value, 'https://www.facebook.com');
+        const host = url.hostname
+          .replace(/^m\./i, 'www.')
+          .replace(/^mbasic\./i, 'www.')
+          .replace(/^mobile\./i, 'www.');
+
+        if (!/(^|\.)facebook\.com$/i.test(host)) return '';
+
+        if (/\/l\.php$/i.test(url.pathname) && url.searchParams.get('u')) {
+          return normalizeFacebookUrl(url.searchParams.get('u'));
+        }
+
+        const clean = new URL('https://www.facebook.com');
+        clean.pathname = decodeURIComponent(url.pathname || '/')
+          .replace(/\/+/g, '/')
+          .replace(/\/+$/g, '') || '/';
+
+        const lowerPath = clean.pathname.toLowerCase();
+        if (lowerPath === '/profile.php') {
+          const id = String(url.searchParams.get('id') || '').trim();
+          if (id) clean.searchParams.set('id', id);
+        }
+
+        return clean.toString();
+      } catch {
+        return '';
+      }
     }
 
-    function isPuterReady() {
-      return typeof window.puter !== 'undefined' && window.puter.auth && window.puter.ai;
-    }
-
-    function isSignedIn() {
-      return isPuterReady() && window.puter.auth.isSignedIn();
-    }
-
-    function getErrorText(error) {
-      if (!error) return '';
-      if (typeof error === 'string') return error;
-      if (error.message) return error.message;
-      try { return JSON.stringify(error); } catch { return String(error); }
-    }
-
-    function isTokenError(message) {
-      const lower = String(message || '').toLowerCase();
-      return APP.tokenErrorPatterns.some(pattern => lower.includes(pattern));
-    }
-
-    function stripAiWrapper(text) {
-      return String(text || '')
-        .replace(/^```(?:text|md|markdown)?/i, '')
-        .replace(/```$/i, '')
-        .replace(/^\s*["“”']|["“”']\s*$/g, '')
-        .trim();
-    }
-
-    function extractResponseText(response) {
-      if (typeof response === 'string') return response;
-      return response?.message?.content
-        || response?.content
-        || response?.text
-        || 'Không có phản hồi từ AI.';
-    }
-
-    function parseLinks(raw) {
-      const chunks = String(raw || '')
-        .split(/[\n,\s]+/)
-        .map(item => item.trim())
+    function extractLinks(text) {
+      const raw = String(text || '')
+        .split(/[\n\r\t,; ]+/)
+        .map((item) => item.trim())
         .filter(Boolean);
 
-      const unique = [];
-      const invalid = [];
       const seen = new Set();
+      const output = [];
 
-      for (const item of chunks) {
-        try {
-          const url = new URL(item);
-          if (!/^https?:$/.test(url.protocol)) throw new Error('Invalid protocol');
-          const clean = url.toString();
-          if (!seen.has(clean)) {
-            seen.add(clean);
-            unique.push(clean);
-          }
-        } catch {
-          invalid.push(item);
+      for (const item of raw) {
+        const normalized = normalizeFacebookUrl(item);
+        if (!normalized) continue;
+        const key = normalized.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        output.push(normalized);
+      }
+
+      return output;
+    }
+
+    function extractDirectUid(link) {
+      try {
+        const url = new URL(link);
+        const path = decodeURIComponent(url.pathname || '/').replace(/\/+$/g, '');
+        const parts = path.split('/').filter(Boolean);
+        const lower = path.toLowerCase();
+
+        if (lower === '/profile.php') {
+          const id = String(url.searchParams.get('id') || '').trim();
+          if (/^\d{4,}$/.test(id)) return id;
+        }
+
+        if (parts.length >= 4 && parts[0].toLowerCase() === 'groups' && parts[2].toLowerCase() === 'user') {
+          const uid = String(parts[3] || '').trim();
+          if (/^\d{4,}$/.test(uid)) return uid;
+        }
+
+        if (parts.length >= 3 && parts[0].toLowerCase() === 'people') {
+          const uid = String(parts[2] || '').trim();
+          if (/^\d{4,}$/.test(uid)) return uid;
+        }
+
+        if (parts.length === 1 && /^\d{4,}$/.test(parts[0])) return parts[0];
+      } catch {
+        return '';
+      }
+
+      return '';
+    }
+
+    function parseUidFromResponse(data) {
+      if (!data || typeof data !== 'object') return '';
+
+      const status = Number(data.success || data.status || 0);
+      const direct = [data.id, data.uid, data.user_id, data.userId, data.facebook_id];
+
+      for (const value of direct) {
+        const uid = String(value || '').trim();
+        if (/^\d{4,}$/.test(uid) && (!status || status === 200 || status === 1)) return uid;
+      }
+
+      for (const key of ['data', 'result', 'user']) {
+        if (data[key] && typeof data[key] === 'object') {
+          const uid = parseUidFromResponse({ success: data.success || 200, ...data[key] });
+          if (uid) return uid;
         }
       }
-      return { valid: unique, invalid };
+
+      return '';
     }
 
-    function randomFrom(array) {
-      return array[Math.floor(Math.random() * array.length)] || '';
+    function getApiError(data, fallback = 'API không trả UID.') {
+      if (!data || typeof data !== 'object') return fallback;
+      return String(data.error || data.message || data.msg || data.notice || data.description || fallback).trim();
     }
 
-    function updateCounters() {
-      els.articleCounter.textContent = `${els.articleInput.value.length}/6000`;
-      els.productCounter.textContent = `${els.productNameInput.value.length}/160`;
-
-      const { valid, invalid } = parseLinks(els.productLinkInput.value);
-      els.linkCounter.textContent = `${valid.length} link`;
-      els.validLinkStat.textContent = String(valid.length);
-
-      if (!els.productLinkInput.value.trim()) {
-        els.linkStatus.textContent = 'Chưa có link sản phẩm';
-        els.linkStatus.className = 'link-preview';
-      } else if (invalid.length) {
-        els.linkStatus.textContent = `Có ${invalid.length} link chưa hợp lệ, hệ thống sẽ bỏ qua`;
-        els.linkStatus.className = 'link-preview warn';
-      } else {
-        els.linkStatus.textContent = 'Tất cả link đều hợp lệ';
-        els.linkStatus.className = 'link-preview ok';
-      }
-    }
-
-    function updateStats() {
-      els.leftTplStat.textContent = String(state.managers.left?.items.length || 0);
-      els.rightTplStat.textContent = String(state.managers.right?.items.length || 0);
-      els.historyStat.textContent = String(loadStorage(APP.storage.history, []).length);
-      updateCounters();
-    }
-
-    function renderAvatar(user) {
-      els.authAvatar.textContent = '👤';
-      if (!user?.avatar_url) return;
-
-      const img = document.createElement('img');
-      img.alt = 'Avatar Puter';
-      img.referrerPolicy = 'no-referrer';
-      img.src = user.avatar_url;
-      img.onerror = () => { els.authAvatar.textContent = '👤'; };
-      els.authAvatar.replaceChildren(img);
-    }
-
-    async function updateAuthUI() {
-      if (!isPuterReady()) {
-        els.authStatus.textContent = '⚠️ Chưa tải được Puter SDK';
-        els.authStatus.className = 'auth-status';
-        els.authUsername.classList.add('hidden');
-        els.authAvatar.textContent = '👤';
-        els.loginBtn.classList.remove('hidden');
-        els.switchBtn.classList.add('hidden');
-        els.logoutBtn.classList.add('hidden');
-        return;
-      }
-
-      if (!isSignedIn()) {
-        els.authStatus.textContent = '⚠️ Chưa đăng nhập Puter';
-        els.authStatus.className = 'auth-status';
-        els.authUsername.classList.add('hidden');
-        els.authAvatar.textContent = '👤';
-        els.loginBtn.classList.remove('hidden');
-        els.switchBtn.classList.add('hidden');
-        els.logoutBtn.classList.add('hidden');
-        return;
-      }
-
-      els.authStatus.textContent = '✅ Đã đăng nhập Puter';
-      els.authStatus.className = 'auth-status ok';
-      els.loginBtn.classList.add('hidden');
-      els.switchBtn.classList.remove('hidden');
-      els.logoutBtn.classList.remove('hidden');
-
-      try {
-        const user = await window.puter.auth.getUser();
-        const name = user?.username || user?.email || 'Puter User';
-        els.authUsername.textContent = name;
-        els.authUsername.classList.remove('hidden');
-        renderAvatar(user);
-      } catch {
-        els.authUsername.classList.add('hidden');
-        els.authAvatar.textContent = '👤';
-      }
-    }
-
-    async function doSignIn() {
-      if (!isPuterReady()) {
-        toast('Puter SDK chưa sẵn sàng. Hãy kiểm tra kết nối mạng hoặc mở file qua HTTPS/server.', 'warning');
-        return false;
-      }
-      try {
-        await window.puter.auth.signIn();
-        els.tokenBanner.classList.remove('show');
-        await updateAuthUI();
-        toast('Đăng nhập Puter thành công');
-        return true;
-      } catch (error) {
-        setOutput('❌ Đăng nhập thất bại: ' + getErrorText(error), 'error');
-        return false;
-      }
-    }
-
-    async function doSignOut() {
-      try {
-        if (isPuterReady()) await window.puter.auth.signOut();
-      } catch {}
-      els.tokenBanner.classList.remove('show');
-      await updateAuthUI();
-    }
-
-    async function doSwitchAccount() {
-      closeModal(els.switchModal);
-      await doSignOut();
-      await doSignIn();
-    }
-
-    function buildPrompt({ article, productName, selectedLink, selectedTone }) {
-      const linkInstruction = selectedLink
-        ? `- Link sản phẩm được phép dùng: ${selectedLink}`
-        : '- Không có link sản phẩm, không được tự bịa link';
-
-      return `Bạn là chuyên gia Social Content và Affiliate Marketing có kinh nghiệm viết bình luận Facebook tự nhiên.
-
-Nhiệm vụ: Viết duy nhất 1 bình luận tiếng Việt dựa trên bài viết gốc và sản phẩm được cung cấp.
-
-Dữ liệu:
-- Nội dung bài viết gốc: "${article}"
-- Tên sản phẩm: "${productName || 'Sản phẩm'}"
-${linkInstruction}
-- Phong cách yêu cầu: ${selectedTone}
-
-Quy tắc bắt buộc:
-1. Đọc bài viết trước, chọn 1 chi tiết/cảm xúc chính để mở đầu bằng 1 câu đồng cảm thật tự nhiên.
-2. Nếu sản phẩm liên quan trực tiếp đến bài viết, lồng ghép như một gợi ý hữu ích.
-3. Nếu sản phẩm không liên quan trực tiếp, chuyển ý nhẹ bằng cụm như "À tiện thể", "Sẵn tiện", "Nhân đây".
-4. Không phóng đại công dụng, không cam kết chắc chắn, không giả vờ đã mua nếu dữ liệu không nói vậy.
-5. Không spam, không hashtag, không viết hoa toàn bộ, không dùng quá 1 emoji.
-6. Tổng 2-4 câu. Mỗi câu nên dưới 20 từ. Ngôn ngữ giống người thật bình luận.
-7. Nếu có link, để URL trần ở cuối hoặc gần cuối, không dùng markdown, không đặt trong ngoặc kép.
-8. Câu cuối không có dấu chấm.
-
-Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giải thích.`;
-    }
-
-    async function generateComment() {
-      const article = els.articleInput.value.trim();
-      const productName = els.productNameInput.value.trim();
-      const selectedTone = els.toneSelect.value;
-      const { valid, invalid } = parseLinks(els.productLinkInput.value);
-      const selectedLink = randomFrom(valid);
-
-      if (!article) {
-        toast('Vui lòng dán nội dung bài viết gốc.', 'warning');
-        els.articleInput.focus();
-        return;
-      }
-      if (invalid.length) {
-        toast(`Đã bỏ qua ${invalid.length} link chưa hợp lệ.`, 'warning');
-      }
-
-      if (!isSignedIn()) {
-        const ok = await doSignIn();
-        if (!ok) return;
-      }
-
-      els.generateBtn.disabled = true;
-      els.generateBtn.textContent = '⏳ Đang xử lý...';
-      els.tokenBanner.classList.remove('show');
-      setOutput('Đang phân tích ngữ cảnh và tạo bình luận...', 'loading');
-
-      try {
-        const prompt = buildPrompt({ article, productName, selectedLink, selectedTone });
-        const response = await window.puter.ai.chat(prompt, { model: APP.model });
-        const result = stripAiWrapper(extractResponseText(response));
-        setOutput(result || 'Không có phản hồi từ AI.', result ? '' : 'error');
-
-        if (result) {
-          const copied = await copyText(els.output.textContent, { silent: true });
-          const oldCopyText = els.copyBtn.textContent;
-          if (copied) {
-            els.copyBtn.textContent = '✔️ Đã tự copy';
-            toast('Đã tạo xong và tự động copy kết quả');
-            setTimeout(() => { els.copyBtn.textContent = oldCopyText; }, 2500);
-          } else {
-            els.copyBtn.textContent = 'Copy thủ công';
-            toast('Trình duyệt chặn tự động copy. Bấm nút Sao chép để copy thủ công.', 'warning');
-            setTimeout(() => { els.copyBtn.textContent = oldCopyText; }, 3000);
-          }
-        }
-      } catch (error) {
-        const errText = getErrorText(error);
-        if (isTokenError(errText)) {
-          setOutput('⚠️ Tài khoản Puter hiện tại có thể đã hết token hoặc bị giới hạn. Hãy đổi tài khoản hoặc thử lại sau.', 'error');
-          els.tokenBanner.classList.add('show');
-        } else if (/sign|auth|unauthorized|401/i.test(errText)) {
-          setOutput('🔑 Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.', 'error');
-          await doSignOut();
-        } else {
-          setOutput('❌ Lỗi: ' + errText, 'error');
-        }
-      } finally {
-        els.generateBtn.disabled = false;
-        els.generateBtn.textContent = '✨ Tạo bình luận';
-      }
-    }
-
-    async function copyText(text, options = {}) {
-      const value = String(text || '').trim();
-      if (!value) return false;
-
-      try {
-        await navigator.clipboard.writeText(value);
-        if (!options.silent) toast('Đã sao chép vào clipboard');
-        return true;
-      } catch {
-        const ta = document.createElement('textarea');
-        ta.value = value;
-        ta.style.position = 'fixed';
-        ta.style.opacity = '0';
-        document.body.appendChild(ta);
-        ta.select();
-        let ok = false;
-        try { ok = document.execCommand('copy'); } catch { ok = false; }
-        ta.remove();
-        if (!options.silent) toast(ok ? 'Đã sao chép vào clipboard' : 'Trình duyệt chặn sao chép tự động.', ok ? 'success' : 'warning');
-        return ok;
-      }
-    }
-
-    function clearForm() {
-      els.articleInput.value = '';
-      els.productNameInput.value = '';
-      els.productLinkInput.value = '';
-      els.toneSelect.selectedIndex = 0;
-      setOutput('Bình luận sẽ xuất hiện tại đây...', 'placeholder');
-      els.tokenBanner.classList.remove('show');
-      $$('.tpl-item').forEach(item => item.classList.remove('active'));
-      state.selectedTemplateKey = null;
-      saveDraft();
-      updateCounters();
-      toast('Đã làm mới form');
-    }
-
-    async function pasteArticle() {
-      try {
-        const text = await navigator.clipboard.readText();
-        els.articleInput.value = text;
-        saveDraft();
-        updateCounters();
-        toast('Đã dán nội dung');
-      } catch {
-        toast('Trình duyệt chặn clipboard. Hãy dán thủ công bằng Ctrl+V.', 'warning');
-      }
-    }
-
-    function saveHistory() {
-      const comment = els.output.textContent.trim();
-      if (!comment || els.output.classList.contains('placeholder') || els.output.classList.contains('loading')) {
-        toast('Chưa có bình luận hợp lệ để lưu.', 'warning');
-        return;
-      }
-
-      const history = loadStorage(APP.storage.history, []);
-      history.unshift({
-        comment,
-        product: els.productNameInput.value.trim(),
-        createdAt: new Date().toISOString()
-      });
-      saveStorage(APP.storage.history, history.slice(0, 50));
-      updateStats();
-      toast('Đã lưu bình luận vào lịch sử');
-    }
-
-    function saveDraft() {
-      saveStorage(APP.storage.draft, {
-        article: els.articleInput.value,
-        productName: els.productNameInput.value,
-        productLinks: els.productLinkInput.value,
-        tone: els.toneSelect.value
-      });
-    }
-
-    function restoreDraft() {
-      const draft = loadStorage(APP.storage.draft, null);
-      if (!draft) return;
-      els.articleInput.value = draft.article || '';
-      els.productNameInput.value = draft.productName || '';
-      els.productLinkInput.value = draft.productLinks || '';
-      if (draft.tone) els.toneSelect.value = draft.tone;
-    }
-
-    function openModal(modal) {
-      modal.classList.add('show');
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closeModal(modal) {
-      modal.classList.remove('show');
-      if (!$$('.modal-overlay.show').length) document.body.style.overflow = '';
-    }
-
-
-    function ensureTemplateBuilderModal() {
-      let modal = $('#templateBuilderModal');
-      if (!modal) {
-        modal = document.createElement('div');
-        modal.className = 'modal-overlay';
-        modal.id = 'templateBuilderModal';
-        modal.setAttribute('role', 'dialog');
-        modal.setAttribute('aria-modal', 'true');
-        modal.setAttribute('aria-labelledby', 'builderTitle');
-        modal.innerHTML = `
-          <div class="modal">
-            <h2 id="builderTitle">Quản lý mẫu sản phẩm</h2>
-            <div class="builder-help">
-              Điền mẫu tại đây để sửa nhanh kho mẫu. Sau khi xong, bấm “Tải file web đã cập nhật”, rồi upload file đó thay file index.html cũ.
-            </div>
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="builderSideSelect">Kho mẫu</label>
-                <select id="builderSideSelect">
-                  <option value="left">Kho mẫu trái</option>
-                  <option value="right">Kho mẫu phải</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="builderNameInput">Tên mẫu</label>
-                <input type="text" id="builderNameInput" maxlength="90" placeholder="VD: Đèn NLMT 300W">
-              </div>
-              <div class="form-group">
-                <label for="builderProductInput">Tên sản phẩm</label>
-                <input type="text" id="builderProductInput" maxlength="160" placeholder="VD: Đèn năng lượng mặt trời 300W">
-              </div>
-              <div class="form-group">
-                <label for="builderLinksInput">Danh sách link</label>
-                <textarea id="builderLinksInput" placeholder="Mỗi link một dòng"></textarea>
-              </div>
-            </div>
-            <div class="builder-toolbar">
-              <button class="btn btn-primary" id="builderSaveBtn" type="button">💾 Lưu vào kho mẫu</button>
-              <button class="btn btn-muted" id="builderNewBtn" type="button">+ Nhập mẫu mới</button>
-            </div>
-            <div class="builder-list" id="builderList" aria-live="polite"></div>
-            <div class="builder-export">
-              <button class="btn btn-warning" id="builderDownloadBtn" type="button">⬇️ Tải file web đã cập nhật</button>
-              <button class="btn btn-muted" id="builderCloseBtn" type="button">Đóng</button>
-            </div>
-          </div>`;
-        document.body.appendChild(modal);
-      }
-
-      els.templateBuilderModal = modal;
-      els.builderTitle = $('#builderTitle');
-      els.builderSideSelect = $('#builderSideSelect');
-      els.builderNameInput = $('#builderNameInput');
-      els.builderProductInput = $('#builderProductInput');
-      els.builderLinksInput = $('#builderLinksInput');
-      els.builderSaveBtn = $('#builderSaveBtn');
-      els.builderNewBtn = $('#builderNewBtn');
-      els.builderList = $('#builderList');
-      els.builderDownloadBtn = $('#builderDownloadBtn');
-      els.builderCloseBtn = $('#builderCloseBtn');
-
-      if (modal.dataset.ready === '1') return;
-      modal.dataset.ready = '1';
-
-      els.builderSideSelect.addEventListener('change', () => {
-        state.builderSide = els.builderSideSelect.value === 'right' ? 'right' : 'left';
-        clearBuilderForm(false);
-        renderBuilderList();
-      });
-      els.builderSaveBtn.addEventListener('click', saveBuilderTemplate);
-      els.builderNewBtn.addEventListener('click', () => clearBuilderForm(true));
-      els.builderDownloadBtn.addEventListener('click', downloadUpdatedHtml);
-      els.builderCloseBtn.addEventListener('click', () => closeModal(els.templateBuilderModal));
-      els.builderList.addEventListener('click', (event) => {
-        const btn = event.target.closest('[data-builder-action]');
-        if (!btn) return;
-        const index = Number(btn.dataset.index);
-        const action = btn.dataset.builderAction;
-        if (action === 'edit') editBuilderTemplate(index);
-        if (action === 'delete') deleteBuilderTemplate(index);
-      });
-      modal.addEventListener('click', (event) => {
-        if (event.target === modal) closeModal(modal);
-      });
-    }
-
-    function openTemplateBuilder(side = 'left') {
-      ensureTemplateBuilderModal();
-      state.builderSide = side === 'right' ? 'right' : 'left';
-      els.builderSideSelect.value = state.builderSide;
-      clearBuilderForm(false);
-      renderBuilderList();
-      openModal(els.templateBuilderModal);
-      requestAnimationFrame(() => els.builderNameInput.focus());
-    }
-
-    function getBuilderManager() {
-      return state.managers[state.builderSide];
-    }
-
-    function clearBuilderForm(focus = false) {
-      state.builderEditingIndex = -1;
-      if (!els.builderNameInput) return;
-      els.builderNameInput.value = '';
-      els.builderProductInput.value = '';
-      els.builderLinksInput.value = '';
-      els.builderSaveBtn.textContent = '💾 Lưu vào kho mẫu';
-      if (focus) els.builderNameInput.focus();
-    }
-
-    function renderBuilderList() {
-      const manager = getBuilderManager();
-      if (!manager || !els.builderList) return;
-      els.builderTitle.textContent = `Quản lý mẫu sản phẩm — ${manager.label}`;
-      els.builderList.replaceChildren();
-
-      if (!manager.items.length) {
-        const empty = document.createElement('div');
-        empty.className = 'tpl-empty';
-        empty.textContent = 'Chưa có mẫu nào trong kho này.';
-        els.builderList.appendChild(empty);
-        return;
-      }
-
-      manager.items.forEach((tpl, index) => {
-        const row = document.createElement('div');
-        row.className = 'builder-item';
-
-        const info = document.createElement('div');
-        const name = document.createElement('strong');
-        name.textContent = tpl.name || `Mẫu ${index + 1}`;
-        const meta = document.createElement('span');
-        meta.textContent = `${tpl.product || 'Chưa có sản phẩm'} • ${parseLinks(tpl.links || '').valid.length} link`;
-        info.append(name, meta);
-
-        const actions = document.createElement('div');
-        actions.className = 'builder-item-actions';
-        const editBtn = document.createElement('button');
-        editBtn.type = 'button';
-        editBtn.className = 'btn btn-soft btn-sm';
-        editBtn.textContent = 'Sửa';
-        editBtn.dataset.builderAction = 'edit';
-        editBtn.dataset.index = String(index);
-        const deleteBtn = document.createElement('button');
-        deleteBtn.type = 'button';
-        deleteBtn.className = 'btn btn-danger btn-sm';
-        deleteBtn.textContent = 'Xóa';
-        deleteBtn.dataset.builderAction = 'delete';
-        deleteBtn.dataset.index = String(index);
-        actions.append(editBtn, deleteBtn);
-
-        row.append(info, actions);
-        els.builderList.appendChild(row);
-      });
-    }
-
-    function editBuilderTemplate(index) {
-      const manager = getBuilderManager();
-      const tpl = manager?.items[index];
-      if (!tpl) return;
-      state.builderEditingIndex = index;
-      els.builderNameInput.value = tpl.name || '';
-      els.builderProductInput.value = tpl.product || '';
-      els.builderLinksInput.value = tpl.links || '';
-      els.builderSaveBtn.textContent = '✅ Cập nhật mẫu';
-      els.builderNameInput.focus();
-    }
-
-    function deleteBuilderTemplate(index) {
-      const manager = getBuilderManager();
-      const tpl = manager?.items[index];
-      if (!manager || !tpl) return;
-      if (!confirm(`Xóa mẫu "${tpl.name || `Mẫu ${index + 1}`}" khỏi file web mới?`)) return;
-      manager.items.splice(index, 1);
-      if (state.selectedTemplateKey === `${manager.key}:${index}`) state.selectedTemplateKey = null;
-      manager.render();
-      renderBuilderList();
-      updateStats();
-      toast('Đã xóa mẫu khỏi bản đang chỉnh');
-    }
-
-    function saveBuilderTemplate() {
-      const manager = getBuilderManager();
-      if (!manager) return;
-
-      const name = els.builderNameInput.value.trim();
-      const product = els.builderProductInput.value.trim();
-      const links = els.builderLinksInput.value.trim();
-      const parsed = parseLinks(links);
-
-      if (!name) {
-        toast('Vui lòng nhập tên mẫu.', 'warning');
-        els.builderNameInput.focus();
-        return;
-      }
-      if (!product) {
-        toast('Vui lòng nhập tên sản phẩm.', 'warning');
-        els.builderProductInput.focus();
-        return;
-      }
-      if (links && !parsed.valid.length) {
-        toast('Danh sách link chưa có URL hợp lệ.', 'warning');
-        els.builderLinksInput.focus();
-        return;
-      }
-      if (parsed.invalid.length) {
-        toast(`Đã bỏ qua ${parsed.invalid.length} link chưa hợp lệ.`, 'warning');
-      }
-
-      const payload = {
-        name,
-        product,
-        links: parsed.valid.join('\n')
-      };
-
-      if (state.builderEditingIndex >= 0) manager.items[state.builderEditingIndex] = payload;
-      else manager.items.push(payload);
-
-      manager.render();
-      renderBuilderList();
-      clearBuilderForm(false);
-      updateStats();
-      toast('Đã lưu mẫu vào bản đang chỉnh. Nhớ tải file web mới để cập nhật thật.');
-    }
-
-    function getTemplatesForExport() {
+    function getSettings() {
       return {
-        left: normalizeManualTemplates(state.managers.left?.items || []),
-        right: normalizeManualTemplates(state.managers.right?.items || [])
+        apiUrl: String(els.apiUrl.value || '').trim() || 'https://id.traodoisub.com/api.php',
+        concurrency: clamp(els.concurrency.value, 1, 20, 5),
+        delayMs: clamp(els.delayMs.value, 0, 10000, 500),
+        retryCount: clamp(els.retryCount.value, 0, 10, 4),
+        timeoutMs: 25000
       };
     }
 
-    function buildManualTemplatesSource() {
-      const json = JSON.stringify(getTemplatesForExport(), null, 8)
-        .replace(/\n/g, '\n      ');
-      return `manualTemplates: ${json}`;
+    function buildResultsFromInput() {
+      const links = extractLinks(els.inputLinks.value);
+      const seenUid = new Set();
+
+      results = links.map((link, index) => {
+        const directUid = extractDirectUid(link);
+        const row = {
+          index: index + 1,
+          link,
+          uid: directUid,
+          status: directUid ? 'done' : 'queued',
+          source: directUid ? DIRECT_SOURCE : '',
+          attempts: 0,
+          error: '',
+          updatedAt: ''
+        };
+
+        if (directUid) seenUid.add(directUid);
+        return row;
+      });
+
+      queue = results.filter((row) => !row.uid);
+      cursor = 0;
+      return { links, seenUid };
     }
 
-    function downloadUpdatedHtml() {
-      try {
-        const clone = document.documentElement.cloneNode(true);
-        clone.querySelectorAll('.modal-overlay.show').forEach(item => item.classList.remove('show'));
-        const cloneBody = clone.querySelector('body');
-        if (cloneBody) cloneBody.style.overflow = '';
+    async function gateRequest(delayMs) {
+      const jitter = delayMs > 0 ? Math.floor(Math.random() * Math.min(350, Math.max(80, delayMs))) : 0;
+      const wait = Math.max(0, delayMs + jitter);
+      const previous = requestGate;
+      let release;
+      requestGate = new Promise((resolve) => { release = resolve; });
+      await previous;
+      if (wait) await sleep(wait);
+      release();
+    }
 
-        let html = '<!DOCTYPE html>\n' + clone.outerHTML;
-        const replacement = `${buildManualTemplatesSource()},\n      tokenErrorPatterns:`;
-        const pattern = /manualTemplates:\s*\{[\s\S]*?\n\s*\},\n\s*tokenErrorPatterns:/;
-        if (!pattern.test(html)) {
-          toast('Không tìm thấy vùng manualTemplates để cập nhật file.', 'error');
-          return;
+    async function fetchUid(link, settings) {
+      await gateRequest(settings.delayMs);
+
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), settings.timeoutMs);
+
+      try {
+        const response = await fetch(settings.apiUrl, {
+          method: 'POST',
+          cache: 'no-store',
+          credentials: 'omit',
+          signal: controller.signal,
+          headers: {
+            'Accept': 'application/json, text/plain, */*',
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+          },
+          body: new URLSearchParams({ link }).toString()
+        });
+
+        const text = await response.text();
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          throw new Error('API không trả JSON hợp lệ. Có thể bị CORS/chặn hoặc server quá tải.');
         }
 
-        html = html.replace(pattern, replacement);
-        const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        const stamp = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '');
-        a.href = url;
-        a.download = `index_updated_${stamp}.html`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 1200);
-        toast('Đã tải file web mới. Upload file này thay index.html cũ là xong.');
-      } catch (error) {
-        toast('Lỗi xuất file: ' + getErrorText(error), 'error');
+        const uid = parseUidFromResponse(data);
+        if (!uid) throw new Error(getApiError(data));
+
+        return uid;
+      } finally {
+        clearTimeout(timer);
       }
     }
 
-    function normalizeManualTemplates(items) {
-      return (Array.isArray(items) ? items : [])
-        .map((tpl, index) => {
-          const rawLinks = Array.isArray(tpl.links)
-            ? tpl.links.filter(Boolean).join('\n')
-            : String(tpl.links || '');
+    async function resolveRow(row, settings) {
+      row.status = 'running';
+      row.error = '';
+      row.updatedAt = nowText();
+      scheduleRender();
 
-          return {
-            name: String(tpl.name || `Mẫu ${index + 1}`).trim(),
-            product: String(tpl.product || '').trim(),
-            links: rawLinks.trim()
-          };
-        })
-        .filter(tpl => tpl.name || tpl.product || tpl.links);
-    }
+      for (let attempt = 1; attempt <= settings.retryCount + 1; attempt += 1) {
+        if (stopped) return;
 
-    function showManualTemplateGuide(key, label) {
-      openTemplateBuilder(key);
-    }
+        while (paused && !stopped) {
+          row.status = 'paused';
+          scheduleRender();
+          await sleep(250);
+        }
 
-    function createTemplateManager({ key, listEl, label }) {
-      const manager = {
-        key,
-        label,
-        listEl,
-        items: normalizeManualTemplates(APP.manualTemplates[key]),
+        if (stopped) return;
 
-        render() {
-          listEl.replaceChildren();
+        row.status = 'running';
+        row.attempts = attempt;
+        row.updatedAt = nowText();
+        scheduleRender();
 
-          if (!this.items.length) {
-            const empty = document.createElement('div');
-            empty.className = 'tpl-empty';
-            empty.textContent = `Chưa có mẫu cố định trong ${label}. Mở file HTML và thêm tại APP.manualTemplates.${key}.`;
-            listEl.appendChild(empty);
-            updateStats();
+        try {
+          const uid = await fetchUid(row.link, settings);
+          row.uid = uid;
+          row.status = 'done';
+          row.source = API_SOURCE;
+          row.error = '';
+          row.updatedAt = nowText();
+          scheduleRender();
+          return;
+        } catch (error) {
+          const message = error?.name === 'AbortError' ? 'API quá thời gian phản hồi.' : (error?.message || String(error));
+          row.error = message;
+          row.updatedAt = nowText();
+
+          if (attempt > settings.retryCount) {
+            row.status = 'failed';
+            scheduleRender();
             return;
           }
 
-          this.items.forEach((tpl, index) => {
-            const item = document.createElement('article');
-            item.className = 'tpl-item';
-            if (state.selectedTemplateKey === `${key}:${index}`) item.classList.add('active');
-            item.dataset.index = String(index);
-            item.tabIndex = 0;
-            item.setAttribute('role', 'button');
-            item.setAttribute('aria-label', `Áp dụng mẫu ${tpl.name}`);
-
-            const icon = document.createElement('div');
-            icon.className = 'tpl-icon';
-            icon.textContent = '📦';
-
-            const info = document.createElement('div');
-            const name = document.createElement('div');
-            name.className = 'tpl-name';
-            name.textContent = tpl.name || 'Chưa đặt tên';
-            const meta = document.createElement('div');
-            meta.className = 'tpl-meta';
-            const linkCount = parseLinks(tpl.links || '').valid.length;
-            meta.textContent = `${tpl.product || 'Chưa có sản phẩm'} • ${linkCount} link`;
-            info.append(name, meta);
-
-            const actions = document.createElement('div');
-            actions.className = 'tpl-actions';
-            const edit = document.createElement('button');
-            edit.type = 'button';
-            edit.className = 'btn btn-soft btn-icon';
-            edit.textContent = '✏️';
-            edit.title = 'Sửa nhanh mẫu';
-            edit.dataset.action = 'edit';
-
-            const del = document.createElement('button');
-            del.type = 'button';
-            del.className = 'btn btn-danger btn-icon';
-            del.textContent = '🗑️';
-            del.title = 'Xóa nhanh mẫu';
-            del.dataset.action = 'delete';
-            actions.append(edit, del);
-
-            item.append(icon, info, actions);
-            listEl.appendChild(item);
-          });
-          updateStats();
-        },
-
-        apply(index) {
-          const tpl = this.items[index];
-          if (!tpl) return;
-          els.productNameInput.value = tpl.product || '';
-          els.productLinkInput.value = tpl.links || '';
-          state.selectedTemplateKey = `${key}:${index}`;
-          Object.values(state.managers).forEach(mgr => mgr.render());
-          updateCounters();
-          saveDraft();
-          els.productNameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          toast(`Đã áp dụng mẫu: ${tpl.name}`);
-        },
-
-        openAdd() {
-          showManualTemplateGuide(key, label);
+          row.status = 'retry';
+          const backoff = Math.min(12000, 900 * Math.pow(1.65, attempt - 1)) + Math.floor(Math.random() * 700);
+          setMessage(`Retry ${attempt}/${settings.retryCount}: ${row.link}\nLý do: ${message}`);
+          scheduleRender();
+          await sleep(backoff);
         }
+      }
+    }
+
+    function getNextRow() {
+      if (cursor >= queue.length) return null;
+      const row = queue[cursor];
+      cursor += 1;
+      return row;
+    }
+
+    async function worker(settings) {
+      while (!stopped) {
+        while (paused && !stopped) await sleep(250);
+        if (stopped) return;
+
+        const row = getNextRow();
+        if (!row) return;
+
+        active += 1;
+        scheduleRender();
+        try {
+          await resolveRow(row, settings);
+        } finally {
+          active = Math.max(0, active - 1);
+          scheduleRender();
+        }
+      }
+    }
+
+    async function start() {
+      if (running) return;
+
+      const settings = getSettings();
+      buildResultsFromInput();
+
+      if (!results.length) {
+        setMessage('Không tìm thấy link Facebook hợp lệ. Hãy dán link mỗi dòng một link.');
+        render();
+        return;
+      }
+
+      running = true;
+      paused = false;
+      stopped = false;
+      active = 0;
+      startedAt = Date.now();
+      finishedCountAtStart = results.filter((row) => row.status === 'done').length;
+      requestGate = Promise.resolve();
+
+      setControls();
+      setMessage(`Bắt đầu đổi ${queue.length} link cần gọi API. Link có UID sẵn đã được lấy trực tiếp.`);
+      render();
+      saveState();
+
+      const workerCount = Math.min(settings.concurrency, queue.length || 1);
+      await Promise.all(Array.from({ length: workerCount }, () => worker(settings)));
+
+      running = false;
+      paused = false;
+      active = 0;
+      setControls();
+      render();
+      saveState();
+
+      const ok = results.filter((row) => row.uid).length;
+      const fail = results.filter((row) => row.status === 'failed').length;
+      setMessage(stopped ? `Đã dừng. Có ${ok} UID, lỗi ${fail}.` : `Hoàn tất. Có ${ok} UID, lỗi ${fail}.`);
+    }
+
+    function pauseResume() {
+      if (!running) return;
+      paused = !paused;
+      els.pauseBtn.textContent = paused ? 'Tiếp tục' : 'Tạm dừng';
+      setMessage(paused ? 'Đã tạm dừng. Bấm Tiếp tục để chạy tiếp.' : 'Đang chạy tiếp...');
+      setControls();
+      render();
+    }
+
+    function stop() {
+      stopped = true;
+      paused = false;
+      setMessage('Đang dừng các request còn lại...');
+      setControls();
+    }
+
+    function getUidList() {
+      const seen = new Set();
+      const output = [];
+      for (const row of results) {
+        if (!/^\d{4,}$/.test(String(row.uid || ''))) continue;
+        if (seen.has(row.uid)) continue;
+        seen.add(row.uid);
+        output.push(row.uid);
+      }
+      return output;
+    }
+
+    function buildCsv() {
+      const esc = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+      const header = ['index', 'link', 'uid', 'status', 'source', 'attempts', 'error', 'updated_at'].map(esc).join(',');
+      const body = results.map((row) => [
+        row.index, row.link, row.uid, row.status, row.source, row.attempts, row.error, row.updatedAt
+      ].map(esc).join(',')).join('\n');
+      return `\uFEFF${header}\n${body}`;
+    }
+
+    async function copyUids() {
+      const text = getUidList().join('\n');
+      if (!text) return setMessage('Chưa có UID để copy.');
+      await navigator.clipboard.writeText(text);
+      setMessage(`Đã copy ${getUidList().length} UID.`);
+    }
+
+    function download(filename, mime, content) {
+      const blob = new Blob([content], { type: `${mime};charset=utf-8` });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1200);
+    }
+
+    function downloadTxt() {
+      const uids = getUidList();
+      if (!uids.length) return setMessage('Chưa có UID để tải TXT.');
+      download(`facebook-uids-${Date.now()}.txt`, 'text/plain', uids.join('\n'));
+    }
+
+    function downloadCsv() {
+      if (!results.length) return setMessage('Chưa có dữ liệu để tải CSV.');
+      download(`facebook-link-uid-${Date.now()}.csv`, 'text/csv', buildCsv());
+    }
+
+    function clearAll() {
+      if (running) return;
+      els.inputLinks.value = '';
+      els.outputUids.value = '';
+      results = [];
+      queue = [];
+      cursor = 0;
+      active = 0;
+      localStorage.removeItem(STORAGE_KEY);
+      setMessage('Đã xóa dữ liệu.');
+      render();
+      setControls();
+    }
+
+    function sample() {
+      els.inputLinks.value = [
+        'https://www.facebook.com/zuck',
+        'https://www.facebook.com/profile.php?id=100000000000000',
+        'https://www.facebook.com/groups/123456789/user/61551083814184/',
+        'https://www.facebook.com/people/Example-Name/100011112222333/'
+      ].join('\n');
+      updateInputCount();
+      setMessage('Đã dán mẫu. Bấm Bắt đầu đổi để chạy thử.');
+      saveState();
+    }
+
+    function toggleDetail() {
+      const show = els.tableWrap.style.display !== 'block';
+      els.tableWrap.style.display = show ? 'block' : 'none';
+      els.showDetailBtn.textContent = show ? 'Ẩn chi tiết' : 'Bảng chi tiết';
+      renderTable();
+    }
+
+    function setControls() {
+      els.startBtn.disabled = running;
+      els.pauseBtn.disabled = !running;
+      els.stopBtn.disabled = !running;
+      els.clearBtn.disabled = running;
+      els.pauseBtn.textContent = paused ? 'Tiếp tục' : 'Tạm dừng';
+    }
+
+    function updateInputCount() {
+      const count = extractLinks(els.inputLinks.value).length;
+      els.inputCount.textContent = `${count} link hợp lệ`;
+    }
+
+    function scheduleRender() {
+      if (renderTimer) return;
+      renderTimer = requestAnimationFrame(() => {
+        renderTimer = 0;
+        render();
+        saveState();
+      });
+    }
+
+    function render() {
+      const total = results.length;
+      const done = results.filter((row) => ['done', 'failed'].includes(row.status)).length;
+      const uidCount = getUidList().length;
+      const fail = results.filter((row) => row.status === 'failed').length;
+      const percent = total ? Math.round(done / total * 100) : 0;
+      const elapsed = startedAt ? Math.max(1, (Date.now() - startedAt) / 1000) : 1;
+      const speed = running ? Math.max(0, (done - finishedCountAtStart) / elapsed) : 0;
+
+      els.statTotal.textContent = total;
+      els.statDone.textContent = done;
+      els.statUid.textContent = uidCount;
+      els.statFail.textContent = fail;
+      els.statActive.textContent = active;
+      els.statSpeed.textContent = `${speed.toFixed(1)}/s`;
+      els.progress.style.width = `${percent}%`;
+      els.outputUids.value = getUidList().join('\n');
+      els.outputCount.textContent = `${uidCount} UID`;
+      updateInputCount();
+
+      if (els.tableWrap.style.display === 'block') renderTable();
+    }
+
+    function renderTable() {
+      const rows = results.slice(0, 500).map((row) => {
+        const statusClass = row.status === 'done' ? 'ok' : (row.status === 'failed' ? 'fail' : 'wait');
+        return `<tr>
+          <td>${row.index}</td>
+          <td>${escapeHtml(row.link)}</td>
+          <td>${escapeHtml(row.uid || '')}</td>
+          <td class="${statusClass}">${escapeHtml(row.status)}${row.attempts ? ` (${row.attempts})` : ''}</td>
+          <td>${escapeHtml(row.error || '')}</td>
+        </tr>`;
+      }).join('');
+
+      els.detailRows.innerHTML = rows || '<tr><td colspan="5">Chưa có dữ liệu.</td></tr>';
+    }
+
+    function escapeHtml(text) {
+      return String(text ?? '').replace(/[&<>"']/g, (ch) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[ch]));
+    }
+
+    function saveState() {
+      const payload = {
+        apiUrl: els.apiUrl.value,
+        concurrency: els.concurrency.value,
+        delayMs: els.delayMs.value,
+        retryCount: els.retryCount.value,
+        input: els.inputLinks.value,
+        results
       };
-
-      listEl.addEventListener('click', (event) => {
-        const item = event.target.closest('.tpl-item');
-        if (!item) return;
-        const index = Number(item.dataset.index);
-        const action = event.target.closest('[data-action]')?.dataset.action;
-        if (action === 'edit') {
-          openTemplateBuilder(key);
-          editBuilderTemplate(index);
-          return;
-        }
-        if (action === 'delete') {
-          state.builderSide = key;
-          ensureTemplateBuilderModal();
-          deleteBuilderTemplate(index);
-          return;
-        }
-        manager.apply(index);
-      });
-
-      listEl.addEventListener('keydown', (event) => {
-        if (event.key !== 'Enter' && event.key !== ' ') return;
-        const item = event.target.closest('.tpl-item');
-        if (!item) return;
-        event.preventDefault();
-        manager.apply(Number(item.dataset.index));
-      });
-
-      manager.render();
-      return manager;
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      } catch {
+        // Bỏ qua khi trình duyệt chặn localStorage hoặc dữ liệu quá lớn.
+      }
     }
 
-    function wireEvents() {
-      els.loginBtn.addEventListener('click', doSignIn);
-      els.logoutBtn.addEventListener('click', async () => {
-        if (confirm('Đăng xuất khỏi Puter?')) await doSignOut();
-      });
-      els.switchBtn.addEventListener('click', () => openModal(els.switchModal));
-      els.btnRelogin.addEventListener('click', () => openModal(els.switchModal));
-      els.btnConfirmSwitch.addEventListener('click', doSwitchAccount);
-      els.btnCancelSwitch.addEventListener('click', () => closeModal(els.switchModal));
-      els.generateBtn.addEventListener('click', generateComment);
-      els.clearBtn.addEventListener('click', clearForm);
-      els.pasteBtn.addEventListener('click', pasteArticle);
-      els.copyBtn.addEventListener('click', () => copyText(els.output.textContent));
-      els.saveHistoryBtn.addEventListener('click', saveHistory);
-      $('#btnAddTplLeft').addEventListener('click', () => state.managers.left.openAdd());
-      $('#btnAddTpl').addEventListener('click', () => state.managers.right.openAdd());
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        els.apiUrl.value = data.apiUrl || els.apiUrl.value;
+        els.concurrency.value = data.concurrency || els.concurrency.value;
+        els.delayMs.value = data.delayMs || els.delayMs.value;
+        els.retryCount.value = data.retryCount || els.retryCount.value;
+        els.inputLinks.value = data.input || '';
+        results = Array.isArray(data.results) ? data.results : [];
+      } catch {
+        // Bỏ qua dữ liệu lưu bị hỏng.
+      }
+    }
 
-      [els.articleInput, els.productNameInput, els.productLinkInput, els.toneSelect].forEach(input => {
-        input.addEventListener('input', () => {
-          updateCounters();
-          saveDraft();
-        });
-        input.addEventListener('change', saveDraft);
-      });
+    els.startBtn.addEventListener('click', start);
+    els.pauseBtn.addEventListener('click', pauseResume);
+    els.stopBtn.addEventListener('click', stop);
+    els.copyUidBtn.addEventListener('click', copyUids);
+    els.downloadTxtBtn.addEventListener('click', downloadTxt);
+    els.downloadCsvBtn.addEventListener('click', downloadCsv);
+    els.clearBtn.addEventListener('click', clearAll);
+    els.sampleBtn.addEventListener('click', sample);
+    els.showDetailBtn.addEventListener('click', toggleDetail);
 
-      els.switchModal.addEventListener('click', event => {
-        if (event.target === els.switchModal) closeModal(els.switchModal);
-      });
-
-      document.addEventListener('keydown', event => {
-        if (event.key === 'Escape') {
-          closeModal(els.switchModal);
-          if (els.templateBuilderModal) closeModal(els.templateBuilderModal);
-        }
-        if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
-          event.preventDefault();
-          generateComment();
-        }
+    for (const el of [els.inputLinks, els.apiUrl, els.concurrency, els.delayMs, els.retryCount]) {
+      el.addEventListener('input', () => {
+        updateInputCount();
+        saveState();
       });
     }
 
-    async function init() {
-      state.managers.left = createTemplateManager({
-        key: 'left',
-        listEl: $('#tplListLeft'),
-        label: 'Kho mẫu trái'
-      });
-      state.managers.right = createTemplateManager({
-        key: 'right',
-        listEl: $('#tplList'),
-        label: 'Kho mẫu phải'
-      });
-
-      restoreDraft();
-      wireEvents();
-      updateStats();
-      await updateAuthUI();
-    }
-
-    window.addEventListener('DOMContentLoaded', init);
+    loadState();
+    setControls();
+    render();
   </script>
 </body>
 </html>
