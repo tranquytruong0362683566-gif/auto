@@ -229,6 +229,7 @@
     textarea::placeholder, input::placeholder { color: #98a2b3; }
     textarea { min-height: 96px; resize: vertical; }
     #fbPostLinkInput { min-height: 112px; font-family: Consolas, "SFMono-Regular", Menlo, monospace; }
+    #fbGroupIdInput { min-height: 92px; font-family: Consolas, "SFMono-Regular", Menlo, monospace; }
     #productLinkInput { min-height: 78px; }
 
     .field-status {
@@ -550,6 +551,18 @@
               <span class="counter">Bridge Extension</span>
             </div>
 
+
+            <div class="form-group">
+              <label for="fbGroupIdInput">UID nhóm Facebook</label>
+              <textarea id="fbGroupIdInput" spellcheck="false" placeholder="Nhập nhiều UID nhóm hoặc link nhóm, mỗi dòng một nhóm"></textarea>
+              <div class="hint">Mặc định: mỗi nhóm lấy 5 permalink mới nhất · cuộn tối đa 35 · delay cuộn 2200ms · chỉ lấy link /permalink/ sau khi click được ô bình luận.</div>
+            </div>
+
+            <div class="actions bridge-actions">
+              <button class="btn btn-soft" id="scanGroupLinksBtn" type="button">🧲 Quét nhóm → đổ link</button>
+              <button class="btn btn-muted" id="copyScannedLinksBtn" type="button">📋 Copy link đã quét</button>
+            </div>
+
             <div class="form-group">
               <label for="fbPostLinkInput">Link bài viết Facebook</label>
               <textarea id="fbPostLinkInput" spellcheck="false" placeholder="Dán nhiều link bài viết / UID bài viết Facebook, mỗi link một dòng"></textarea>
@@ -734,6 +747,9 @@
       switchModal: $('#switchModal'),
       btnConfirmSwitch: $('#btnConfirmSwitch'),
       btnCancelSwitch: $('#btnCancelSwitch'),
+      fbGroupIdInput: $('#fbGroupIdInput'),
+      scanGroupLinksBtn: $('#scanGroupLinksBtn'),
+      copyScannedLinksBtn: $('#copyScannedLinksBtn'),
       fbPostLinkInput: $('#fbPostLinkInput'),
       bridgeExtensionId: $('#bridgeExtensionId'),
       fbDelayMs: $('#fbDelayMs'),
@@ -1008,10 +1024,12 @@
     }
 
     function getBridgeSettings() {
+      const fbGroupIdRaw = els.fbGroupIdInput.value.trim();
       const fbPostLinkRaw = els.fbPostLinkInput.value.trim();
       const fbPostLinks = parseFbPostLinks(fbPostLinkRaw);
       return {
         extensionId: els.bridgeExtensionId.value.trim(),
+        fbGroupIdRaw,
         fbPostLinkRaw,
         fbPostLinks,
         fbPostLink: fbPostLinks[0] || '',
@@ -1030,6 +1048,7 @@
       const saved = loadStorage(APP.storage.bridge, null);
       if (!saved) return;
       els.bridgeExtensionId.value = saved.extensionId || '';
+      els.fbGroupIdInput.value = saved.fbGroupIdRaw || saved.groupIds || '';
       els.fbPostLinkInput.value = saved.fbPostLinkRaw || saved.fbPostLink || '';
       els.fbDelayMs.value = String(saved.delayMs || 7000);
       els.fbMaxChars.value = String(saved.maxChars || 20000);
@@ -1061,6 +1080,76 @@
           resolve(response || { ok: false, error: 'Extension không trả dữ liệu.' });
         });
       });
+    }
+
+
+
+    async function scanGroupLinksToPostBox() {
+      const oldText = els.scanGroupLinksBtn.textContent;
+      try {
+        const settings = assertBridgeReady();
+        const groupIdsRaw = settings.fbGroupIdRaw;
+        if (!groupIdsRaw) {
+          els.fbGroupIdInput.focus();
+          throw new Error('Chưa nhập UID nhóm Facebook.');
+        }
+
+        els.scanGroupLinksBtn.disabled = true;
+        els.copyScannedLinksBtn.disabled = true;
+        els.scanGroupLinksBtn.textContent = '⏳ Đang quét...';
+        setBridgeStatus('Đang quét nhóm Facebook và lấy permalink mới nhất...', 'warn');
+        saveBridgeSettings();
+
+        const response = await sendToBridge({
+          action: 'SCAN_GROUP_PERMALINKS',
+          groupIds: groupIdsRaw,
+          limit: 5,
+          maxRounds: 35,
+          loadDelay: 2200,
+          commentDelay: 2400,
+          closeAfter: true,
+          active: false,
+          resetTop: true,
+          skipPinned: true
+        });
+
+        if (!response.ok || !Array.isArray(response.links) || !response.links.length) {
+          const detail = Array.isArray(response.reports) && response.reports.length
+            ? response.reports.map(r => `${r.groupId}: ${r.count || 0}/5${r.error ? ` | ${r.error}` : ''}`).join('\n')
+            : '';
+          throw new Error((response.error || 'Không lấy được link nào.') + (detail ? `\n${detail}` : ''));
+        }
+
+        els.fbPostLinkInput.value = response.links.join('\n');
+        saveBridgeSettings();
+        updateCounters();
+        await copyText(response.links.join('\n'), { silent: true });
+
+        const reports = Array.isArray(response.reports) ? response.reports : [];
+        const reportText = reports.length
+          ? '\n' + reports.map(r => `- ${r.groupId}: ${r.count || 0}/5 link`).join('\n')
+          : '';
+        setBridgeStatus(`Đã quét xong ${response.totalLinks || response.links.length} link từ ${response.totalGroups || reports.length || 1} nhóm và đã đổ vào ô Link bài viết Facebook.${reportText}`, 'ok');
+        toast(`Đã đổ ${response.links.length} link vào ô Link bài viết Facebook`);
+        return response.links;
+      } catch (error) {
+        setBridgeStatus('❌ ' + getErrorText(error), 'error');
+        toast(getErrorText(error), 'error');
+        return [];
+      } finally {
+        els.scanGroupLinksBtn.disabled = false;
+        els.copyScannedLinksBtn.disabled = false;
+        els.scanGroupLinksBtn.textContent = oldText;
+      }
+    }
+
+    async function copyScannedPostLinks() {
+      const text = els.fbPostLinkInput.value.trim();
+      if (!text) {
+        toast('Chưa có link bài viết để copy.', 'warning');
+        return;
+      }
+      await copyText(text);
     }
 
     async function readFacebookPostToArticle(options = {}) {
@@ -1385,6 +1474,7 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
       els.articleInput.value = '';
       els.productNameInput.value = '';
       els.productLinkInput.value = '';
+      els.fbGroupIdInput.value = '';
       els.fbPostLinkInput.value = '';
       state.activeFbTabId = null;
       state.activeFbUrl = '';
@@ -1652,6 +1742,8 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
       els.btnConfirmSwitch.addEventListener('click', doSwitchAccount);
       els.btnCancelSwitch.addEventListener('click', () => closeModal(els.switchModal));
       els.generateBtn.addEventListener('click', generateComment);
+      els.scanGroupLinksBtn.addEventListener('click', scanGroupLinksToPostBox);
+      els.copyScannedLinksBtn.addEventListener('click', copyScannedPostLinks);
       els.readFbPostBtn.addEventListener('click', async () => {
         try { await readFacebookPostToArticle({ keepTab: true }); }
         catch (error) { setBridgeStatus('❌ ' + getErrorText(error), 'error'); toast(getErrorText(error), 'error'); }
@@ -1675,7 +1767,7 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
         input.addEventListener('change', saveDraft);
       });
 
-      [els.fbPostLinkInput, els.bridgeExtensionId, els.fbDelayMs, els.fbMaxChars, els.autoCommentAfterGenerate, els.closeAfterComment].forEach(input => {
+      [els.fbGroupIdInput, els.fbPostLinkInput, els.bridgeExtensionId, els.fbDelayMs, els.fbMaxChars, els.autoCommentAfterGenerate, els.closeAfterComment].forEach(input => {
         input.addEventListener('input', saveBridgeSettings);
         input.addEventListener('change', saveBridgeSettings);
       });
