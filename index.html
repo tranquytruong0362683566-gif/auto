@@ -581,7 +581,7 @@
             <div class="bridge-grid hidden">
               <div class="form-group">
                 <label for="fbDelayMs">Thời gian chờ tải tab</label>
-                <input id="fbDelayMs" type="number" min="1000" max="30000" step="500" value="7000">
+                <input id="fbDelayMs" type="number" min="1000" max="30000" step="500" value="5000">
               </div>
               <div class="form-group">
                 <label for="fbMaxChars">Giới hạn nội dung lấy</label>
@@ -1139,7 +1139,7 @@
         fbPostLinkRaw,
         fbPostLinks,
         fbPostLink: fbPostLinks[0] || '',
-        delayMs: Math.max(1000, Math.min(30000, Number(els.fbDelayMs.value) || 7000)),
+        delayMs: Math.max(5000, Math.min(30000, Number(els.fbDelayMs.value) || 5000)),
         maxChars: Math.max(100, Math.min(50000, Number(els.fbMaxChars.value) || 20000)),
         autoComment: true,
         closeAfterComment: true
@@ -1156,7 +1156,7 @@
       els.bridgeExtensionId.value = saved.extensionId || '';
       els.fbGroupIdInput.value = saved.fbGroupIdRaw || saved.groupIds || '';
       els.fbPostLinkInput.value = saved.fbPostLinkRaw || saved.fbPostLink || '';
-      els.fbDelayMs.value = String(saved.delayMs || 7000);
+      els.fbDelayMs.value = String(Math.max(5000, Number(saved.delayMs) || 5000));
       els.fbMaxChars.value = String(saved.maxChars || 20000);
       els.autoCommentAfterGenerate.checked = true;
       els.closeAfterComment.checked = true;
@@ -1379,7 +1379,7 @@
       state.activeFbTabId = response.tabId || null;
       state.activeFbUrl = response.tabId ? url : '';
       if (response.posted) {
-        setBridgeStatus(settings.closeAfterComment ? 'Đã gửi bình luận và đã đóng tab Facebook.' : 'Đã gửi bình luận vào tab Facebook.', 'ok');
+        setBridgeStatus(settings.closeAfterComment ? 'Đã gửi bình luận, giữ tab 10–20 giây rồi mới đóng.' : 'Đã gửi bình luận vào tab Facebook.', 'ok');
         toast('Đã comment trực tiếp vào bài viết');
       } else {
         setBridgeStatus(response.error || 'Đã điền bình luận nhưng chưa xác nhận được nút gửi.', 'warn');
