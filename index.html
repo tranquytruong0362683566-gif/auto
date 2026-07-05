@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>AI Auto Comment Facebook - GitHub Web</title>
+  <title>AI Auto Comment Facebook - Index7 Merged FB Post Logic</title>
 <style>
     :root {
       --bg: #f4f6fb;
@@ -513,55 +513,6 @@
       .brand h1 { font-size: 16px; }
     }
   </style>
-
-  <style>
-    :root {
-      --bg: #f6f6f6;
-      --surface: #fff;
-      --surface-soft: #f1f1f1;
-      --surface-strong: #f1f1f1;
-      --text: #111;
-      --muted: #666;
-      --subtle: #777;
-      --border: #ddd;
-      --border-strong: #bbb;
-      --primary: #111;
-      --primary-hover: #333;
-      --primary-soft: #f1f1f1;
-      --success: #111;
-      --success-soft: #f1f1f1;
-      --warning: #7a4b00;
-      --warning-soft: #f8f8f8;
-      --danger: #b00020;
-      --danger-soft: #fff5f6;
-      --shadow-sm: none;
-      --shadow-md: none;
-      --radius-lg: 10px;
-      --radius-md: 8px;
-      --radius-sm: 7px;
-      --font: Arial, sans-serif;
-    }
-    body { background: var(--bg); }
-    .app-shell { width: min(100%, 1180px); grid-template-columns: 260px 1fr 260px; gap: 12px; padding: 16px; }
-    .card, .modal, .auth-bar, .automation-panel, .output-box, .tpl-item, .tpl-empty, input[type="text"], input[type="number"], textarea, select {
-      border-color: var(--border);
-      box-shadow: none;
-    }
-    .hero { background: transparent; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; padding: 0 0 12px; margin-bottom: 12px; }
-    .brand-logo, .auth-avatar, .tpl-icon { background: var(--surface-soft); color: var(--text); }
-    .pro-badge { background: #fff; color: var(--text); border-color: var(--border); }
-    .btn { border-radius: 8px; }
-    .btn-primary { background: #111; border-color: #111; color: #fff; }
-    .btn-primary:hover:not(:disabled) { background: #333; }
-    .btn-soft, .btn-muted, .btn-warning { background: #fff; color: #111; border-color: #111; }
-    .btn-danger { color: var(--danger); border-color: var(--danger); background: #fff; }
-    .automation-panel { background: #fff; }
-    .automation-status { background: var(--surface-soft); border-color: var(--border); }
-    .automation-status.ok { color: #111; background: var(--surface-soft); }
-    .automation-status.warn { color: var(--warning); background: #fff; }
-    .automation-status.error { color: var(--danger); background: var(--danger-soft); }
-    #commentedLinksBox { background: #fff; }
-  </style>
 </head>
 <body>
   <div class="app-shell">
@@ -585,7 +536,7 @@
               <p>Nhập link bài viết, tự lấy nội dung gốc, tạo bình luận, copy và gửi vào tab Facebook.</p>
             </div>
           </div>
-          <span class="pro-badge">⚡ AUTO FB LOCAL V1.7.8 + PUTER</span>
+          <span class="pro-badge">⚡ INDEX7 + AUTO FB + FB_POST LOGIC</span>
         </header>
 
         <div class="auth-bar">
@@ -1764,14 +1715,16 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
 
       setBridgeStatus('Đang mở tab và lấy nội dung bài viết...', 'warn');
       const response = await sendBridge(
-        ['READ_FB_POST_TITLE', 'READ_FB_POST', 'READ_FACEBOOK_POST', 'readFbPost', 'readFacebookPost', 'READ_POST'],
+        ['READ_FB_POST_TITLE', 'SCAN_FACEBOOK_POST', 'READ_FB_POST', 'READ_FACEBOOK_POST', 'readFbPost', 'readFacebookPost', 'READ_POST'],
         {
           url: link,
           link,
           delayMs: Number(B.fbDelayMs?.value || 5000),
           maxChars: Number(B.fbMaxChars?.value || 20000),
           openInBackground: true,
-          activateAfterAI: false
+          activateAfterAI: false,
+          keepOpen: true,
+          useFbPostLogic: true
         }
       );
 
