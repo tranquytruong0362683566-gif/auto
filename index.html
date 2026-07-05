@@ -229,9 +229,15 @@
     textarea { min-height: 96px; resize: vertical; }
     #fbPostLinkInput { min-height: 112px; font-family: Consolas, "SFMono-Regular", Menlo, monospace; }
     #fbGroupIdInput { min-height: 92px; font-family: Consolas, "SFMono-Regular", Menlo, monospace; }
-    #commentedLinksBox { min-height: 260px; font-family: Consolas, "SFMono-Regular", Menlo, monospace; font-size: 12px; background: #fbfcff; }
+    #commentedLinksBox { min-height: 210px; font-family: Consolas, "SFMono-Regular", Menlo, monospace; font-size: 12px; background: #fbfcff; }
     .completed-card .section-title { margin-bottom: 10px; }
     .completed-card .hint { margin-top: 2px; }
+    .completed-card-bottom {
+      grid-column: 2;
+      width: 100%;
+      justify-self: center;
+      align-self: start;
+    }
     #productLinkInput { min-height: 78px; }
 
     .field-status {
@@ -502,6 +508,7 @@
       .main-col { order: 1; }
       .side-left { order: 2; }
       .side-right { order: 3; }
+      .completed-card-bottom { grid-column: 1; order: 4; }
       .auth-bar, .hero { grid-template-columns: 1fr; }
       .auth-actions { justify-content: flex-start; }
     }
@@ -687,22 +694,24 @@
         <div class="tpl-list" id="tplList" aria-live="polite"></div>
       </section>
 
-      <section class="card stats-card completed-card" aria-labelledby="statsTitle">
-        <div class="section-title" id="statsTitle">
-          <span>✅ Link đã comment xong</span>
-          <button class="btn btn-muted btn-sm" id="clearCommentedLinksBtn" type="button">Xoá log</button>
-        </div>
-        <div class="stat-row"><span>Tổng link đã chạy</span><strong id="commentedCountStat">0</strong></div>
-        <textarea id="commentedLinksBox" readonly spellcheck="false" placeholder="Các link đã comment xong sẽ được tổng hợp tại đây..."></textarea>
-        <div class="hint">Các link trong danh sách này sẽ được dùng để lọc trùng ở lần quét sau.</div>
-        <div class="hidden" aria-hidden="true">
-          <strong id="validLinkStat">0</strong>
-          <strong id="leftTplStat">0</strong>
-          <strong id="rightTplStat">0</strong>
-          <strong id="historyStat">0</strong>
-        </div>
-      </section>
     </aside>
+
+    <section class="card stats-card completed-card completed-card-bottom" aria-labelledby="statsTitle">
+      <div class="section-title" id="statsTitle">
+        <span>✅ Link đã comment xong</span>
+        <button class="btn btn-muted btn-sm" id="clearCommentedLinksBtn" type="button">Xoá log</button>
+      </div>
+      <div class="stat-row"><span>Tổng link đã chạy</span><strong id="commentedCountStat">0</strong></div>
+      <textarea id="commentedLinksBox" readonly spellcheck="false" placeholder="Các link đã comment xong sẽ được tổng hợp tại đây..."></textarea>
+      <div class="hint">Các link trong danh sách này sẽ được dùng để lọc trùng ở lần quét sau.</div>
+      <div class="hidden" aria-hidden="true">
+        <strong id="validLinkStat">0</strong>
+        <strong id="leftTplStat">0</strong>
+        <strong id="rightTplStat">0</strong>
+        <strong id="historyStat">0</strong>
+      </div>
+    </section>
+
   </div>
 
   <div class="modal-overlay" id="templateModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
@@ -1504,6 +1513,9 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
     };
 
     let closedLoopRunning = false;
+    let activeReadTabId = null;
+    let activeReadLink = '';
+    let bridgeBusy = false;
 
     function save(key, value) {
       localStorage.setItem(key, JSON.stringify(value));
@@ -1606,14 +1618,95 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
     }
 
     function bridgeAvailable() {
-      return !!(window.chrome && chrome.runtime && chrome.runtime.sendMessage);
+      return !!(window.chrome && chrome.runtime && (chrome.runtime.connect || chrome.runtime.sendMessage));
+    }
+
+    function getBridgeTimeoutMs(action) {
+      const name = String(action || '');
+      if (/SCAN_GROUP|SCAN_LINK/i.test(name)) return 15 * 60 * 1000;
+      if (/COMMENT/i.test(name)) return 4 * 60 * 1000;
+      if (/READ/i.test(name)) return 3 * 60 * 1000;
+      return 60 * 1000;
+    }
+
+    function normalizeBridgeResponse(response) {
+      if (!response) throw new Error('Extension trả về rỗng.');
+      if (response.ok === false || response.error) throw new Error(response.error || response.message || 'Extension báo lỗi.');
+      return response;
+    }
+
+    function sendRawBridgeByPort(extensionId, message, timeoutMs) {
+      return new Promise((resolve, reject) => {
+        let port;
+        let done = false;
+        const requestId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+        const cleanup = () => {
+          done = true;
+          clearTimeout(timer);
+          try { port?.disconnect(); } catch {}
+        };
+
+        const timer = setTimeout(() => {
+          if (done) return;
+          cleanup();
+          reject(new Error('Extension xử lý quá lâu hoặc chưa phản hồi.'));
+        }, timeoutMs);
+
+        try {
+          port = chrome.runtime.connect(extensionId, { name: 'fb-auto-commenter-bridge' });
+          port.onMessage.addListener(response => {
+            if (!response || response.requestId !== requestId) return;
+            cleanup();
+            try { resolve(normalizeBridgeResponse(response)); } catch (error) { reject(error); }
+          });
+          port.onDisconnect.addListener(() => {
+            if (done) return;
+            cleanup();
+            const err = chrome.runtime.lastError;
+            reject(new Error(err?.message || 'Extension port đã đóng trước khi có phản hồi.'));
+          });
+          port.postMessage({ ...message, requestId });
+        } catch (error) {
+          cleanup();
+          reject(error);
+        }
+      });
+    }
+
+    function sendRawBridgeByMessage(extensionId, message, timeoutMs) {
+      return new Promise((resolve, reject) => {
+        let settled = false;
+        const timer = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          reject(new Error('Extension xử lý quá lâu hoặc chưa phản hồi.'));
+        }, timeoutMs);
+
+        try {
+          chrome.runtime.sendMessage(extensionId, message, response => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            const lastError = chrome.runtime.lastError;
+            if (lastError) return reject(new Error(lastError.message || 'Extension không phản hồi.'));
+            try { resolve(normalizeBridgeResponse(response)); } catch (error) { reject(error); }
+          });
+        } catch (error) {
+          if (!settled) {
+            settled = true;
+            clearTimeout(timer);
+            reject(error);
+          }
+        }
+      });
     }
 
     function sendRawBridge(action, payload = {}) {
-      return new Promise((resolve, reject) => {
+      return new Promise(async (resolve, reject) => {
         const extensionId = getExtensionId();
         if (!extensionId) return reject(new Error('Chưa nhập Extension ID.'));
-        if (!bridgeAvailable()) return reject(new Error('Không tìm thấy chrome.runtime.sendMessage. Hãy mở bằng Chrome và cài extension bridge.'));
+        if (!bridgeAvailable()) return reject(new Error('Không tìm thấy chrome.runtime. Hãy mở bằng Chrome và cài extension bridge.'));
 
         const message = {
           action,
@@ -1623,17 +1716,20 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
           payload,
           ...payload
         };
+        const timeoutMs = getBridgeTimeoutMs(action);
 
         try {
-          chrome.runtime.sendMessage(extensionId, message, response => {
-            const lastError = chrome.runtime.lastError;
-            if (lastError) return reject(new Error(lastError.message || 'Extension không phản hồi.'));
-            if (!response) return reject(new Error('Extension trả về rỗng.'));
-            if (response.ok === false || response.error) return reject(new Error(response.error || response.message || 'Extension báo lỗi.'));
-            resolve(response);
-          });
-        } catch (error) {
-          reject(error);
+          if (chrome.runtime.connect) {
+            return resolve(await sendRawBridgeByPort(extensionId, message, timeoutMs));
+          }
+          return resolve(await sendRawBridgeByMessage(extensionId, message, timeoutMs));
+        } catch (portError) {
+          if (!chrome.runtime.sendMessage) return reject(portError);
+          try {
+            return resolve(await sendRawBridgeByMessage(extensionId, message, timeoutMs));
+          } catch (messageError) {
+            reject(messageError || portError);
+          }
         }
       });
     }
@@ -1645,14 +1741,18 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
           return await sendRawBridge(action, payload);
         } catch (error) {
           lastError = error;
-          if (!/Receiving end does not exist|message port closed|port closed|response was received|không phản hồi|rỗng|unknown|not found|không hỗ trợ/i.test(String(error.message || error))) break;
+          if (!/Receiving end does not exist|message port closed|port closed|port đã đóng|response was received|không phản hồi|rỗng|unknown|not found|không hỗ trợ/i.test(String(error.message || error))) break;
         }
       }
       throw lastError || new Error('Không gửi được lệnh sang extension.');
     }
 
+    function bridgeResponseData(response) {
+      return response?.payload || response?.data || response?.result || response || {};
+    }
+
     function extractLinksFromResponse(response) {
-      const data = response?.payload || response?.data || response?.result || response;
+      const data = bridgeResponseData(response);
       const raw = data?.links || data?.postLinks || data?.urls || data?.items || data;
       if (Array.isArray(raw)) return raw.map(item => typeof item === 'string' ? item : (item.url || item.link || item.href)).filter(Boolean);
       if (typeof raw === 'string') return parseLines(raw).filter(line => /^https?:\/\//i.test(line));
@@ -1660,7 +1760,7 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
     }
 
     function extractArticleFromResponse(response) {
-      const data = response?.payload || response?.data || response?.result || response;
+      const data = bridgeResponseData(response);
       return text(
         data?.article ||
         data?.content ||
@@ -1722,11 +1822,18 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
           delayMs: Number(B.fbDelayMs?.value || 5000),
           maxChars: Number(B.fbMaxChars?.value || 20000),
           openInBackground: true,
+          active: false,
           activateAfterAI: false,
           keepOpen: true,
+          closeAfter: false,
+          closeAfterRead: false,
           useFbPostLogic: true
         }
       );
+
+      const data = bridgeResponseData(response);
+      activeReadTabId = Number(data.tabId || response.tabId || 0) || null;
+      activeReadLink = activeReadTabId ? link : '';
 
       const article = extractArticleFromResponse(response);
       if (!article) throw new Error('Extension chưa trả về nội dung bài viết.');
@@ -1744,11 +1851,14 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
       if (!comment) throw new Error('Chưa có nội dung bình luận.');
       setBridgeStatus('Đang gửi bình luận sang tab Facebook...', 'warn');
 
+      const targetLink = link || getPostLinks()[0] || '';
+      const tabId = activeReadTabId && normalizeUrl(activeReadLink) === normalizeUrl(targetLink) ? activeReadTabId : null;
       const response = await sendBridge(
         ['COMMENT_IN_FB_TAB', 'COMMENT_FB_POST', 'COMMENT_FACEBOOK_POST', 'commentFbPost', 'commentFacebookPost', 'COMMENT_POST', 'COMMENT_CURRENT_TAB'],
         {
-          url: link || getPostLinks()[0] || '',
-          link: link || getPostLinks()[0] || '',
+          tabId,
+          url: targetLink,
+          link: targetLink,
           comment,
           text: comment,
           commentText: comment,
@@ -1761,6 +1871,10 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
         }
       );
 
+      if (tabId && (B.closeAfterComment?.checked !== false)) {
+        activeReadTabId = null;
+        activeReadLink = '';
+      }
       setBridgeStatus('Đã gửi bình luận xong.', 'ok');
       return response;
     }
@@ -1817,13 +1931,28 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
       }
     }
 
+    async function runBridgeTask(task) {
+      if (bridgeBusy) {
+        setBridgeStatus('Đang có tác vụ chạy, vui lòng đợi tác vụ hiện tại hoàn tất.', 'warn');
+        return;
+      }
+      bridgeBusy = true;
+      [B.scanGroupLinksBtn, B.readFbPostBtn, B.autoWorkflowBtn, B.commentCurrentTabBtn].forEach(btn => { if (btn) btn.disabled = true; });
+      try {
+        return await task();
+      } finally {
+        bridgeBusy = false;
+        [B.scanGroupLinksBtn, B.readFbPostBtn, B.autoWorkflowBtn, B.commentCurrentTabBtn].forEach(btn => { if (btn) btn.disabled = false; });
+      }
+    }
+
     function wireBridge() {
       addInputSave(B.extensionId, STORE.extensionId);
       addInputSave(B.fbGroupIdInput, STORE.groupIds);
       addInputSave(B.fbPostLinkInput, STORE.postLinks);
       renderCommentedLinks();
 
-      B.scanGroupLinksBtn?.addEventListener('click', () => scanGroupLinks({ autoStart: true }).catch(error => setBridgeStatus(error.message || String(error), 'error')));
+      B.scanGroupLinksBtn?.addEventListener('click', () => runBridgeTask(() => scanGroupLinks({ autoStart: true })).catch(error => setBridgeStatus(error.message || String(error), 'error')));
       B.copyScannedLinksBtn?.addEventListener('click', async () => {
         const value = B.fbPostLinkInput?.value || '';
         if (!value.trim()) return setBridgeStatus('Chưa có link mới để copy.', 'warn');
@@ -1836,9 +1965,9 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
           setBridgeStatus('Đã copy danh sách link mới.', 'ok');
         }
       });
-      B.readFbPostBtn?.addEventListener('click', () => readFirstFacebookPost().catch(error => setBridgeStatus(error.message || String(error), 'error')));
-      B.autoWorkflowBtn?.addEventListener('click', () => autoWorkflow().catch(error => setBridgeStatus(error.message || String(error), 'error')));
-      B.commentCurrentTabBtn?.addEventListener('click', () => commentCurrentTab().catch(error => setBridgeStatus(error.message || String(error), 'error')));
+      B.readFbPostBtn?.addEventListener('click', () => runBridgeTask(() => readFirstFacebookPost()).catch(error => setBridgeStatus(error.message || String(error), 'error')));
+      B.autoWorkflowBtn?.addEventListener('click', () => runBridgeTask(() => autoWorkflow()).catch(error => setBridgeStatus(error.message || String(error), 'error')));
+      B.commentCurrentTabBtn?.addEventListener('click', () => runBridgeTask(() => commentCurrentTab()).catch(error => setBridgeStatus(error.message || String(error), 'error')));
       B.stopClosedLoopBtn?.addEventListener('click', () => {
         closedLoopRunning = false;
         B.stopClosedLoopBtn.classList.add('hidden');
