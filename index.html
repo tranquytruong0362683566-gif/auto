@@ -814,6 +814,7 @@
       isClosedLoopRunning: false,
       closedLoopStopRequested: false,
       closedLoopCycleLimit: 100,
+      lastGroupScan: null,
       managers: {}
     };
 
@@ -1191,10 +1192,32 @@
       return new Promise(resolve => setTimeout(resolve, ms));
     }
 
+    const CLOSED_LOOP_DUPLICATE_PAUSE_MS = 5 * 60 * 1000;
 
+    async function waitClosedLoopPause(ms, reasonText) {
+      const startedAt = Date.now();
+      while (!state.closedLoopStopRequested) {
+        const remaining = Math.max(0, ms - (Date.now() - startedAt));
+        if (remaining <= 0) break;
+        const seconds = Math.ceil(remaining / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const secs = String(seconds % 60).padStart(2, '0');
+        setBridgeStatus(`${reasonText} Tạm nghỉ ${minutes}:${secs} rồi quét tiếp.`, 'warn');
+        await sleepMs(Math.min(1000, remaining));
+      }
+    }
 
     async function scanGroupLinksToPostBox() {
       const oldText = els.scanGroupLinksBtn.textContent;
+      state.lastGroupScan = {
+        ok: false,
+        scannedCount: 0,
+        freshCount: 0,
+        duplicateCount: 0,
+        allDuplicate: false,
+        noRawLinks: false,
+        error: ''
+      };
       try {
         const settings = assertBridgeReady();
         const groupIdsRaw = settings.fbGroupIdRaw;
@@ -1223,6 +1246,13 @@
         });
 
         if (!response.ok || !Array.isArray(response.links) || !response.links.length) {
+          state.lastGroupScan = {
+            ...state.lastGroupScan,
+            ok: false,
+            scannedCount: Array.isArray(response.links) ? response.links.length : 0,
+            noRawLinks: true,
+            error: response.error || 'Không lấy được link nào.'
+          };
           const detail = Array.isArray(response.reports) && response.reports.length
             ? response.reports.map(r => `${r.groupId}: ${r.count || 0}/5${r.error ? ` | ${r.error}` : ''}`).join('\n')
             : '';
@@ -1230,6 +1260,15 @@
         }
 
         const { fresh, duplicate } = filterFreshFbLinks(response.links);
+        state.lastGroupScan = {
+          ok: true,
+          scannedCount: response.links.length,
+          freshCount: fresh.length,
+          duplicateCount: duplicate.length,
+          allDuplicate: response.links.length > 0 && fresh.length === 0 && duplicate.length === response.links.length,
+          noRawLinks: false,
+          error: ''
+        };
         els.fbPostLinkInput.value = fresh.join('\n');
         saveBridgeSettings();
         updateCounters();
@@ -1249,6 +1288,11 @@
         toast(`Đã đổ ${fresh.length} link mới vào ô Link bài viết Facebook`);
         return fresh;
       } catch (error) {
+        state.lastGroupScan = {
+          ...(state.lastGroupScan || {}),
+          ok: false,
+          error: getErrorText(error)
+        };
         setBridgeStatus('❌ ' + getErrorText(error), 'error');
         toast(getErrorText(error), 'error');
         return [];
@@ -1527,7 +1571,13 @@
           if (state.closedLoopStopRequested) break;
 
           if (!fresh.length) {
-            setBridgeStatus(`Đã dừng vòng lặp ở vòng ${cycle}: không còn link mới sau khi lọc trùng. Tổng thành công ${totalSuccess}, lỗi ${totalFailed}.`, totalSuccess ? 'ok' : 'warn');
+            const scanInfo = state.lastGroupScan || {};
+            if (scanInfo.allDuplicate) {
+              const reasonText = `🔁 Vòng ${cycle}: đã lấy ${scanInfo.scannedCount || 0} link nhưng tất cả đều trùng với link đã comment.`;
+              await waitClosedLoopPause(CLOSED_LOOP_DUPLICATE_PAUSE_MS, reasonText);
+              continue;
+            }
+            setBridgeStatus(`Đã dừng vòng lặp ở vòng ${cycle}: không lấy được link mới để xử lý. Tổng thành công ${totalSuccess}, lỗi ${totalFailed}.`, totalSuccess ? 'ok' : 'warn');
             break;
           }
 
