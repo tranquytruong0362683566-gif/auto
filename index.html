@@ -1333,15 +1333,17 @@
           delayMs: settings.delayMs,
           maxChars: settings.maxChars,
           closeAfter: !keepTab,
-          active: false
+          active: true
         });
+
+        // Lưu tab ngay cả khi đọc lỗi để bước catch có thể đóng đúng tab lỗi, không để sót tab Facebook.
+        state.activeFbTabId = response.tabId || null;
+        state.activeFbUrl = response.url || targetLink;
 
         if (!response.ok || !response.title) {
           throw new Error(response.error || 'Không lấy được nội dung bài viết.');
         }
 
-        state.activeFbTabId = response.tabId || null;
-        state.activeFbUrl = response.url || targetLink;
         els.articleInput.value = response.title.trim();
         saveDraft();
         saveBridgeSettings();
@@ -1379,7 +1381,7 @@
       state.activeFbTabId = response.tabId || null;
       state.activeFbUrl = response.tabId ? url : '';
       if (response.posted) {
-        setBridgeStatus(settings.closeAfterComment ? 'Đã gửi bình luận, giữ tab 10–20 giây rồi mới đóng.' : 'Đã gửi bình luận vào tab Facebook.', 'ok');
+        setBridgeStatus(settings.closeAfterComment ? 'Đã gửi bình luận, giữ tab 10–15 giây rồi mới đóng.' : 'Đã gửi bình luận vào tab Facebook.', 'ok');
         toast('Đã comment trực tiếp vào bài viết');
       } else {
         setBridgeStatus(response.error || 'Đã điền bình luận nhưng chưa xác nhận được nút gửi.', 'warn');
