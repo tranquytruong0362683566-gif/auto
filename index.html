@@ -520,7 +520,7 @@
               <p>Nhập link bài viết, tự lấy nội dung gốc, tạo bình luận, copy và gửi vào tab Facebook.</p>
             </div>
           </div>
-          <span class="pro-badge">⚡ AUTO FB V1.6.0</span>
+          <span class="pro-badge">⚡ AUTO FB V1.7.0</span>
         </header>
 
         <div class="auth-bar">
@@ -568,13 +568,14 @@
 
             <div class="actions bridge-actions">
               <button class="btn btn-soft" id="scanGroupLinksBtn" type="button">🧲 Quét nhóm → lọc trùng</button>
+              <button class="btn btn-danger hidden" id="stopClosedLoopBtn" type="button">⛔ Dừng vòng lặp</button>
               <button class="btn btn-muted" id="copyScannedLinksBtn" type="button">📋 Copy link mới</button>
             </div>
 
             <div class="form-group">
               <label for="fbPostLinkInput">Link bài viết Facebook</label>
               <textarea id="fbPostLinkInput" spellcheck="false" placeholder="Link mới sau khi quét sẽ tự đổ vào đây. Link đã comment trước sẽ tự bị loại."></textarea>
-              <div class="hint">Bấm “Quét → đọc → tạo → comment” để chạy một quy trình khép kín. Xử lý xong ô này sẽ tự xoá để chờ lượt quét mới.</div>
+              <div class="hint">Bấm “🧲 Quét nhóm → lọc trùng” để tự chạy vòng lặp: quét nhóm → lọc trùng → đổ link → chạy “🚀 Quét → đọc → tạo → comment” → xoá ô link → quét lượt mới.</div>
             </div>
 
             <div class="bridge-grid hidden">
@@ -760,6 +761,7 @@
       btnCancelSwitch: $('#btnCancelSwitch'),
       fbGroupIdInput: $('#fbGroupIdInput'),
       scanGroupLinksBtn: $('#scanGroupLinksBtn'),
+      stopClosedLoopBtn: $('#stopClosedLoopBtn'),
       copyScannedLinksBtn: $('#copyScannedLinksBtn'),
       fbPostLinkInput: $('#fbPostLinkInput'),
       bridgeExtensionId: $('#bridgeExtensionId'),
@@ -809,6 +811,9 @@
       activeFbTabId: null,
       activeFbUrl: '',
       isQueueRunning: false,
+      isClosedLoopRunning: false,
+      closedLoopStopRequested: false,
+      closedLoopCycleLimit: 100,
       managers: {}
     };
 
@@ -1182,6 +1187,10 @@
       });
     }
 
+    function sleepMs(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
 
 
     async function scanGroupLinksToPostBox() {
@@ -1345,7 +1354,7 @@
       } catch {}
     }
 
-    async function runFullFacebookWorkflow() {
+    async function runFullFacebookWorkflow(options = {}) {
       if (state.isQueueRunning) return;
 
       const oldText = els.autoWorkflowBtn.textContent;
@@ -1362,6 +1371,7 @@
         failed: 0,
         errors: []
       };
+      const fromClosedLoop = options.fromClosedLoop === true;
 
       try {
         const settings = assertBridgeReady();
@@ -1391,6 +1401,10 @@
         }
 
         for (let index = 0; index < queue.length; index += 1) {
+          if (state.closedLoopStopRequested) {
+            setBridgeStatus('Đã nhận lệnh dừng, kết thúc sau link hiện tại.', 'warn');
+            break;
+          }
           const link = queue[index];
           const label = `${index + 1}/${queue.length}`;
           els.autoWorkflowBtn.textContent = `⏳ ${label}`;
@@ -1439,7 +1453,7 @@
           }
 
           if (index < queue.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 700));
+            await sleepMs(700);
           }
         }
 
@@ -1455,9 +1469,11 @@
           setBridgeStatus(`❌ Không xử lý thành công link nào. Ô Link bài viết Facebook đã tự xoá. Lỗi đầu tiên: ${summary.errors[0] || 'không rõ'}`, 'error');
           toast('Không có link nào xử lý thành công.', 'error');
         }
+        return summary;
       } catch (error) {
         setBridgeStatus('❌ ' + getErrorText(error), 'error');
         toast(getErrorText(error), 'error');
+        return summary;
       } finally {
         state.isQueueRunning = false;
         els.autoWorkflowBtn.disabled = false;
@@ -1466,6 +1482,93 @@
         els.commentCurrentTabBtn.disabled = false;
         els.autoWorkflowBtn.textContent = oldText;
       }
+    }
+
+    async function runClosedLoopFromGroupScan() {
+      if (state.isClosedLoopRunning) {
+        state.closedLoopStopRequested = true;
+        setBridgeStatus('Đang yêu cầu dừng vòng lặp sau tác vụ hiện tại...', 'warn');
+        toast('Đã nhận lệnh dừng vòng lặp', 'warning');
+        return;
+      }
+
+      let settings;
+      try {
+        settings = assertBridgeReady();
+      } catch (error) {
+        setBridgeStatus('❌ ' + getErrorText(error), 'error');
+        toast(getErrorText(error), 'error');
+        return;
+      }
+      if (!settings.fbGroupIdRaw) {
+        els.fbGroupIdInput.focus();
+        toast('Chưa nhập UID nhóm Facebook.', 'warning');
+        return;
+      }
+
+      state.isClosedLoopRunning = true;
+      state.closedLoopStopRequested = false;
+      const oldScanText = els.scanGroupLinksBtn.textContent;
+      const oldWorkflowText = els.autoWorkflowBtn.textContent;
+      els.stopClosedLoopBtn.classList.remove('hidden');
+      els.scanGroupLinksBtn.textContent = '🔁 Đang lặp...';
+      els.autoWorkflowBtn.disabled = true;
+
+      let cycle = 0;
+      let totalSuccess = 0;
+      let totalFailed = 0;
+
+      try {
+        while (!state.closedLoopStopRequested && cycle < state.closedLoopCycleLimit) {
+          cycle += 1;
+          setBridgeStatus(`🔁 Vòng ${cycle}: quét nhóm → lọc trùng → đổ link vào ô Link bài viết Facebook...`, 'warn');
+
+          const fresh = await scanGroupLinksToPostBox();
+          if (state.closedLoopStopRequested) break;
+
+          if (!fresh.length) {
+            setBridgeStatus(`Đã dừng vòng lặp ở vòng ${cycle}: không còn link mới sau khi lọc trùng. Tổng thành công ${totalSuccess}, lỗi ${totalFailed}.`, totalSuccess ? 'ok' : 'warn');
+            break;
+          }
+
+          setBridgeStatus(`🔁 Vòng ${cycle}: đã có ${fresh.length} link mới, tự chuyển sang “🚀 Quét → đọc → tạo → comment”.`, 'warn');
+          const result = await runFullFacebookWorkflow({ fromClosedLoop: true });
+          totalSuccess += Number(result?.success || 0);
+          totalFailed += Number(result?.failed || 0);
+
+          if (state.closedLoopStopRequested) break;
+          if (!result || !result.success) {
+            setBridgeStatus(`Đã dừng vòng lặp ở vòng ${cycle}: lượt xử lý vừa rồi không thành công link nào. Tổng lỗi ${totalFailed}.`, 'error');
+            break;
+          }
+
+          await sleepMs(1200);
+        }
+
+        if (cycle >= state.closedLoopCycleLimit) {
+          setBridgeStatus(`Đã chạm giới hạn ${state.closedLoopCycleLimit} vòng. Tổng thành công ${totalSuccess}, lỗi ${totalFailed}.`, 'warn');
+        } else if (state.closedLoopStopRequested) {
+          setBridgeStatus(`Đã dừng vòng lặp theo yêu cầu. Tổng thành công ${totalSuccess}, lỗi ${totalFailed}.`, totalSuccess ? 'ok' : 'warn');
+        }
+      } catch (error) {
+        setBridgeStatus('❌ ' + getErrorText(error), 'error');
+        toast(getErrorText(error), 'error');
+      } finally {
+        state.isClosedLoopRunning = false;
+        state.closedLoopStopRequested = false;
+        els.stopClosedLoopBtn.classList.add('hidden');
+        els.scanGroupLinksBtn.textContent = oldScanText;
+        els.autoWorkflowBtn.textContent = oldWorkflowText;
+        els.autoWorkflowBtn.disabled = false;
+      }
+    }
+
+    function stopClosedLoop() {
+      if (!state.isClosedLoopRunning) return;
+      state.closedLoopStopRequested = true;
+      els.stopClosedLoopBtn.disabled = true;
+      setBridgeStatus('Đang dừng vòng lặp sau tác vụ hiện tại...', 'warn');
+      setTimeout(() => { els.stopClosedLoopBtn.disabled = false; }, 1200);
     }
 
     async function commentCurrentTabFromOutput() {
@@ -1868,7 +1971,8 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
       els.btnConfirmSwitch.addEventListener('click', doSwitchAccount);
       els.btnCancelSwitch.addEventListener('click', () => closeModal(els.switchModal));
       els.generateBtn.addEventListener('click', generateComment);
-      els.scanGroupLinksBtn.addEventListener('click', scanGroupLinksToPostBox);
+      els.scanGroupLinksBtn.addEventListener('click', runClosedLoopFromGroupScan);
+      els.stopClosedLoopBtn.addEventListener('click', stopClosedLoop);
       els.copyScannedLinksBtn.addEventListener('click', copyScannedPostLinks);
       els.clearCommentedLinksBtn.addEventListener('click', clearCompletedCommentLinks);
       els.readFbPostBtn.addEventListener('click', async () => {
