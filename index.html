@@ -228,6 +228,7 @@
     }
     textarea::placeholder, input::placeholder { color: #98a2b3; }
     textarea { min-height: 96px; resize: vertical; }
+    #fbPostLinkInput { min-height: 112px; font-family: Consolas, "SFMono-Regular", Menlo, monospace; }
     #productLinkInput { min-height: 78px; }
 
     .field-status {
@@ -515,7 +516,7 @@
               <p>Nhập link bài viết, tự lấy nội dung gốc, tạo bình luận, copy và gửi vào tab Facebook.</p>
             </div>
           </div>
-          <span class="pro-badge">⚡ AUTO FB V1.4.1</span>
+          <span class="pro-badge">⚡ AUTO FB V1.4.2</span>
         </header>
 
         <div class="auth-bar">
@@ -551,8 +552,8 @@
 
             <div class="form-group">
               <label for="fbPostLinkInput">Link bài viết Facebook</label>
-              <input type="url" id="fbPostLinkInput" placeholder="Dán link bài viết / UID bài viết Facebook cần bình luận">
-              <div class="hint">Bấm “Lấy nội dung” để tự mở tab, đọc tiêu đề/nội dung bài viết rồi đưa vào ô “Nội dung bài viết gốc”.</div>
+              <textarea id="fbPostLinkInput" spellcheck="false" placeholder="Dán nhiều link bài viết / UID bài viết Facebook, mỗi link một dòng"></textarea>
+              <div class="hint">Bấm “Lấy bài → Tạo → Comment” để chạy lần lượt từ trên xuống dưới. Link nào lỗi sẽ tự bỏ qua và chuyển sang link kế tiếp.</div>
             </div>
 
             <div class="form-group">
@@ -777,6 +778,7 @@
       selectedTemplateKey: null,
       activeFbTabId: null,
       activeFbUrl: '',
+      isQueueRunning: false,
       managers: {}
     };
 
@@ -866,6 +868,21 @@
         }
       }
       return { valid: unique, invalid };
+    }
+
+
+    function parseFbPostLinks(raw) {
+      return String(raw || '')
+        .replace(/[\u200B-\u200D\uFEFF]/g, ' ')
+        .split(/[\s,;]+/)
+        .map(item => item.trim().replace(/[，,;]+$/g, ''))
+        .filter(Boolean);
+    }
+
+    function compactLinkLabel(value, max = 90) {
+      const text = String(value || '').trim();
+      if (text.length <= max) return text;
+      return `${text.slice(0, Math.max(20, max - 18))}...${text.slice(-14)}`;
     }
 
     function randomFrom(array) {
@@ -991,9 +1008,13 @@
     }
 
     function getBridgeSettings() {
+      const fbPostLinkRaw = els.fbPostLinkInput.value.trim();
+      const fbPostLinks = parseFbPostLinks(fbPostLinkRaw);
       return {
         extensionId: els.bridgeExtensionId.value.trim(),
-        fbPostLink: els.fbPostLinkInput.value.trim(),
+        fbPostLinkRaw,
+        fbPostLinks,
+        fbPostLink: fbPostLinks[0] || '',
         delayMs: Math.max(1000, Math.min(30000, Number(els.fbDelayMs.value) || 7000)),
         maxChars: Math.max(100, Math.min(50000, Number(els.fbMaxChars.value) || 20000)),
         autoComment: els.autoCommentAfterGenerate.checked,
@@ -1009,7 +1030,7 @@
       const saved = loadStorage(APP.storage.bridge, null);
       if (!saved) return;
       els.bridgeExtensionId.value = saved.extensionId || '';
-      els.fbPostLinkInput.value = saved.fbPostLink || '';
+      els.fbPostLinkInput.value = saved.fbPostLinkRaw || saved.fbPostLink || '';
       els.fbDelayMs.value = String(saved.delayMs || 7000);
       els.fbMaxChars.value = String(saved.maxChars || 20000);
       els.autoCommentAfterGenerate.checked = saved.autoComment !== false;
@@ -1044,20 +1065,22 @@
 
     async function readFacebookPostToArticle(options = {}) {
       const settings = assertBridgeReady();
-      if (!settings.fbPostLink) {
+      const targetLink = String(options.link || settings.fbPostLink || '').trim();
+      if (!targetLink) {
         els.fbPostLinkInput.focus();
         throw new Error('Chưa nhập link bài viết Facebook.');
       }
 
       const keepTab = options.keepTab !== false;
+      const queueLabel = options.queueTotal ? ` (${options.queueIndex + 1}/${options.queueTotal})` : '';
       const oldReadText = els.readFbPostBtn.textContent;
       els.readFbPostBtn.disabled = true;
-      setBridgeStatus('Đang mở tab Facebook và đọc nội dung bài viết...', 'warn');
+      setBridgeStatus(`Đang mở tab Facebook và đọc nội dung bài viết${queueLabel}...`, 'warn');
 
       try {
         const response = await sendToBridge({
           action: 'READ_FB_POST_TITLE',
-          url: settings.fbPostLink,
+          url: targetLink,
           delayMs: settings.delayMs,
           maxChars: settings.maxChars,
           closeAfter: !keepTab,
@@ -1069,16 +1092,16 @@
         }
 
         state.activeFbTabId = response.tabId || null;
-        state.activeFbUrl = response.url || settings.fbPostLink;
+        state.activeFbUrl = response.url || targetLink;
         els.articleInput.value = response.title.trim();
         saveDraft();
         saveBridgeSettings();
         updateCounters();
-        setBridgeStatus(`Đã lấy nội dung bài viết. Tab ID: ${state.activeFbTabId || 'đã đóng'}`, 'ok');
-        toast('Đã đưa nội dung bài viết vào ô gốc');
+        setBridgeStatus(`Đã lấy nội dung bài viết${queueLabel}. Tab ID: ${state.activeFbTabId || 'đã đóng'}`, 'ok');
+        toast(`Đã lấy nội dung link${queueLabel || ''}`);
         return response;
       } finally {
-        els.readFbPostBtn.disabled = false;
+        els.readFbPostBtn.disabled = state.isQueueRunning;
         els.readFbPostBtn.textContent = oldReadText;
       }
     }
@@ -1088,8 +1111,8 @@
       const value = String(commentText || '').trim();
       if (!value) throw new Error('Chưa có bình luận để gửi.');
 
-      const tabId = state.activeFbTabId;
-      const url = state.activeFbUrl || settings.fbPostLink;
+      const tabId = Number(options.tabId || state.activeFbTabId || 0);
+      const url = String(options.url || state.activeFbUrl || settings.fbPostLink || '').trim();
       if (!tabId && !url) throw new Error('Chưa có tab/link bài viết Facebook để comment.');
 
       setBridgeStatus('Đang đưa bình luận vào tab Facebook...', 'warn');
@@ -1105,6 +1128,7 @@
 
       if (!response.ok) throw new Error(response.error || 'Không comment được vào tab Facebook.');
       state.activeFbTabId = response.tabId || null;
+      state.activeFbUrl = response.tabId ? url : '';
       if (response.posted) {
         setBridgeStatus(settings.closeAfterComment ? 'Đã gửi bình luận và đã đóng tab Facebook.' : 'Đã gửi bình luận vào tab Facebook.', 'ok');
         toast('Đã comment trực tiếp vào bài viết');
@@ -1115,27 +1139,113 @@
       return response;
     }
 
+    async function closeActiveFacebookTabSilently() {
+      const tabId = Number(state.activeFbTabId || 0);
+      state.activeFbTabId = null;
+      state.activeFbUrl = '';
+      if (!tabId) return;
+      try {
+        await sendToBridge({ action: 'CLOSE_FB_TAB', tabId });
+      } catch {}
+    }
+
     async function runFullFacebookWorkflow() {
+      if (state.isQueueRunning) return;
+
       const oldText = els.autoWorkflowBtn.textContent;
       els.autoWorkflowBtn.disabled = true;
+      els.readFbPostBtn.disabled = true;
       els.generateBtn.disabled = true;
       els.commentCurrentTabBtn.disabled = true;
       els.autoWorkflowBtn.textContent = '⏳ Đang chạy...';
+      state.isQueueRunning = true;
+
+      const summary = {
+        total: 0,
+        success: 0,
+        failed: 0,
+        errors: []
+      };
 
       try {
-        await readFacebookPostToArticle({ keepTab: true });
-        const comment = await generateComment();
-        if (!comment) throw new Error('AI chưa tạo được bình luận.');
-        if (els.autoCommentAfterGenerate.checked) {
-          await commentIntoFacebookTab(comment);
+        const settings = assertBridgeReady();
+        const queue = settings.fbPostLinks;
+        if (!queue.length) {
+          els.fbPostLinkInput.focus();
+          throw new Error('Chưa nhập link bài viết Facebook.');
+        }
+
+        summary.total = queue.length;
+        saveBridgeSettings();
+
+        if (!isSignedIn()) {
+          const ok = await doSignIn();
+          if (!ok) throw new Error('Chưa đăng nhập Puter nên chưa thể tạo bình luận.');
+        }
+
+        for (let index = 0; index < queue.length; index += 1) {
+          const link = queue[index];
+          const label = `${index + 1}/${queue.length}`;
+          els.autoWorkflowBtn.textContent = `⏳ ${label}`;
+          setBridgeStatus(`Đang xử lý link ${label}: ${compactLinkLabel(link)}`, 'warn');
+
+          try {
+            state.activeFbTabId = null;
+            state.activeFbUrl = link;
+
+            await readFacebookPostToArticle({
+              keepTab: true,
+              link,
+              queueIndex: index,
+              queueTotal: queue.length
+            });
+
+            const comment = await generateComment();
+            if (!comment) throw new Error('AI chưa tạo được bình luận.');
+
+            if (els.autoCommentAfterGenerate.checked) {
+              await commentIntoFacebookTab(comment, { url: link });
+              setBridgeStatus(`✅ Xong link ${label}. Đang chuyển sang link kế tiếp...`, 'ok');
+            } else {
+              setBridgeStatus(`✅ Xong link ${label}: đã lấy bài, tạo bình luận và copy.`, 'ok');
+              if (settings.closeAfterComment) {
+                await closeActiveFacebookTabSilently();
+              }
+            }
+
+            summary.success += 1;
+          } catch (error) {
+            const message = getErrorText(error) || 'Lỗi không xác định';
+            summary.failed += 1;
+            summary.errors.push(`${label}: ${message}`);
+            setBridgeStatus(`⚠️ Link ${label} lỗi: ${message}. Tự chuyển sang link kế tiếp...`, 'warn');
+            toast(`Bỏ qua link ${label}: ${message}`, 'warning');
+
+            if (settings.closeAfterComment) {
+              await closeActiveFacebookTabSilently();
+            }
+          }
+
+          if (index < queue.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 700));
+          }
+        }
+
+        if (summary.success) {
+          const failText = summary.failed ? `, lỗi ${summary.failed}` : '';
+          setBridgeStatus(`Hoàn tất: thành công ${summary.success}/${summary.total}${failText}.`, summary.failed ? 'warn' : 'ok');
+          toast(`Đã chạy xong ${summary.success}/${summary.total} link${summary.failed ? `, lỗi ${summary.failed}` : ''}`);
         } else {
-          setBridgeStatus('Đã lấy bài viết, tạo bình luận và copy. Chưa gửi vào Facebook vì bạn tắt tự comment.', 'ok');
+          setBridgeStatus(`❌ Không xử lý thành công link nào. Lỗi đầu tiên: ${summary.errors[0] || 'không rõ'}`, 'error');
+          toast('Không có link nào xử lý thành công.', 'error');
         }
       } catch (error) {
         setBridgeStatus('❌ ' + getErrorText(error), 'error');
         toast(getErrorText(error), 'error');
       } finally {
+        state.isQueueRunning = false;
         els.autoWorkflowBtn.disabled = false;
+        els.readFbPostBtn.disabled = false;
         els.generateBtn.disabled = false;
         els.commentCurrentTabBtn.disabled = false;
         els.autoWorkflowBtn.textContent = oldText;
@@ -1243,7 +1353,7 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
         }
         return '';
       } finally {
-        els.generateBtn.disabled = false;
+        els.generateBtn.disabled = state.isQueueRunning;
         els.generateBtn.textContent = '✨ Tạo bình luận';
       }
     }
@@ -1285,6 +1395,7 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
       $$('.tpl-item').forEach(item => item.classList.remove('active'));
       state.selectedTemplateKey = null;
       saveDraft();
+      saveBridgeSettings();
       updateCounters();
       toast('Đã làm mới form');
     }
