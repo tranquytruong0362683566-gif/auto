@@ -562,6 +562,325 @@
     .automation-status.error { color: var(--danger); background: var(--danger-soft); }
     #commentedLinksBox { background: #fff; }
   </style>
+
+
+  <style id="white-professional-layout">
+    :root {
+      --bg: #ffffff;
+      --surface: #ffffff;
+      --surface-soft: #f9fafb;
+      --surface-strong: #f3f4f6;
+      --text: #111827;
+      --muted: #6b7280;
+      --subtle: #9ca3af;
+      --border: #e5e7eb;
+      --border-strong: #d1d5db;
+      --primary: #111827;
+      --primary-hover: #374151;
+      --primary-soft: #f3f4f6;
+      --success: #047857;
+      --success-soft: #ecfdf5;
+      --warning: #92400e;
+      --warning-soft: #fffbeb;
+      --danger: #b91c1c;
+      --danger-soft: #fef2f2;
+      --shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.04);
+      --shadow-md: 0 12px 30px rgba(17, 24, 39, 0.10);
+      --radius-lg: 14px;
+      --radius-md: 10px;
+      --radius-sm: 8px;
+      --font: Arial, Helvetica, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      color: var(--text);
+      background: #ffffff !important;
+      font-family: var(--font);
+    }
+
+    .app-shell {
+      width: min(100%, 1240px);
+      margin: 0 auto;
+      padding: 18px;
+      display: grid;
+      grid-template-columns: 250px minmax(0, 1fr) 250px;
+      gap: 16px;
+      align-items: start;
+      background: #ffffff;
+    }
+
+    .main-col,
+    .side-col {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .card,
+    .modal,
+    .auth-bar,
+    .bridge-box,
+    .output-box,
+    .tpl-item,
+    .tpl-empty,
+    textarea,
+    input[type="text"],
+    input[type="url"],
+    input[type="number"],
+    select {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card {
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      backdrop-filter: none;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 0 0 14px;
+      margin: 0 0 16px;
+      border: 0;
+      border-bottom: 1px solid var(--border);
+      background: transparent;
+    }
+
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      color: var(--text);
+      background: var(--surface-strong);
+      box-shadow: none;
+    }
+
+    .brand h1 {
+      color: var(--text);
+      font-size: 18px;
+      letter-spacing: -0.01em;
+    }
+
+    .brand p,
+    .hint,
+    .auth-username,
+    .tpl-meta,
+    .counter,
+    .link-preview {
+      color: var(--muted);
+    }
+
+    .pro-badge {
+      color: var(--text);
+      background: var(--surface-soft);
+      border-color: var(--border);
+      font-weight: 700;
+    }
+
+    .auth-bar,
+    .bridge-box {
+      background: var(--surface-soft);
+      border-radius: 12px;
+    }
+
+    .bridge-box {
+      background: #ffffff;
+      border-color: var(--border);
+      padding: 16px;
+    }
+
+    .bridge-title,
+    .output-title {
+      color: var(--text);
+    }
+
+    label,
+    .section-title {
+      color: #374151;
+      letter-spacing: 0.04em;
+    }
+
+    textarea,
+    input[type="text"],
+    input[type="url"],
+    input[type="number"],
+    select {
+      color: var(--text);
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: none;
+    }
+
+    textarea:focus,
+    input[type="text"]:focus,
+    input[type="url"]:focus,
+    input[type="number"]:focus,
+    select:focus {
+      border-color: #111827;
+      box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+    }
+
+    .btn {
+      border-radius: 9px;
+      box-shadow: none !important;
+      font-weight: 700;
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: none;
+    }
+
+    .btn-primary {
+      color: #ffffff;
+      background: #111827;
+      border-color: #111827;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #374151;
+      border-color: #374151;
+    }
+
+    .btn-soft,
+    .btn-muted,
+    .btn-warning {
+      color: #111827;
+      background: #ffffff;
+      border-color: var(--border-strong);
+    }
+
+    .btn-soft:hover:not(:disabled),
+    .btn-muted:hover:not(:disabled),
+    .btn-warning:hover:not(:disabled) {
+      background: var(--surface-soft);
+    }
+
+    .btn-danger {
+      color: var(--danger);
+      background: #ffffff;
+      border-color: #fecaca;
+    }
+
+    .output-box {
+      background: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .output-header {
+      background: var(--surface-soft);
+      border-bottom: 1px solid var(--border);
+    }
+
+    #output {
+      background: #ffffff;
+    }
+
+    .tpl-item {
+      border-radius: 12px;
+    }
+
+    .tpl-item:hover,
+    .tpl-item.active {
+      background: var(--surface-soft);
+      border-color: var(--border-strong);
+      transform: none;
+    }
+
+    .tpl-icon,
+    .auth-avatar {
+      background: var(--surface-strong);
+      color: var(--text);
+    }
+
+    .completed-bottom {
+      grid-column: 1 / -1;
+      margin-top: 2px;
+    }
+
+    .completed-bottom .section-title {
+      margin-bottom: 12px;
+    }
+
+    .completed-bottom #commentedLinksBox {
+      min-height: 220px;
+      background: #ffffff;
+      font-family: Consolas, "SFMono-Regular", Menlo, monospace;
+      font-size: 13px;
+    }
+
+    .completed-bottom .stat-row {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 0;
+      margin-bottom: 12px;
+    }
+
+    .automation-status {
+      background: var(--surface-soft);
+      border-color: var(--border);
+      border-radius: 10px;
+    }
+
+    .toast {
+      border-radius: 12px;
+      box-shadow: var(--shadow-md);
+    }
+
+    @media (max-width: 1120px) {
+      .app-shell {
+        grid-template-columns: 220px minmax(0, 1fr) 220px;
+        padding: 14px;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+        max-width: 720px;
+      }
+
+      .main-col { order: 1; }
+      .side-left { order: 2; }
+      .side-right { order: 3; }
+      .completed-bottom { order: 4; }
+      .hero,
+      .auth-bar {
+        grid-template-columns: 1fr;
+      }
+      .auth-actions {
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .app-shell {
+        padding: 10px;
+        gap: 10px;
+      }
+      .card {
+        padding: 14px;
+      }
+      .actions,
+      .modal-btns,
+      .bridge-actions {
+        grid-template-columns: 1fr;
+      }
+      .output-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
+
 </head>
 <body>
   <div class="app-shell">
@@ -735,8 +1054,9 @@
         </div>
         <div class="tpl-list" id="tplList" aria-live="polite"></div>
       </section>
+    </aside>
 
-      <section class="card stats-card completed-card" aria-labelledby="statsTitle">
+      <section class="card stats-card completed-card completed-bottom" aria-labelledby="statsTitle">
         <div class="section-title" id="statsTitle">
           <span>✅ Link đã comment xong</span>
           <button class="btn btn-muted btn-sm" id="clearCommentedLinksBtn" type="button">Xoá log</button>
@@ -751,7 +1071,6 @@
           <strong id="historyStat">0</strong>
         </div>
       </section>
-    </aside>
   </div>
 
   <div class="modal-overlay" id="templateModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
