@@ -1206,7 +1206,7 @@
         els.scanGroupLinksBtn.disabled = true;
         els.copyScannedLinksBtn.disabled = true;
         els.scanGroupLinksBtn.textContent = '⏳ Đang quét...';
-        setBridgeStatus('Đang quét nhóm Facebook và lấy permalink mới nhất...', 'warn');
+        setBridgeStatus('Đang mở tab mới để quét nhóm Facebook và lấy permalink mới nhất...', 'warn');
         saveBridgeSettings();
 
         const response = await sendToBridge({
@@ -1217,7 +1217,7 @@
           loadDelay: 2200,
           commentDelay: 2400,
           closeAfter: true,
-          active: false,
+          active: true,
           resetTop: true,
           skipPinned: true
         });
