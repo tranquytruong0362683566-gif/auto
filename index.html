@@ -67,13 +67,13 @@
           <div class="row">
             <div>
               <label for="delayMs">Thời gian chờ tải</label>
-              <input id="delayMs" type="number" min="1000" max="15000" step="500" value="4500">
-              <div class="hint">Nên để 4000–7000 nếu bài có ảnh/video.</div>
+              <input id="delayMs" type="number" min="1000" max="20000" step="500" value="5500">
+              <div class="hint">Nên để 5000–9000 nếu bài có ảnh/video hoặc nội dung dài.</div>
             </div>
             <div>
               <label for="maxChars">Giới hạn tiêu đề</label>
-              <input id="maxChars" type="number" min="50" max="1200" step="50" value="500">
-              <div class="hint">Số ký tự tối đa của tiêu đề hiển thị.</div>
+              <input id="maxChars" type="number" min="100" max="20000" step="100" value="5000">
+              <div class="hint">Số ký tự tối đa. Để 5000 hoặc cao hơn để tránh bị cắt dấu ...</div>
             </div>
           </div>
 
@@ -171,15 +171,17 @@ function render() {
 
 function saveSettings() {
   localStorage.setItem('fb_reader_extension_id', els.extensionId.value.trim());
-  localStorage.setItem('fb_reader_delay_ms', String(Number(els.delayMs.value) || 4500));
-  localStorage.setItem('fb_reader_max_chars', String(Number(els.maxChars.value) || 500));
+  localStorage.setItem('fb_reader_delay_ms', String(Number(els.delayMs.value) || 5500));
+  localStorage.setItem('fb_reader_max_chars', String(Number(els.maxChars.value) || 5000));
   localStorage.setItem('fb_reader_close_tabs', els.closeTabs.checked ? '1' : '0');
 }
 
 function loadSettings() {
   els.extensionId.value = localStorage.getItem('fb_reader_extension_id') || '';
-  els.delayMs.value = localStorage.getItem('fb_reader_delay_ms') || '4500';
-  els.maxChars.value = localStorage.getItem('fb_reader_max_chars') || '500';
+  const savedDelay = Number(localStorage.getItem('fb_reader_delay_ms') || 5500);
+  const savedMax = Number(localStorage.getItem('fb_reader_max_chars') || 5000);
+  els.delayMs.value = String(savedDelay < 4000 ? 5500 : savedDelay);
+  els.maxChars.value = String(savedMax < 2000 ? 5000 : savedMax);
   els.closeTabs.checked = (localStorage.getItem('fb_reader_close_tabs') || '1') === '1';
 }
 
@@ -219,8 +221,8 @@ async function scan() {
   render();
   els.scanBtn.disabled = true;
 
-  const delayMs = Math.max(1000, Math.min(15000, Number(els.delayMs.value) || 4500));
-  const maxChars = Math.max(50, Math.min(1200, Number(els.maxChars.value) || 500));
+  const delayMs = Math.max(1000, Math.min(20000, Number(els.delayMs.value) || 5500));
+  const maxChars = Math.max(100, Math.min(20000, Number(els.maxChars.value) || 5000));
   const closeAfter = els.closeTabs.checked;
   let ok = 0;
 
