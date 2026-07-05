@@ -1,0 +1,2339 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="color-scheme" content="light">
+  <title>AI Auto Comment Facebook Pro - By Trường Saker</title>
+  <script src="https://js.puter.com/v2/"></script>
+  <style>
+    :root {
+      --bg: #f4f6fb;
+      --surface: #ffffff;
+      --surface-soft: #f8faff;
+      --surface-strong: #eef2ff;
+      --text: #111827;
+      --muted: #667085;
+      --subtle: #98a2b3;
+      --border: #e4e7ec;
+      --border-strong: #c7d2fe;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --primary-soft: #eef2ff;
+      --success: #15803d;
+      --success-soft: #ecfdf3;
+      --warning: #b45309;
+      --warning-soft: #fff7ed;
+      --danger: #dc2626;
+      --danger-soft: #fef2f2;
+      --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
+      --shadow-md: 0 12px 28px rgba(16, 24, 40, 0.10);
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --radius-sm: 9px;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font);
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(79,70,229,0.14), transparent 32%),
+        radial-gradient(circle at top right, rgba(245,158,11,0.14), transparent 30%),
+        var(--bg);
+    }
+
+    button, input, textarea, select { font: inherit; }
+    button { -webkit-tap-highlight-color: transparent; }
+    button:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible,
+    select:focus-visible {
+      outline: 3px solid rgba(79, 70, 229, 0.22);
+      outline-offset: 2px;
+    }
+
+    .app-shell {
+      width: min(100%, 1320px);
+      margin: 0 auto;
+      padding: 22px;
+      display: grid;
+      grid-template-columns: 290px minmax(0, 1fr) 290px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .main-col, .side-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+    .card {
+      background: rgba(255,255,255,0.94);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      padding: 20px;
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: center;
+      padding-bottom: 18px;
+      margin-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand { display: flex; gap: 12px; align-items: center; min-width: 0; }
+    .brand-logo {
+      width: 44px; height: 44px;
+      display: grid; place-items: center;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: #fff;
+      box-shadow: 0 10px 22px rgba(79, 70, 229, 0.25);
+      font-size: 22px;
+      flex: 0 0 auto;
+    }
+    .brand h1 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      color: #24205d;
+    }
+    .brand p {
+      margin: 4px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .pro-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      color: #7c2d12;
+      background: #ffedd5;
+      border: 1px solid #fed7aa;
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .auth-bar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+    .auth-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .auth-avatar {
+      width: 38px; height: 38px; border-radius: 50%;
+      display: grid; place-items: center;
+      background: #eaecf0;
+      color: var(--muted);
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+    .auth-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .auth-info { min-width: 0; }
+    .auth-status { font-size: 13px; font-weight: 700; color: var(--warning); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .auth-status.ok { color: var(--success); }
+    .auth-username { margin-top: 2px; color: var(--subtle); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .auth-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+
+    .btn {
+      border: 1px solid transparent;
+      border-radius: 11px;
+      padding: 10px 13px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .14s ease, background .14s ease, border-color .14s ease, color .14s ease, opacity .14s ease;
+      user-select: none;
+      min-height: 40px;
+    }
+    .btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .btn:active:not(:disabled) { transform: translateY(0); }
+    .btn:disabled { cursor: not-allowed; opacity: .62; }
+    .btn-primary { color: #fff; background: var(--primary); box-shadow: 0 10px 18px rgba(79, 70, 229, .18); }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+    .btn-soft { color: var(--primary); background: var(--primary-soft); border-color: #d9ddff; }
+    .btn-soft:hover:not(:disabled) { background: #e0e7ff; }
+    .btn-muted { color: #475467; background: #fff; border-color: var(--border); }
+    .btn-muted:hover:not(:disabled) { background: #f9fafb; }
+    .btn-warning { color: #fff; background: #f59e0b; }
+    .btn-warning:hover:not(:disabled) { background: #d97706; }
+    .btn-danger { color: var(--danger); background: var(--danger-soft); border-color: #fecaca; }
+    .btn-danger:hover:not(:disabled) { background: #fee2e2; }
+    .btn-sm { min-height: 30px; padding: 6px 10px; border-radius: 9px; font-size: 12px; }
+    .btn-icon { min-height: 32px; padding: 6px 9px; border-radius: 9px; }
+    .hidden { display: none !important; }
+
+    .notice {
+      display: none;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: start;
+      color: var(--warning);
+      background: var(--warning-soft);
+      border: 1px solid #fed7aa;
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .notice.show { display: grid; }
+    .notice strong { display: block; color: #7c2d12; margin-bottom: 2px; }
+
+    .form-grid { display: grid; gap: 14px; }
+    .form-group { display: grid; gap: 7px; }
+    .label-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    label {
+      color: #475467;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .hint { color: var(--subtle); font-size: 12px; line-height: 1.4; }
+    .counter { color: var(--subtle); font-size: 11px; white-space: nowrap; }
+
+    textarea, input[type="text"], input[type="password"], select {
+      width: 100%;
+      color: var(--text);
+      background: #fff;
+      border: 1px solid #d0d5dd;
+      border-radius: 13px;
+      padding: 11px 12px;
+      font-size: 14px;
+      line-height: 1.5;
+      box-shadow: 0 1px 0 rgba(16, 24, 40, 0.02);
+      transition: border-color .14s ease, box-shadow .14s ease;
+    }
+    textarea:focus, input[type="text"]:focus, select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, .09);
+      outline: none;
+    }
+    textarea::placeholder, input::placeholder { color: #98a2b3; }
+    textarea { min-height: 96px; resize: vertical; }
+    #fbPostLinkInput { min-height: 112px; font-family: Consolas, "SFMono-Regular", Menlo, monospace; }
+    #fbGroupIdInput { min-height: 92px; font-family: Consolas, "SFMono-Regular", Menlo, monospace; }
+    #commentedLinksBox { min-height: 260px; font-family: Consolas, "SFMono-Regular", Menlo, monospace; font-size: 12px; background: #fbfcff; }
+    .completed-card .section-title { margin-bottom: 10px; }
+    .completed-card .hint { margin-top: 2px; }
+    #productLinkInput { min-height: 78px; }
+
+    .field-status {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      min-height: 16px;
+    }
+    .link-preview {
+      color: #475467;
+      font-size: 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .link-preview.warn { color: var(--warning); }
+    .link-preview.ok { color: var(--success); }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1.25fr 1.25fr .82fr;
+      gap: 10px;
+      margin-top: 2px;
+    }
+    .bridge-box {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--border-strong);
+      border-radius: 16px;
+      background: linear-gradient(180deg, #f8faff, #ffffff);
+    }
+    .bridge-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      color: #312e81;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+    .bridge-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 10px;
+    }
+    input[type="url"], input[type="number"] {
+      width: 100%;
+      color: var(--text);
+      background: #fff;
+      border: 1px solid #d0d5dd;
+      border-radius: 13px;
+      padding: 11px 12px;
+      font-size: 14px;
+      line-height: 1.5;
+      box-shadow: 0 1px 0 rgba(16, 24, 40, 0.02);
+      transition: border-color .14s ease, box-shadow .14s ease;
+    }
+    input[type="url"]:focus, input[type="number"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, .09);
+      outline: none;
+    }
+    .check-list {
+      display: grid;
+      gap: 8px;
+    }
+    .check-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      color: #475467;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .check-row input {
+      width: 16px;
+      height: 16px;
+      margin-top: 2px;
+      flex: 0 0 auto;
+    }
+    .bridge-actions {
+      grid-template-columns: 1fr 1.35fr;
+    }
+    .automation-status {
+      min-height: 40px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .automation-status.ok { color: var(--success); background: var(--success-soft); border-color: #bbf7d0; }
+    .automation-status.warn { color: var(--warning); background: var(--warning-soft); border-color: #fed7aa; }
+    .automation-status.error { color: var(--danger); background: var(--danger-soft); border-color: #fecaca; }
+    #generateBtn { min-height: 48px; font-size: 15px; }
+
+    .output-box {
+      margin-top: 16px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      background: var(--surface-soft);
+    }
+    .output-header {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 13px;
+      border-bottom: 1px solid var(--border);
+    }
+    .output-title { color: var(--primary); font-size: 13px; font-weight: 900; }
+    .output-actions { display: flex; gap: 7px; flex-wrap: wrap; justify-content: flex-end; }
+    #output {
+      min-height: 90px;
+      padding: 16px;
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.68;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+    #output.placeholder { color: var(--subtle); }
+    #output.loading { color: var(--primary); }
+    #output.error { color: var(--danger); }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      color: #475467;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .tpl-list { display: grid; gap: 9px; }
+    .tpl-empty {
+      color: var(--subtle);
+      background: var(--surface-soft);
+      border: 1px dashed #d0d5dd;
+      border-radius: 14px;
+      padding: 16px;
+      text-align: center;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .tpl-item {
+      display: grid;
+      grid-template-columns: auto minmax(0,1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fff;
+      cursor: pointer;
+      transition: border-color .14s ease, background .14s ease, transform .14s ease;
+    }
+    .tpl-item:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+    .tpl-item.active { border-color: var(--primary); background: var(--primary-soft); }
+    .tpl-icon { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 10px; background: #f2f4f7; }
+    .tpl-name { color: var(--text); font-size: 13px; font-weight: 800; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .tpl-meta { margin-top: 2px; color: var(--subtle); font-size: 11px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .tpl-actions { display: flex; gap: 5px; }
+
+    .stats-card { display: grid; gap: 10px; }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f2f5;
+    }
+    .stat-row:last-child { border-bottom: 0; }
+    .stat-row strong { color: var(--text); }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(15, 23, 42, 0.48);
+      z-index: 50;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      width: min(100%, 470px);
+      max-height: min(90vh, 760px);
+      overflow: auto;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: var(--shadow-md);
+    }
+    .modal h2 { margin: 0 0 16px; color: #24205d; font-size: 18px; }
+    .modal-btns { display: grid; grid-template-columns: 1.4fr 1fr; gap: 10px; margin-top: 18px; }
+    .modal-center { text-align: center; }
+    .modal-center p { margin: 8px 0 18px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+
+    .toast-host {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 90;
+      display: grid;
+      gap: 10px;
+      pointer-events: none;
+    }
+    .toast {
+      pointer-events: auto;
+      width: min(360px, calc(100vw - 36px));
+      color: #344054;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-left: 5px solid var(--primary);
+      border-radius: 14px;
+      box-shadow: var(--shadow-md);
+      padding: 12px 13px;
+      font-size: 13px;
+      line-height: 1.45;
+      animation: toastIn .18s ease-out;
+    }
+    .toast.success { border-left-color: var(--success); }
+    .toast.error { border-left-color: var(--danger); }
+    .toast.warning { border-left-color: #f59e0b; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+
+    .github-card details { display: grid; gap: 10px; }
+    .github-card summary { cursor: pointer; font-weight: 900; color: #344054; user-select: none; }
+    .github-sync-grid { display: grid; gap: 10px; margin-top: 12px; }
+    .github-sync-grid .mini-row { display: grid; grid-template-columns: 1fr 86px; gap: 8px; }
+    .github-status { min-height: 36px; color: var(--muted); background: var(--surface-soft); border: 1px solid var(--border); border-radius: 12px; padding: 10px; font-size: 12px; line-height: 1.4; white-space: pre-line; }
+    .github-status.ok { color: var(--success); background: var(--success-soft); border-color: #bbf7d0; }
+    .github-status.warn { color: var(--warning); background: var(--warning-soft); border-color: #fed7aa; }
+    .github-status.error { color: var(--danger); background: var(--danger-soft); border-color: #fecaca; }
+
+    @media (max-width: 1120px) {
+      .app-shell { grid-template-columns: 245px minmax(0, 1fr) 245px; padding: 18px; }
+      .card { padding: 17px; }
+    }
+    @media (max-width: 860px) {
+      .app-shell { grid-template-columns: 1fr; max-width: 660px; }
+      .main-col { order: 1; }
+      .side-left { order: 2; }
+      .side-right { order: 3; }
+      .auth-bar, .hero { grid-template-columns: 1fr; }
+      .auth-actions { justify-content: flex-start; }
+    }
+    @media (max-width: 520px) {
+      .app-shell { padding: 12px; gap: 12px; }
+      .card { padding: 15px; border-radius: 16px; }
+      .actions, .modal-btns { grid-template-columns: 1fr; }
+      .output-header { align-items: flex-start; flex-direction: column; }
+      .brand h1 { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="side-col side-left">
+      <section class="card templates-card" aria-labelledby="leftTplTitle">
+        <div class="section-title">
+          <span id="leftTplTitle">📦 Kho mẫu trái</span>
+          <button class="btn btn-primary btn-sm" id="btnAddTplLeft" type="button">+ Thêm</button>
+        </div>
+        <div class="tpl-list" id="tplListLeft" aria-live="polite"></div>
+      </section>
+
+      <section class="card github-card" aria-labelledby="githubSyncTitle">
+        <div class="section-title">
+          <span id="githubSyncTitle">☁️ GitHub Update</span>
+        </div>
+        <details>
+          <summary>Cài đặt lưu web lên GitHub</summary>
+          <div class="github-sync-grid">
+            <div class="form-group">
+              <label for="githubRepoInput">Repo</label>
+              <input type="text" id="githubRepoInput" placeholder="owner/repo">
+            </div>
+            <div class="mini-row">
+              <div class="form-group">
+                <label for="githubPathInput">File</label>
+                <input type="text" id="githubPathInput" value="index.html" placeholder="index.html">
+              </div>
+              <div class="form-group">
+                <label for="githubBranchInput">Branch</label>
+                <input type="text" id="githubBranchInput" value="main" placeholder="main">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="githubTokenInput">Fine-grained token</label>
+              <input type="password" id="githubTokenInput" autocomplete="off" placeholder="github_pat_...">
+              <div class="hint">Token cần quyền Contents: Read and write cho đúng repo đang host web.</div>
+            </div>
+            <label class="check-row"><input id="githubAutoSyncTpl" type="checkbox"> Tự commit khi thêm/sửa/xoá Kho mẫu</label>
+            <div class="actions bridge-actions">
+              <button class="btn btn-soft" id="githubSaveSettingsBtn" type="button">💾 Lưu cài đặt</button>
+              <button class="btn btn-primary" id="githubSyncTemplatesBtn" type="button">⬆️ Đẩy Kho mẫu</button>
+            </div>
+            <div class="github-status" id="githubStatus">Chưa cấu hình GitHub sync.</div>
+          </div>
+        </details>
+      </section>
+    </aside>
+
+    <main class="main-col">
+      <section class="card">
+        <header class="hero">
+          <div class="brand">
+            <div class="brand-logo" aria-hidden="true">🤖</div>
+            <div>
+              <h1>AI Auto Content Facebook</h1>
+              <p>Nhập link bài viết, tự lấy nội dung gốc, tạo bình luận, copy và gửi vào tab Facebook.</p>
+            </div>
+          </div>
+          <span class="pro-badge">⚡ AUTO FB V1.7.6 • GH FIX</span>
+        </header>
+
+        <div class="auth-bar">
+          <div class="auth-left">
+            <div class="auth-avatar" id="authAvatar" aria-hidden="true">👤</div>
+            <div class="auth-info">
+              <div class="auth-status" id="authStatus">⏳ Đang kiểm tra Puter...</div>
+              <div class="auth-username hidden" id="authUsername"></div>
+            </div>
+          </div>
+          <div class="auth-actions">
+            <button class="btn btn-primary btn-sm hidden" id="loginBtn" type="button">🔑 Đăng nhập</button>
+            <button class="btn btn-warning btn-sm hidden" id="switchBtn" type="button">🔄 Đổi tài khoản</button>
+            <button class="btn btn-danger btn-sm hidden" id="logoutBtn" type="button">↩ Đăng xuất</button>
+          </div>
+        </div>
+
+        <div class="notice" id="tokenBanner" role="alert">
+          <div aria-hidden="true">⚠️</div>
+          <div>
+            <strong>Tài khoản Puter có thể đã hết token miễn phí</strong>
+            Hãy đổi tài khoản Puter khác hoặc thử lại sau nếu gặp giới hạn sử dụng.
+          </div>
+          <button class="btn btn-warning btn-sm" id="btnRelogin" type="button">Đổi</button>
+        </div>
+
+        <div class="form-grid">
+          <div class="bridge-box">
+            <div class="bridge-title">
+              <span>🔗 Tự động từ UID nhóm Facebook</span>
+              <span class="counter">Bridge Extension</span>
+            </div>
+
+            <div class="form-group">
+              <label for="bridgeExtensionId">Extension ID</label>
+              <input type="text" id="bridgeExtensionId" placeholder="Dán Extension ID của FB Auto Commenter Bridge">
+              <div class="hint">Cài extension, mở icon extension để copy ID. Ô này được đưa lên đầu để nhập một lần rồi dùng lâu dài.</div>
+            </div>
+
+            <div class="form-group">
+              <label for="fbGroupIdInput">UID nhóm Facebook</label>
+              <textarea id="fbGroupIdInput" spellcheck="false" placeholder="Nhập nhiều UID nhóm hoặc link nhóm, mỗi dòng một nhóm"></textarea>
+              <div class="hint">Chỉ cần nhập lần đầu. Mỗi lượt sẽ quét 5 permalink mới nhất/nhóm, tự lọc link đã comment trước đó rồi mới xử lý.</div>
+            </div>
+
+            <div class="actions bridge-actions">
+              <button class="btn btn-soft" id="scanGroupLinksBtn" type="button">🧲 Quét nhóm → lọc trùng</button>
+              <button class="btn btn-danger hidden" id="stopClosedLoopBtn" type="button">⛔ Dừng vòng lặp</button>
+              <button class="btn btn-muted" id="copyScannedLinksBtn" type="button">📋 Copy link mới</button>
+            </div>
+
+            <div class="form-group">
+              <label for="fbPostLinkInput">Link bài viết Facebook</label>
+              <textarea id="fbPostLinkInput" spellcheck="false" placeholder="Link mới sau khi quét sẽ tự đổ vào đây. Link đã comment trước sẽ tự bị loại."></textarea>
+              <div class="hint">Bấm “🧲 Quét nhóm → lọc trùng” để tự chạy vòng lặp: quét nhóm → lọc trùng → đổ link → chạy “🚀 Quét → đọc → tạo → comment” → xoá ô link → quét lượt mới.</div>
+            </div>
+
+            <div class="bridge-grid hidden">
+              <div class="form-group">
+                <label for="fbDelayMs">Thời gian chờ tải tab</label>
+                <input id="fbDelayMs" type="number" min="1000" max="30000" step="500" value="5000">
+              </div>
+              <div class="form-group">
+                <label for="fbMaxChars">Giới hạn nội dung lấy</label>
+                <input id="fbMaxChars" type="number" min="100" max="50000" step="100" value="20000">
+              </div>
+            </div>
+
+            <div class="check-list hidden">
+              <label class="check-row"><input id="autoCommentAfterGenerate" type="checkbox" checked> Tạo xong bình luận thì tự gửi bình luận vào tab bài viết Facebook</label>
+              <label class="check-row"><input id="closeAfterComment" type="checkbox" checked> Đóng tab Facebook sau khi gửi bình luận xong</label>
+            </div>
+
+            <div class="actions bridge-actions">
+              <button class="btn btn-soft" id="readFbPostBtn" type="button">🔎 Lấy nội dung</button>
+              <button class="btn btn-primary" id="autoWorkflowBtn" type="button">🚀 Quét → đọc → tạo → comment</button>
+            </div>
+            <div class="automation-status" id="bridgeStatus">Sẵn sàng kết nối extension.</div>
+          </div>
+
+          <div class="form-group">
+            <div class="label-row">
+              <label for="articleInput">Nội dung bài viết gốc</label>
+              <button class="btn btn-soft btn-sm" id="pasteBtn" type="button">📋 Dán nội dung</button>
+            </div>
+            <textarea id="articleInput" maxlength="6000" placeholder="Dán nội dung bài viết cần trả lời vào đây..."></textarea>
+            <div class="field-status">
+              <span class="hint">AI sẽ đọc ngữ cảnh để viết câu đầu tự nhiên hơn.</span>
+              <span class="counter" id="articleCounter">0/6000</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="productNameInput">Tên sản phẩm</label>
+            <input type="text" id="productNameInput" maxlength="160" placeholder="VD: Đèn năng lượng mặt trời 300W, Inverter LuxPower...">
+            <div class="field-status">
+              <span class="hint">Không bắt buộc, nhưng nên nhập để bình luận rõ ý hơn.</span>
+              <span class="counter" id="productCounter">0/160</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="productLinkInput">Danh sách link Shopee / link sản phẩm</label>
+            <textarea id="productLinkInput" placeholder="Mỗi link một dòng. Hệ thống sẽ chọn ngẫu nhiên 1 link hợp lệ."></textarea>
+            <div class="field-status">
+              <span class="link-preview" id="linkStatus">Chưa có link sản phẩm</span>
+              <span class="counter" id="linkCounter">0 link</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="toneSelect">🎭 Phong cách bình luận</label>
+            <select id="toneSelect">
+              <option value="đời thường, gần gũi, tự nhiên như người thật bình luận">🌱 Đời thường & tự nhiên</option>
+              <option value="hài hước nhẹ, bắt trend vừa phải, không lố và không spam">🔥 Hài hước & bắt trend</option>
+              <option value="chuyên gia tư vấn, có logic, ngắn gọn và đáng tin">💼 Chuyên gia tư vấn</option>
+              <option value="tích cực, đồng cảm, khen vừa đủ, không sáo rỗng">❤️ Tích cực & đồng cảm</option>
+              <option value="bán hàng mềm, gợi ý khéo, không ép mua và không phóng đại">🛒 Bán hàng mềm</option>
+            </select>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-primary" id="generateBtn" type="button">✨ Tạo bình luận</button>
+            <button class="btn btn-soft" id="commentCurrentTabBtn" type="button">💬 Comment tab hiện tại</button>
+            <button class="btn btn-muted" id="clearBtn" type="button">🔄 Làm mới</button>
+          </div>
+        </div>
+
+        <section class="output-box" aria-live="polite">
+          <div class="output-header">
+            <span class="output-title">✨ Kết quả bình luận</span>
+            <div class="output-actions">
+              <button class="btn btn-soft btn-sm" id="copyBtn" type="button">Sao chép</button>
+              <button class="btn btn-muted btn-sm" id="saveHistoryBtn" type="button">Lưu lịch sử</button>
+            </div>
+          </div>
+          <div id="output" class="placeholder">Bình luận sẽ xuất hiện tại đây...</div>
+        </section>
+      </section>
+    </main>
+
+    <aside class="side-col side-right">
+      <section class="card templates-card" aria-labelledby="rightTplTitle">
+        <div class="section-title">
+          <span id="rightTplTitle">📦 Kho mẫu phải</span>
+          <button class="btn btn-primary btn-sm" id="btnAddTpl" type="button">+ Thêm</button>
+        </div>
+        <div class="tpl-list" id="tplList" aria-live="polite"></div>
+      </section>
+
+      <section class="card stats-card completed-card" aria-labelledby="statsTitle">
+        <div class="section-title" id="statsTitle">
+          <span>✅ Link đã comment xong</span>
+          <button class="btn btn-muted btn-sm" id="clearCommentedLinksBtn" type="button">Xoá log</button>
+        </div>
+        <div class="stat-row"><span>Tổng link đã chạy</span><strong id="commentedCountStat">0</strong></div>
+        <textarea id="commentedLinksBox" readonly spellcheck="false" placeholder="Các link đã comment xong sẽ được tổng hợp tại đây..."></textarea>
+        <div class="hint">Các link trong danh sách này sẽ được dùng để lọc trùng ở lần quét sau.</div>
+        <div class="hidden" aria-hidden="true">
+          <strong id="validLinkStat">0</strong>
+          <strong id="leftTplStat">0</strong>
+          <strong id="rightTplStat">0</strong>
+          <strong id="historyStat">0</strong>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <div class="modal-overlay" id="templateModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <h2 id="modalTitle">Thêm mẫu mới</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="tplNameInput">Tên mẫu</label>
+          <input type="text" id="tplNameInput" maxlength="90" placeholder="VD: Đèn NLMT - khách hỏi mua">
+        </div>
+        <div class="form-group">
+          <label for="tplProductInput">Tên sản phẩm</label>
+          <input type="text" id="tplProductInput" maxlength="160" placeholder="VD: Đèn năng lượng mặt trời 300W">
+        </div>
+        <div class="form-group">
+          <label for="tplLinksInput">Danh sách link</label>
+          <textarea id="tplLinksInput" placeholder="Mỗi link một dòng"></textarea>
+        </div>
+      </div>
+      <div class="modal-btns">
+        <button class="btn btn-primary" id="btnSaveTpl" type="button">💾 Lưu mẫu</button>
+        <button class="btn btn-muted" id="btnCancelTpl" type="button">Huỷ</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="switchModal" role="dialog" aria-modal="true" aria-labelledby="switchTitle">
+    <div class="modal modal-center">
+      <h2 id="switchTitle">🔄 Đổi tài khoản Puter</h2>
+      <p>Bạn sẽ đăng xuất khỏi tài khoản hiện tại rồi đăng nhập tài khoản mới. Các mẫu sản phẩm và lịch sử đã lưu vẫn được giữ trong trình duyệt.</p>
+      <button class="btn btn-warning" id="btnConfirmSwitch" type="button" style="width:100%; margin-bottom:10px">Xác nhận đổi tài khoản</button>
+      <button class="btn btn-muted" id="btnCancelSwitch" type="button" style="width:100%">Huỷ</button>
+    </div>
+  </div>
+
+  <div class="toast-host" id="toastHost" aria-live="polite"></div>
+
+  <script id="githubTemplateData" type="application/json">{"left":[],"right":[],"updatedAt":""}</script>
+
+  <script>
+    'use strict';
+
+    const APP = {
+      model: 'gpt-4o',
+      build: 'v1.7.6-gh-update-fix-2026-07-05',
+      storage: {
+        leftTemplates: 'truong_ai_commenter_templates_left_v2',
+        rightTemplates: 'truong_ai_commenter_templates_right_v2',
+        history: 'truong_ai_commenter_history_v2',
+        draft: 'truong_ai_commenter_draft_v2',
+        bridge: 'truong_ai_commenter_fb_bridge_v1',
+        completedComments: 'truong_ai_commenter_completed_comments_v1',
+        githubSync: 'truong_ai_commenter_github_sync_v1'
+      },
+      tokenErrorPatterns: [
+        'quota', 'rate limit', 'rate_limit', 'insufficient', 'limit exceeded',
+        'token', 'credits', 'billing', 'usage', '429', 'too many requests',
+        'hết', 'vượt quá', 'giới hạn', 'credit'
+      ]
+    };
+
+    const $ = (selector, root = document) => root.querySelector(selector);
+    const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+
+    const els = {
+      authStatus: $('#authStatus'),
+      authUsername: $('#authUsername'),
+      authAvatar: $('#authAvatar'),
+      loginBtn: $('#loginBtn'),
+      switchBtn: $('#switchBtn'),
+      logoutBtn: $('#logoutBtn'),
+      tokenBanner: $('#tokenBanner'),
+      btnRelogin: $('#btnRelogin'),
+      switchModal: $('#switchModal'),
+      btnConfirmSwitch: $('#btnConfirmSwitch'),
+      btnCancelSwitch: $('#btnCancelSwitch'),
+      fbGroupIdInput: $('#fbGroupIdInput'),
+      scanGroupLinksBtn: $('#scanGroupLinksBtn'),
+      stopClosedLoopBtn: $('#stopClosedLoopBtn'),
+      copyScannedLinksBtn: $('#copyScannedLinksBtn'),
+      fbPostLinkInput: $('#fbPostLinkInput'),
+      bridgeExtensionId: $('#bridgeExtensionId'),
+      fbDelayMs: $('#fbDelayMs'),
+      fbMaxChars: $('#fbMaxChars'),
+      autoCommentAfterGenerate: $('#autoCommentAfterGenerate'),
+      closeAfterComment: $('#closeAfterComment'),
+      readFbPostBtn: $('#readFbPostBtn'),
+      autoWorkflowBtn: $('#autoWorkflowBtn'),
+      commentCurrentTabBtn: $('#commentCurrentTabBtn'),
+      bridgeStatus: $('#bridgeStatus'),
+      articleInput: $('#articleInput'),
+      productNameInput: $('#productNameInput'),
+      productLinkInput: $('#productLinkInput'),
+      toneSelect: $('#toneSelect'),
+      generateBtn: $('#generateBtn'),
+      clearBtn: $('#clearBtn'),
+      pasteBtn: $('#pasteBtn'),
+      copyBtn: $('#copyBtn'),
+      saveHistoryBtn: $('#saveHistoryBtn'),
+      output: $('#output'),
+      articleCounter: $('#articleCounter'),
+      productCounter: $('#productCounter'),
+      linkCounter: $('#linkCounter'),
+      linkStatus: $('#linkStatus'),
+      validLinkStat: $('#validLinkStat'),
+      leftTplStat: $('#leftTplStat'),
+      rightTplStat: $('#rightTplStat'),
+      historyStat: $('#historyStat'),
+      commentedLinksBox: $('#commentedLinksBox'),
+      commentedCountStat: $('#commentedCountStat'),
+      clearCommentedLinksBtn: $('#clearCommentedLinksBtn'),
+      templateModal: $('#templateModal'),
+      modalTitle: $('#modalTitle'),
+      tplNameInput: $('#tplNameInput'),
+      tplProductInput: $('#tplProductInput'),
+      tplLinksInput: $('#tplLinksInput'),
+      btnSaveTpl: $('#btnSaveTpl'),
+      btnCancelTpl: $('#btnCancelTpl'),
+      toastHost: $('#toastHost'),
+      githubRepoInput: $('#githubRepoInput'),
+      githubPathInput: $('#githubPathInput'),
+      githubBranchInput: $('#githubBranchInput'),
+      githubTokenInput: $('#githubTokenInput'),
+      githubAutoSyncTpl: $('#githubAutoSyncTpl'),
+      githubSaveSettingsBtn: $('#githubSaveSettingsBtn'),
+      githubSyncTemplatesBtn: $('#githubSyncTemplatesBtn'),
+      githubStatus: $('#githubStatus')
+    };
+
+    const state = {
+      activeManager: null,
+      editingIndex: -1,
+      selectedTemplateKey: null,
+      activeFbTabId: null,
+      activeFbUrl: '',
+      isQueueRunning: false,
+      isClosedLoopRunning: false,
+      closedLoopStopRequested: false,
+      closedLoopCycleLimit: 100,
+      lastGroupScan: null,
+      managers: {}
+    };
+
+    function safeJsonParse(value, fallback) {
+      try { return JSON.parse(value) ?? fallback; }
+      catch { return fallback; }
+    }
+
+    function loadStorage(key, fallback) {
+      return safeJsonParse(localStorage.getItem(key), fallback);
+    }
+
+    function saveStorage(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function setGithubStatus(message, type = '') {
+      if (!els.githubStatus) return;
+      els.githubStatus.textContent = message;
+      els.githubStatus.className = `github-status ${type}`.trim();
+    }
+
+    function getGithubSettings() {
+      const repoRaw = els.githubRepoInput?.value.trim() || '';
+      const [owner = '', repo = ''] = repoRaw.split('/').map(v => v.trim()).filter(Boolean);
+      return {
+        repoRaw,
+        owner,
+        repo,
+        path: els.githubPathInput?.value.trim() || 'index.html',
+        branch: els.githubBranchInput?.value.trim() || 'main',
+        token: els.githubTokenInput?.value.trim() || '',
+        autoSyncTemplates: !!els.githubAutoSyncTpl?.checked
+      };
+    }
+
+    function saveGithubSettings(showToast = true) {
+      const settings = getGithubSettings();
+      saveStorage(APP.storage.githubSync, settings);
+      if (showToast) toast('Đã lưu cài đặt GitHub');
+      setGithubStatus(settings.repoRaw ? `Đã lưu cấu hình: ${settings.repoRaw} • ${settings.branch} • ${settings.path}` : 'Chưa nhập owner/repo.', settings.repoRaw ? 'ok' : 'warn');
+    }
+
+    function restoreGithubSettings() {
+      const saved = loadStorage(APP.storage.githubSync, null);
+      if (!saved) return;
+      if (els.githubRepoInput) els.githubRepoInput.value = saved.repoRaw || [saved.owner, saved.repo].filter(Boolean).join('/');
+      if (els.githubPathInput) els.githubPathInput.value = saved.path || 'index.html';
+      if (els.githubBranchInput) els.githubBranchInput.value = saved.branch || 'main';
+      if (els.githubTokenInput) els.githubTokenInput.value = saved.token || '';
+      if (els.githubAutoSyncTpl) els.githubAutoSyncTpl.checked = !!saved.autoSyncTemplates;
+      setGithubStatus(saved.repoRaw || saved.owner ? `Đã tải cấu hình GitHub. Bản web: ${APP.build}` : 'Chưa cấu hình GitHub sync.', saved.repoRaw || saved.owner ? 'ok' : '');
+    }
+
+    function getTemplatePayload() {
+      return {
+        left: loadStorage(APP.storage.leftTemplates, []),
+        right: loadStorage(APP.storage.rightTemplates, []),
+        updatedAt: new Date().toISOString(),
+        build: APP.build
+      };
+    }
+
+    function seedTemplatesFromEmbedded() {
+      const node = document.getElementById('githubTemplateData');
+      if (!node) return;
+      const payload = safeJsonParse(node.textContent || '{}', {});
+      if (Array.isArray(payload.left) && payload.left.length && !loadStorage(APP.storage.leftTemplates, []).length) {
+        saveStorage(APP.storage.leftTemplates, payload.left);
+      }
+      if (Array.isArray(payload.right) && payload.right.length && !loadStorage(APP.storage.rightTemplates, []).length) {
+        saveStorage(APP.storage.rightTemplates, payload.right);
+      }
+    }
+
+    function encodeUtf8Base64(text) {
+      const bytes = new TextEncoder().encode(String(text || ''));
+      let binary = '';
+      const chunkSize = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+      }
+      return btoa(binary);
+    }
+
+    function decodeUtf8Base64(base64) {
+      const binary = atob(String(base64 || '').replace(/\s+/g, ''));
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+      return new TextDecoder().decode(bytes);
+    }
+
+    function injectTemplatePayloadIntoHtml(sourceHtml, payload) {
+      const json = JSON.stringify(payload).replace(/<\//g, '<\/');
+      const tagRe = /<script\s+id=["']githubTemplateData["']\s+type=["']application\/json["']>[\s\S]*?<\/script>/i;
+      const tag = `<script id="githubTemplateData" type="application/json">${json}<\/script>`;
+      if (tagRe.test(sourceHtml)) return sourceHtml.replace(tagRe, tag);
+      return sourceHtml.replace(/<script>\s*['"]use strict['"];?/i, `${tag}
+
+  <script>
+    'use strict';`);
+    }
+
+    async function githubApiFetch(url, options = {}) {
+      const settings = getGithubSettings();
+      const headers = {
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        ...(options.headers || {})
+      };
+      if (settings.token) headers.Authorization = `Bearer ${settings.token}`;
+      const response = await fetch(url, { ...options, headers });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const msg = data?.message || `${response.status} ${response.statusText}`;
+        throw new Error(msg);
+      }
+      return data;
+    }
+
+    async function syncTemplatesToGithub(options = {}) {
+      const settings = getGithubSettings();
+      if (!settings.owner || !settings.repo) {
+        setGithubStatus('Sai định dạng repo. Hãy nhập dạng owner/repo.', 'error');
+        return false;
+      }
+      if (!settings.token) {
+        setGithubStatus('Chưa nhập GitHub token.', 'error');
+        return false;
+      }
+
+      const oldText = els.githubSyncTemplatesBtn?.textContent || '';
+      if (els.githubSyncTemplatesBtn) {
+        els.githubSyncTemplatesBtn.disabled = true;
+        els.githubSyncTemplatesBtn.textContent = '⏳ Đang đẩy...';
+      }
+      setGithubStatus('Đang lấy SHA mới nhất từ GitHub...', 'warn');
+      saveGithubSettings(false);
+
+      try {
+        const apiUrl = `https://api.github.com/repos/${encodeURIComponent(settings.owner)}/${encodeURIComponent(settings.repo)}/contents/${settings.path.split('/').map(encodeURIComponent).join('/')}?ref=${encodeURIComponent(settings.branch)}`;
+        const current = await githubApiFetch(apiUrl);
+        const sourceHtml = decodeUtf8Base64(current.content || '');
+        const nextHtml = injectTemplatePayloadIntoHtml(sourceHtml, getTemplatePayload());
+        const changed = nextHtml !== sourceHtml;
+        if (!changed) {
+          setGithubStatus('Kho mẫu hiện tại đã giống file trên GitHub. Không cần commit mới.', 'ok');
+          return true;
+        }
+
+        setGithubStatus('Đang tạo commit cập nhật index.html...', 'warn');
+        await githubApiFetch(apiUrl.replace(/\?ref=.*$/, ''), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: `Update web templates ${new Date().toLocaleString('vi-VN')}`,
+            content: encodeUtf8Base64(nextHtml),
+            sha: current.sha,
+            branch: settings.branch
+          })
+        });
+
+        setGithubStatus('✅ Đã commit lên GitHub. GitHub Pages thường cần 30–90 giây để hiện bản mới. Nếu vẫn thấy bản cũ, mở URL kèm ?v=' + Date.now(), 'ok');
+        if (!options.silent) toast('Đã đẩy Kho mẫu lên GitHub');
+        return true;
+      } catch (error) {
+        setGithubStatus('❌ GitHub update lỗi: ' + getErrorText(error), 'error');
+        if (!options.silent) toast('GitHub update lỗi: ' + getErrorText(error), 'error');
+        return false;
+      } finally {
+        if (els.githubSyncTemplatesBtn) {
+          els.githubSyncTemplatesBtn.disabled = false;
+          els.githubSyncTemplatesBtn.textContent = oldText || '⬆️ Đẩy Kho mẫu';
+        }
+      }
+    }
+
+    function afterTemplateMutation() {
+      if (els.githubAutoSyncTpl?.checked) {
+        syncTemplatesToGithub({ silent: true });
+      }
+    }
+
+
+    function toast(message, type = 'success') {
+      const item = document.createElement('div');
+      item.className = `toast ${type}`;
+      item.textContent = message;
+      els.toastHost.appendChild(item);
+      setTimeout(() => item.remove(), 3300);
+    }
+
+    function setOutput(message, className = '') {
+      els.output.textContent = message;
+      els.output.className = className;
+    }
+
+    function isPuterReady() {
+      return typeof window.puter !== 'undefined' && window.puter.auth && window.puter.ai;
+    }
+
+    function isSignedIn() {
+      return isPuterReady() && window.puter.auth.isSignedIn();
+    }
+
+    function getErrorText(error) {
+      if (!error) return '';
+      if (typeof error === 'string') return error;
+      if (error.message) return error.message;
+      try { return JSON.stringify(error); } catch { return String(error); }
+    }
+
+    function isTokenError(message) {
+      const lower = String(message || '').toLowerCase();
+      return APP.tokenErrorPatterns.some(pattern => lower.includes(pattern));
+    }
+
+    function stripAiWrapper(text) {
+      return String(text || '')
+        .replace(/^```(?:text|md|markdown)?/i, '')
+        .replace(/```$/i, '')
+        .replace(/^\s*["“”']|["“”']\s*$/g, '')
+        .trim();
+    }
+
+    function extractResponseText(response) {
+      if (typeof response === 'string') return response;
+      return response?.message?.content
+        || response?.content
+        || response?.text
+        || 'Không có phản hồi từ AI.';
+    }
+
+    function parseLinks(raw) {
+      const chunks = String(raw || '')
+        .split(/[\n,\s]+/)
+        .map(item => item.trim())
+        .filter(Boolean);
+
+      const unique = [];
+      const invalid = [];
+      const seen = new Set();
+
+      for (const item of chunks) {
+        try {
+          const url = new URL(item);
+          if (!/^https?:$/.test(url.protocol)) throw new Error('Invalid protocol');
+          const clean = url.toString();
+          if (!seen.has(clean)) {
+            seen.add(clean);
+            unique.push(clean);
+          }
+        } catch {
+          invalid.push(item);
+        }
+      }
+      return { valid: unique, invalid };
+    }
+
+
+    function parseFbPostLinks(raw) {
+      return String(raw || '')
+        .replace(/[\u200B-\u200D\uFEFF]/g, ' ')
+        .split(/[\s,;]+/)
+        .map(item => item.trim().replace(/[，,;]+$/g, ''))
+        .filter(Boolean);
+    }
+
+    function normalizeFbLinkForDedup(value) {
+      const raw = String(value || '').trim().replace(/[\u200B-\u200D\uFEFF]/g, '');
+      if (!raw) return '';
+      const groupPostMatch = raw.match(/\/groups\/([0-9A-Za-z._-]+)\/(?:permalink|posts)\/([0-9A-Za-z._-]+)/i);
+      const postMatch = raw.match(/\/(?:permalink|posts|videos|reel)\/([0-9A-Za-z._-]+)/i);
+      if (groupPostMatch) return `group:${groupPostMatch[1].toLowerCase()}:post:${groupPostMatch[2].toLowerCase()}`;
+      if (postMatch) return `post:${postMatch[1].toLowerCase()}`;
+      try {
+        const url = new URL(raw);
+        url.hash = '';
+        url.search = '';
+        const host = url.hostname.toLowerCase().replace(/^(m|web)\./, 'www.').replace(/^fb\.com$/, 'www.facebook.com');
+        const path = url.pathname.replace(/\/+$/g, '').toLowerCase();
+        return `${host}${path}`;
+      } catch {
+        return raw.replace(/[?#].*$/g, '').replace(/\/+$/g, '').toLowerCase();
+      }
+    }
+
+    function getCompletedCommentEntries() {
+      const items = loadStorage(APP.storage.completedComments, []);
+      return Array.isArray(items) ? items.filter(item => item && item.link) : [];
+    }
+
+    function saveCompletedCommentEntries(items) {
+      saveStorage(APP.storage.completedComments, items.slice(0, 1000));
+      renderCompletedCommentLinks();
+    }
+
+    function getCompletedCommentKeys() {
+      return new Set(getCompletedCommentEntries().map(item => item.key || normalizeFbLinkForDedup(item.link)).filter(Boolean));
+    }
+
+    function filterFreshFbLinks(links) {
+      const completed = getCompletedCommentKeys();
+      const seen = new Set();
+      const fresh = [];
+      const duplicate = [];
+      for (const link of links || []) {
+        const clean = String(link || '').trim();
+        const key = normalizeFbLinkForDedup(clean);
+        if (!clean || !key) continue;
+        if (completed.has(key) || seen.has(key)) {
+          duplicate.push(clean);
+          continue;
+        }
+        seen.add(key);
+        fresh.push(clean);
+      }
+      return { fresh, duplicate };
+    }
+
+    function markLinkCommented(link, comment = '') {
+      const clean = String(link || '').trim();
+      const key = normalizeFbLinkForDedup(clean);
+      if (!clean || !key) return;
+      const items = getCompletedCommentEntries();
+      const index = items.findIndex(item => (item.key || normalizeFbLinkForDedup(item.link)) === key);
+      const payload = {
+        link: clean,
+        key,
+        comment: String(comment || '').trim(),
+        completedAt: new Date().toISOString()
+      };
+      if (index >= 0) items.splice(index, 1);
+      items.unshift(payload);
+      saveCompletedCommentEntries(items);
+    }
+
+    function renderCompletedCommentLinks() {
+      if (!els.commentedLinksBox || !els.commentedCountStat) return;
+      const items = getCompletedCommentEntries();
+      els.commentedCountStat.textContent = String(items.length);
+      els.commentedLinksBox.value = items.map((item, index) => {
+        const time = item.completedAt ? new Date(item.completedAt).toLocaleString('vi-VN') : '';
+        return `${index + 1}. ${item.link}${time ? `  |  ${time}` : ''}`;
+      }).join('\n');
+    }
+
+    function clearCompletedCommentLinks() {
+      if (!confirm('Xoá toàn bộ danh sách link đã comment xong?')) return;
+      saveCompletedCommentEntries([]);
+      toast('Đã xoá log link đã comment');
+    }
+
+    function compactLinkLabel(value, max = 90) {
+      const text = String(value || '').trim();
+      if (text.length <= max) return text;
+      return `${text.slice(0, Math.max(20, max - 18))}...${text.slice(-14)}`;
+    }
+
+    function randomFrom(array) {
+      return array[Math.floor(Math.random() * array.length)] || '';
+    }
+
+    function updateCounters() {
+      els.articleCounter.textContent = `${els.articleInput.value.length}/6000`;
+      els.productCounter.textContent = `${els.productNameInput.value.length}/160`;
+
+      const { valid, invalid } = parseLinks(els.productLinkInput.value);
+      els.linkCounter.textContent = `${valid.length} link`;
+      els.validLinkStat.textContent = String(valid.length);
+
+      if (!els.productLinkInput.value.trim()) {
+        els.linkStatus.textContent = 'Chưa có link sản phẩm';
+        els.linkStatus.className = 'link-preview';
+      } else if (invalid.length) {
+        els.linkStatus.textContent = `Có ${invalid.length} link chưa hợp lệ, hệ thống sẽ bỏ qua`;
+        els.linkStatus.className = 'link-preview warn';
+      } else {
+        els.linkStatus.textContent = 'Tất cả link đều hợp lệ';
+        els.linkStatus.className = 'link-preview ok';
+      }
+    }
+
+    function updateStats() {
+      els.leftTplStat.textContent = String(state.managers.left?.items.length || 0);
+      els.rightTplStat.textContent = String(state.managers.right?.items.length || 0);
+      els.historyStat.textContent = String(loadStorage(APP.storage.history, []).length);
+      renderCompletedCommentLinks();
+      updateCounters();
+    }
+
+    function renderAvatar(user) {
+      els.authAvatar.textContent = '👤';
+      if (!user?.avatar_url) return;
+
+      const img = document.createElement('img');
+      img.alt = 'Avatar Puter';
+      img.referrerPolicy = 'no-referrer';
+      img.src = user.avatar_url;
+      img.onerror = () => { els.authAvatar.textContent = '👤'; };
+      els.authAvatar.replaceChildren(img);
+    }
+
+    async function updateAuthUI() {
+      if (!isPuterReady()) {
+        els.authStatus.textContent = '⚠️ Chưa tải được Puter SDK';
+        els.authStatus.className = 'auth-status';
+        els.authUsername.classList.add('hidden');
+        els.authAvatar.textContent = '👤';
+        els.loginBtn.classList.remove('hidden');
+        els.switchBtn.classList.add('hidden');
+        els.logoutBtn.classList.add('hidden');
+        return;
+      }
+
+      if (!isSignedIn()) {
+        els.authStatus.textContent = '⚠️ Chưa đăng nhập Puter';
+        els.authStatus.className = 'auth-status';
+        els.authUsername.classList.add('hidden');
+        els.authAvatar.textContent = '👤';
+        els.loginBtn.classList.remove('hidden');
+        els.switchBtn.classList.add('hidden');
+        els.logoutBtn.classList.add('hidden');
+        return;
+      }
+
+      els.authStatus.textContent = '✅ Đã đăng nhập Puter';
+      els.authStatus.className = 'auth-status ok';
+      els.loginBtn.classList.add('hidden');
+      els.switchBtn.classList.remove('hidden');
+      els.logoutBtn.classList.remove('hidden');
+
+      try {
+        const user = await window.puter.auth.getUser();
+        const name = user?.username || user?.email || 'Puter User';
+        els.authUsername.textContent = name;
+        els.authUsername.classList.remove('hidden');
+        renderAvatar(user);
+      } catch {
+        els.authUsername.classList.add('hidden');
+        els.authAvatar.textContent = '👤';
+      }
+    }
+
+    async function doSignIn() {
+      if (!isPuterReady()) {
+        toast('Puter SDK chưa sẵn sàng. Hãy kiểm tra kết nối mạng hoặc mở file qua HTTPS/server.', 'warning');
+        return false;
+      }
+      try {
+        await window.puter.auth.signIn();
+        els.tokenBanner.classList.remove('show');
+        await updateAuthUI();
+        toast('Đăng nhập Puter thành công');
+        return true;
+      } catch (error) {
+        setOutput('❌ Đăng nhập thất bại: ' + getErrorText(error), 'error');
+        return false;
+      }
+    }
+
+    async function doSignOut() {
+      try {
+        if (isPuterReady()) await window.puter.auth.signOut();
+      } catch {}
+      els.tokenBanner.classList.remove('show');
+      await updateAuthUI();
+    }
+
+    async function doSwitchAccount() {
+      closeModal(els.switchModal);
+      await doSignOut();
+      await doSignIn();
+    }
+
+
+    function setBridgeStatus(message, type = '') {
+      if (!els.bridgeStatus) return;
+      els.bridgeStatus.textContent = message;
+      els.bridgeStatus.className = `automation-status ${type}`.trim();
+    }
+
+    function getBridgeSettings() {
+      const fbGroupIdRaw = els.fbGroupIdInput.value.trim();
+      const fbPostLinkRaw = els.fbPostLinkInput.value.trim();
+      const fbPostLinks = parseFbPostLinks(fbPostLinkRaw);
+      return {
+        extensionId: els.bridgeExtensionId.value.trim(),
+        fbGroupIdRaw,
+        fbPostLinkRaw,
+        fbPostLinks,
+        fbPostLink: fbPostLinks[0] || '',
+        delayMs: Math.max(5000, Math.min(30000, Number(els.fbDelayMs.value) || 5000)),
+        maxChars: Math.max(100, Math.min(50000, Number(els.fbMaxChars.value) || 20000)),
+        autoComment: true,
+        closeAfterComment: true
+      };
+    }
+
+    function saveBridgeSettings() {
+      saveStorage(APP.storage.bridge, getBridgeSettings());
+    }
+
+    function restoreBridgeSettings() {
+      const saved = loadStorage(APP.storage.bridge, null);
+      if (!saved) return;
+      els.bridgeExtensionId.value = saved.extensionId || '';
+      els.fbGroupIdInput.value = saved.fbGroupIdRaw || saved.groupIds || '';
+      els.fbPostLinkInput.value = saved.fbPostLinkRaw || saved.fbPostLink || '';
+      els.fbDelayMs.value = String(Math.max(5000, Number(saved.delayMs) || 5000));
+      els.fbMaxChars.value = String(saved.maxChars || 20000);
+      els.autoCommentAfterGenerate.checked = true;
+      els.closeAfterComment.checked = true;
+    }
+
+    function assertBridgeReady() {
+      const settings = getBridgeSettings();
+      if (!settings.extensionId) {
+        els.bridgeExtensionId.focus();
+        throw new Error('Chưa nhập Extension ID. Mở icon extension Bridge để copy ID rồi dán vào đây.');
+      }
+      if (!window.chrome || !chrome.runtime || !chrome.runtime.sendMessage) {
+        throw new Error('Trang hiện tại chưa thấy Chrome Extension API. Hãy mở web qua GitHub Pages/localhost và cài extension Bridge.');
+      }
+      return settings;
+    }
+
+    function sendToBridge(payload) {
+      const settings = assertBridgeReady();
+      return new Promise(resolve => {
+        chrome.runtime.sendMessage(settings.extensionId, payload, response => {
+          const err = chrome.runtime.lastError;
+          if (err) {
+            resolve({ ok: false, error: err.message || String(err) });
+            return;
+          }
+          resolve(response || { ok: false, error: 'Extension không trả dữ liệu.' });
+        });
+      });
+    }
+
+    function sleepMs(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    const CLOSED_LOOP_DUPLICATE_PAUSE_MS = 5 * 60 * 1000;
+
+    async function waitClosedLoopPause(ms, reasonText) {
+      const startedAt = Date.now();
+      while (!state.closedLoopStopRequested) {
+        const remaining = Math.max(0, ms - (Date.now() - startedAt));
+        if (remaining <= 0) break;
+        const seconds = Math.ceil(remaining / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const secs = String(seconds % 60).padStart(2, '0');
+        setBridgeStatus(`${reasonText} Tạm nghỉ ${minutes}:${secs} rồi quét tiếp.`, 'warn');
+        await sleepMs(Math.min(1000, remaining));
+      }
+    }
+
+    async function scanGroupLinksToPostBox() {
+      const oldText = els.scanGroupLinksBtn.textContent;
+      state.lastGroupScan = {
+        ok: false,
+        scannedCount: 0,
+        freshCount: 0,
+        duplicateCount: 0,
+        allDuplicate: false,
+        noRawLinks: false,
+        error: ''
+      };
+      try {
+        const settings = assertBridgeReady();
+        const groupIdsRaw = settings.fbGroupIdRaw;
+        if (!groupIdsRaw) {
+          els.fbGroupIdInput.focus();
+          throw new Error('Chưa nhập UID nhóm Facebook.');
+        }
+
+        els.scanGroupLinksBtn.disabled = true;
+        els.copyScannedLinksBtn.disabled = true;
+        els.scanGroupLinksBtn.textContent = '⏳ Đang quét...';
+        setBridgeStatus('Đang mở tab mới để quét nhóm Facebook và lấy permalink mới nhất...', 'warn');
+        saveBridgeSettings();
+
+        const response = await sendToBridge({
+          action: 'SCAN_GROUP_PERMALINKS',
+          groupIds: groupIdsRaw,
+          limit: 5,
+          maxRounds: 35,
+          loadDelay: 2200,
+          commentDelay: 2400,
+          closeAfter: true,
+          active: true,
+          resetTop: true,
+          skipPinned: true
+        });
+
+        if (!response.ok || !Array.isArray(response.links) || !response.links.length) {
+          state.lastGroupScan = {
+            ...state.lastGroupScan,
+            ok: false,
+            scannedCount: Array.isArray(response.links) ? response.links.length : 0,
+            noRawLinks: true,
+            error: response.error || 'Không lấy được link nào.'
+          };
+          const detail = Array.isArray(response.reports) && response.reports.length
+            ? response.reports.map(r => `${r.groupId}: ${r.count || 0}/5${r.error ? ` | ${r.error}` : ''}`).join('\n')
+            : '';
+          throw new Error((response.error || 'Không lấy được link nào.') + (detail ? `\n${detail}` : ''));
+        }
+
+        const { fresh, duplicate } = filterFreshFbLinks(response.links);
+        state.lastGroupScan = {
+          ok: true,
+          scannedCount: response.links.length,
+          freshCount: fresh.length,
+          duplicateCount: duplicate.length,
+          allDuplicate: response.links.length > 0 && fresh.length === 0 && duplicate.length === response.links.length,
+          noRawLinks: false,
+          error: ''
+        };
+        els.fbPostLinkInput.value = fresh.join('\n');
+        saveBridgeSettings();
+        updateCounters();
+        if (fresh.length) await copyText(fresh.join('\n'), { silent: true });
+
+        const reports = Array.isArray(response.reports) ? response.reports : [];
+        const reportText = reports.length
+          ? '\n' + reports.map(r => `- ${r.groupId}: ${r.count || 0}/5 link`).join('\n')
+          : '';
+        const duplicateText = duplicate.length ? `\nĐã tự loại ${duplicate.length} link trùng với danh sách đã comment.` : '';
+        if (!fresh.length) {
+          setBridgeStatus(`Quét xong nhưng toàn bộ ${response.links.length} link đã comment trước đó.${duplicateText}${reportText}`, 'warn');
+          toast('Không có link mới sau khi lọc trùng.', 'warning');
+          return [];
+        }
+        setBridgeStatus(`Đã quét xong ${response.totalLinks || response.links.length} link, còn ${fresh.length} link mới đã đổ vào ô Link bài viết Facebook.${duplicateText}${reportText}`, 'ok');
+        toast(`Đã đổ ${fresh.length} link mới vào ô Link bài viết Facebook`);
+        return fresh;
+      } catch (error) {
+        state.lastGroupScan = {
+          ...(state.lastGroupScan || {}),
+          ok: false,
+          error: getErrorText(error)
+        };
+        setBridgeStatus('❌ ' + getErrorText(error), 'error');
+        toast(getErrorText(error), 'error');
+        return [];
+      } finally {
+        els.scanGroupLinksBtn.disabled = false;
+        els.copyScannedLinksBtn.disabled = false;
+        els.scanGroupLinksBtn.textContent = oldText;
+      }
+    }
+
+    async function copyScannedPostLinks() {
+      const text = els.fbPostLinkInput.value.trim();
+      if (!text) {
+        toast('Chưa có link bài viết để copy.', 'warning');
+        return;
+      }
+      await copyText(text);
+    }
+
+    async function readFacebookPostToArticle(options = {}) {
+      const settings = assertBridgeReady();
+      const targetLink = String(options.link || settings.fbPostLink || '').trim();
+      if (!targetLink) {
+        els.fbPostLinkInput.focus();
+        throw new Error('Chưa nhập link bài viết Facebook.');
+      }
+
+      const keepTab = options.keepTab !== false;
+      const queueLabel = options.queueTotal ? ` (${options.queueIndex + 1}/${options.queueTotal})` : '';
+      const oldReadText = els.readFbPostBtn.textContent;
+      els.readFbPostBtn.disabled = true;
+      setBridgeStatus(`Đang mở tab Facebook và đọc nội dung bài viết${queueLabel}...`, 'warn');
+
+      try {
+        const response = await sendToBridge({
+          action: 'READ_FB_POST_TITLE',
+          url: targetLink,
+          delayMs: settings.delayMs,
+          maxChars: settings.maxChars,
+          closeAfter: !keepTab,
+          active: true
+        });
+
+        // Lưu tab ngay cả khi đọc lỗi để bước catch có thể đóng đúng tab lỗi, không để sót tab Facebook.
+        state.activeFbTabId = response.tabId || null;
+        state.activeFbUrl = response.url || targetLink;
+
+        if (!response.ok || !response.title) {
+          throw new Error(response.error || 'Không lấy được nội dung bài viết.');
+        }
+
+        els.articleInput.value = response.title.trim();
+        saveDraft();
+        saveBridgeSettings();
+        updateCounters();
+        setBridgeStatus(`Đã lấy nội dung bài viết${queueLabel}. Tab ID: ${state.activeFbTabId || 'đã đóng'}`, 'ok');
+        toast(`Đã lấy nội dung link${queueLabel || ''}`);
+        return response;
+      } finally {
+        els.readFbPostBtn.disabled = state.isQueueRunning;
+        els.readFbPostBtn.textContent = oldReadText;
+      }
+    }
+
+    async function commentIntoFacebookTab(commentText, options = {}) {
+      const settings = assertBridgeReady();
+      const value = String(commentText || '').trim();
+      if (!value) throw new Error('Chưa có bình luận để gửi.');
+
+      const tabId = Number(options.tabId || state.activeFbTabId || 0);
+      const url = String(options.url || state.activeFbUrl || settings.fbPostLink || '').trim();
+      if (!tabId && !url) throw new Error('Chưa có tab/link bài viết Facebook để comment.');
+
+      setBridgeStatus('Đang đưa bình luận vào tab Facebook...', 'warn');
+      const response = await sendToBridge({
+        action: 'COMMENT_IN_FB_TAB',
+        tabId,
+        url,
+        commentText: value,
+        closeAfter: options.closeAfter ?? settings.closeAfterComment,
+        submit: true,
+        delayMs: settings.delayMs
+      });
+
+      if (!response.ok) throw new Error(response.error || 'Không comment được vào tab Facebook.');
+      state.activeFbTabId = response.tabId || null;
+      state.activeFbUrl = response.tabId ? url : '';
+      if (response.posted) {
+        setBridgeStatus(settings.closeAfterComment ? 'Đã gửi bình luận, giữ tab 10–15 giây rồi mới đóng.' : 'Đã gửi bình luận vào tab Facebook.', 'ok');
+        toast('Đã comment trực tiếp vào bài viết');
+      } else {
+        setBridgeStatus(response.error || 'Đã điền bình luận nhưng chưa xác nhận được nút gửi.', 'warn');
+        toast('Đã điền bình luận vào tab Facebook', 'warning');
+      }
+      return response;
+    }
+
+    async function closeActiveFacebookTabSilently() {
+      const tabId = Number(state.activeFbTabId || 0);
+      state.activeFbTabId = null;
+      state.activeFbUrl = '';
+      if (!tabId) return;
+      try {
+        await sendToBridge({ action: 'CLOSE_FB_TAB', tabId });
+      } catch {}
+    }
+
+    async function runFullFacebookWorkflow(options = {}) {
+      if (state.isQueueRunning) return;
+
+      const oldText = els.autoWorkflowBtn.textContent;
+      els.autoWorkflowBtn.disabled = true;
+      els.readFbPostBtn.disabled = true;
+      els.generateBtn.disabled = true;
+      els.commentCurrentTabBtn.disabled = true;
+      els.autoWorkflowBtn.textContent = '⏳ Đang chạy...';
+      state.isQueueRunning = true;
+
+      const summary = {
+        total: 0,
+        success: 0,
+        failed: 0,
+        errors: []
+      };
+      const fromClosedLoop = options.fromClosedLoop === true;
+
+      try {
+        const settings = assertBridgeReady();
+        let { fresh: queue, duplicate } = filterFreshFbLinks(settings.fbPostLinks);
+        if (duplicate.length) {
+          els.fbPostLinkInput.value = queue.join('\n');
+          saveBridgeSettings();
+          updateCounters();
+          setBridgeStatus(`Đã tự xoá ${duplicate.length} link trùng khỏi ô Link bài viết Facebook.`, 'warn');
+        }
+        if (!queue.length && settings.fbGroupIdRaw) {
+          setBridgeStatus('Ô Link đang trống, tự quét nhóm để lấy link mới...', 'warn');
+          queue = await scanGroupLinksToPostBox();
+        }
+        if (!queue.length) {
+          els.fbPostLinkInput.focus();
+          throw new Error('Chưa có link bài viết Facebook mới để xử lý.');
+        }
+
+        summary.total = queue.length;
+        els.fbPostLinkInput.value = queue.join('\n');
+        saveBridgeSettings();
+
+        if (!isSignedIn()) {
+          const ok = await doSignIn();
+          if (!ok) throw new Error('Chưa đăng nhập Puter nên chưa thể tạo bình luận.');
+        }
+
+        for (let index = 0; index < queue.length; index += 1) {
+          if (state.closedLoopStopRequested) {
+            setBridgeStatus('Đã nhận lệnh dừng, kết thúc sau link hiện tại.', 'warn');
+            break;
+          }
+          const link = queue[index];
+          const label = `${index + 1}/${queue.length}`;
+          els.autoWorkflowBtn.textContent = `⏳ ${label}`;
+          setBridgeStatus(`Đang xử lý link ${label}: ${compactLinkLabel(link)}`, 'warn');
+
+          try {
+            state.activeFbTabId = null;
+            state.activeFbUrl = link;
+
+            await readFacebookPostToArticle({
+              keepTab: true,
+              link,
+              queueIndex: index,
+              queueTotal: queue.length
+            });
+
+            const comment = await generateComment();
+            if (!comment) throw new Error('AI chưa tạo được bình luận.');
+
+            if (els.autoCommentAfterGenerate.checked) {
+              const commentResult = await commentIntoFacebookTab(comment, { url: link });
+              if (!commentResult.posted && !commentResult.inserted) {
+                throw new Error(commentResult.error || 'Chưa xác nhận được bình luận đã được đưa vào tab.');
+              }
+              markLinkCommented(link, comment);
+              setBridgeStatus(`✅ Xong link ${label}. Đã lưu vào danh sách link đã comment.`, 'ok');
+            } else {
+              markLinkCommented(link, comment);
+              setBridgeStatus(`✅ Xong link ${label}: đã lấy bài, tạo bình luận và copy.`, 'ok');
+              if (settings.closeAfterComment) {
+                await closeActiveFacebookTabSilently();
+              }
+            }
+
+            summary.success += 1;
+          } catch (error) {
+            const message = getErrorText(error) || 'Lỗi không xác định';
+            summary.failed += 1;
+            summary.errors.push(`${label}: ${message}`);
+            setBridgeStatus(`⚠️ Link ${label} lỗi: ${message}. Tự chuyển sang link kế tiếp...`, 'warn');
+            toast(`Bỏ qua link ${label}: ${message}`, 'warning');
+
+            if (settings.closeAfterComment) {
+              await closeActiveFacebookTabSilently();
+            }
+          }
+
+          if (index < queue.length - 1) {
+            await sleepMs(700);
+          }
+        }
+
+        els.fbPostLinkInput.value = '';
+        saveBridgeSettings();
+        updateCounters();
+
+        if (summary.success) {
+          const failText = summary.failed ? `, lỗi ${summary.failed}` : '';
+          setBridgeStatus(`Hoàn tất: thành công ${summary.success}/${summary.total}${failText}. Ô Link bài viết Facebook đã tự xoá để chờ lượt quét mới.`, summary.failed ? 'warn' : 'ok');
+          toast(`Đã chạy xong ${summary.success}/${summary.total} link${summary.failed ? `, lỗi ${summary.failed}` : ''}`);
+        } else {
+          setBridgeStatus(`❌ Không xử lý thành công link nào. Ô Link bài viết Facebook đã tự xoá. Lỗi đầu tiên: ${summary.errors[0] || 'không rõ'}`, 'error');
+          toast('Không có link nào xử lý thành công.', 'error');
+        }
+        return summary;
+      } catch (error) {
+        setBridgeStatus('❌ ' + getErrorText(error), 'error');
+        toast(getErrorText(error), 'error');
+        return summary;
+      } finally {
+        state.isQueueRunning = false;
+        els.autoWorkflowBtn.disabled = false;
+        els.readFbPostBtn.disabled = false;
+        els.generateBtn.disabled = false;
+        els.commentCurrentTabBtn.disabled = false;
+        els.autoWorkflowBtn.textContent = oldText;
+      }
+    }
+
+    async function runClosedLoopFromGroupScan() {
+      if (state.isClosedLoopRunning) {
+        state.closedLoopStopRequested = true;
+        setBridgeStatus('Đang yêu cầu dừng vòng lặp sau tác vụ hiện tại...', 'warn');
+        toast('Đã nhận lệnh dừng vòng lặp', 'warning');
+        return;
+      }
+
+      let settings;
+      try {
+        settings = assertBridgeReady();
+      } catch (error) {
+        setBridgeStatus('❌ ' + getErrorText(error), 'error');
+        toast(getErrorText(error), 'error');
+        return;
+      }
+      if (!settings.fbGroupIdRaw) {
+        els.fbGroupIdInput.focus();
+        toast('Chưa nhập UID nhóm Facebook.', 'warning');
+        return;
+      }
+
+      state.isClosedLoopRunning = true;
+      state.closedLoopStopRequested = false;
+      const oldScanText = els.scanGroupLinksBtn.textContent;
+      const oldWorkflowText = els.autoWorkflowBtn.textContent;
+      els.stopClosedLoopBtn.classList.remove('hidden');
+      els.scanGroupLinksBtn.textContent = '🔁 Đang lặp...';
+      els.autoWorkflowBtn.disabled = true;
+
+      let cycle = 0;
+      let totalSuccess = 0;
+      let totalFailed = 0;
+
+      try {
+        while (!state.closedLoopStopRequested && cycle < state.closedLoopCycleLimit) {
+          cycle += 1;
+          setBridgeStatus(`🔁 Vòng ${cycle}: quét nhóm → lọc trùng → đổ link vào ô Link bài viết Facebook...`, 'warn');
+
+          const fresh = await scanGroupLinksToPostBox();
+          if (state.closedLoopStopRequested) break;
+
+          if (!fresh.length) {
+            const scanInfo = state.lastGroupScan || {};
+            if (scanInfo.allDuplicate) {
+              const reasonText = `🔁 Vòng ${cycle}: đã lấy ${scanInfo.scannedCount || 0} link nhưng tất cả đều trùng với link đã comment.`;
+              await waitClosedLoopPause(CLOSED_LOOP_DUPLICATE_PAUSE_MS, reasonText);
+              continue;
+            }
+            setBridgeStatus(`Đã dừng vòng lặp ở vòng ${cycle}: không lấy được link mới để xử lý. Tổng thành công ${totalSuccess}, lỗi ${totalFailed}.`, totalSuccess ? 'ok' : 'warn');
+            break;
+          }
+
+          setBridgeStatus(`🔁 Vòng ${cycle}: đã có ${fresh.length} link mới, tự chuyển sang “🚀 Quét → đọc → tạo → comment”.`, 'warn');
+          const result = await runFullFacebookWorkflow({ fromClosedLoop: true });
+          totalSuccess += Number(result?.success || 0);
+          totalFailed += Number(result?.failed || 0);
+
+          if (state.closedLoopStopRequested) break;
+          if (!result || !result.success) {
+            setBridgeStatus(`Đã dừng vòng lặp ở vòng ${cycle}: lượt xử lý vừa rồi không thành công link nào. Tổng lỗi ${totalFailed}.`, 'error');
+            break;
+          }
+
+          await sleepMs(1200);
+        }
+
+        if (cycle >= state.closedLoopCycleLimit) {
+          setBridgeStatus(`Đã chạm giới hạn ${state.closedLoopCycleLimit} vòng. Tổng thành công ${totalSuccess}, lỗi ${totalFailed}.`, 'warn');
+        } else if (state.closedLoopStopRequested) {
+          setBridgeStatus(`Đã dừng vòng lặp theo yêu cầu. Tổng thành công ${totalSuccess}, lỗi ${totalFailed}.`, totalSuccess ? 'ok' : 'warn');
+        }
+      } catch (error) {
+        setBridgeStatus('❌ ' + getErrorText(error), 'error');
+        toast(getErrorText(error), 'error');
+      } finally {
+        state.isClosedLoopRunning = false;
+        state.closedLoopStopRequested = false;
+        els.stopClosedLoopBtn.classList.add('hidden');
+        els.scanGroupLinksBtn.textContent = oldScanText;
+        els.autoWorkflowBtn.textContent = oldWorkflowText;
+        els.autoWorkflowBtn.disabled = false;
+      }
+    }
+
+    function stopClosedLoop() {
+      if (!state.isClosedLoopRunning) return;
+      state.closedLoopStopRequested = true;
+      els.stopClosedLoopBtn.disabled = true;
+      setBridgeStatus('Đang dừng vòng lặp sau tác vụ hiện tại...', 'warn');
+      setTimeout(() => { els.stopClosedLoopBtn.disabled = false; }, 1200);
+    }
+
+    async function commentCurrentTabFromOutput() {
+      const comment = els.output.textContent.trim();
+      if (!comment || els.output.classList.contains('placeholder') || els.output.classList.contains('loading') || els.output.classList.contains('error')) {
+        toast('Chưa có bình luận hợp lệ để comment.', 'warning');
+        return;
+      }
+      try {
+        await commentIntoFacebookTab(comment);
+      } catch (error) {
+        setBridgeStatus('❌ ' + getErrorText(error), 'error');
+        toast(getErrorText(error), 'error');
+      }
+    }
+
+    function buildPrompt({ article, productName, selectedLink, selectedTone }) {
+      const linkInstruction = selectedLink
+        ? `- Link sản phẩm được phép dùng: ${selectedLink}`
+        : '- Không có link sản phẩm, không được tự bịa link';
+
+      return `Bạn là chuyên gia Social Content và Affiliate Marketing có kinh nghiệm viết bình luận Facebook tự nhiên.
+
+Nhiệm vụ: Viết duy nhất 1 bình luận tiếng Việt dựa trên bài viết gốc và sản phẩm được cung cấp.
+
+Dữ liệu:
+- Nội dung bài viết gốc: "${article}"
+- Tên sản phẩm: "${productName || 'Sản phẩm'}"
+${linkInstruction}
+- Phong cách yêu cầu: ${selectedTone}
+
+Quy tắc bắt buộc:
+1. Đọc bài viết trước, chọn 1 chi tiết/cảm xúc chính để mở đầu bằng 1 câu đồng cảm thật tự nhiên.
+2. Nếu sản phẩm liên quan trực tiếp đến bài viết, lồng ghép như một gợi ý hữu ích.
+3. Nếu sản phẩm không liên quan trực tiếp, chuyển ý nhẹ bằng cụm như "À tiện thể", "Sẵn tiện", "Nhân đây".
+4. Không phóng đại công dụng, không cam kết chắc chắn, không giả vờ đã mua nếu dữ liệu không nói vậy.
+5. Không spam, không hashtag, không viết hoa toàn bộ, không dùng quá 1 emoji.
+6. Tổng 2-4 câu. Mỗi câu nên dưới 20 từ. Ngôn ngữ giống người thật bình luận.
+7. Nếu có link, để URL trần ở cuối hoặc gần cuối, không dùng markdown, không đặt trong ngoặc kép.
+8. Câu cuối không có dấu chấm.
+
+Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giải thích.`;
+    }
+
+    async function generateComment() {
+      const article = els.articleInput.value.trim();
+      const productName = els.productNameInput.value.trim();
+      const selectedTone = els.toneSelect.value;
+      const { valid, invalid } = parseLinks(els.productLinkInput.value);
+      const selectedLink = randomFrom(valid);
+
+      if (!article) {
+        toast('Vui lòng dán nội dung bài viết gốc.', 'warning');
+        els.articleInput.focus();
+        return '';
+      }
+      if (invalid.length) {
+        toast(`Đã bỏ qua ${invalid.length} link chưa hợp lệ.`, 'warning');
+      }
+
+      if (!isSignedIn()) {
+        const ok = await doSignIn();
+        if (!ok) return '';
+      }
+
+      els.generateBtn.disabled = true;
+      els.generateBtn.textContent = '⏳ Đang xử lý...';
+      els.tokenBanner.classList.remove('show');
+      setOutput('Đang phân tích ngữ cảnh và tạo bình luận...', 'loading');
+
+      try {
+        const prompt = buildPrompt({ article, productName, selectedLink, selectedTone });
+        const response = await window.puter.ai.chat(prompt, { model: APP.model });
+        const result = stripAiWrapper(extractResponseText(response));
+        setOutput(result || 'Không có phản hồi từ AI.', result ? '' : 'error');
+
+        if (result) {
+          const copied = await copyText(els.output.textContent, { silent: true });
+          const oldCopyText = els.copyBtn.textContent;
+          if (copied) {
+            els.copyBtn.textContent = '✔️ Đã tự copy';
+            toast('Đã tạo xong và tự động copy kết quả');
+            setTimeout(() => { els.copyBtn.textContent = oldCopyText; }, 2500);
+          } else {
+            els.copyBtn.textContent = 'Copy thủ công';
+            toast('Trình duyệt chặn tự động copy. Bấm nút Sao chép để copy thủ công.', 'warning');
+            setTimeout(() => { els.copyBtn.textContent = oldCopyText; }, 3000);
+          }
+        }
+        return result || '';
+      } catch (error) {
+        const errText = getErrorText(error);
+        if (isTokenError(errText)) {
+          setOutput('⚠️ Tài khoản Puter hiện tại có thể đã hết token hoặc bị giới hạn. Hãy đổi tài khoản hoặc thử lại sau.', 'error');
+          els.tokenBanner.classList.add('show');
+        } else if (/sign|auth|unauthorized|401/i.test(errText)) {
+          setOutput('🔑 Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.', 'error');
+          await doSignOut();
+        } else {
+          setOutput('❌ Lỗi: ' + errText, 'error');
+        }
+        return '';
+      } finally {
+        els.generateBtn.disabled = state.isQueueRunning;
+        els.generateBtn.textContent = '✨ Tạo bình luận';
+      }
+    }
+
+    async function copyText(text, options = {}) {
+      const value = String(text || '').trim();
+      if (!value) return false;
+
+      try {
+        await navigator.clipboard.writeText(value);
+        if (!options.silent) toast('Đã sao chép vào clipboard');
+        return true;
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = value;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        let ok = false;
+        try { ok = document.execCommand('copy'); } catch { ok = false; }
+        ta.remove();
+        if (!options.silent) toast(ok ? 'Đã sao chép vào clipboard' : 'Trình duyệt chặn sao chép tự động.', ok ? 'success' : 'warning');
+        return ok;
+      }
+    }
+
+    function clearForm() {
+      els.articleInput.value = '';
+      els.productNameInput.value = '';
+      els.productLinkInput.value = '';
+      els.fbPostLinkInput.value = '';
+      state.activeFbTabId = null;
+      state.activeFbUrl = '';
+      els.toneSelect.selectedIndex = 0;
+      setBridgeStatus('Sẵn sàng kết nối extension.');
+      setOutput('Bình luận sẽ xuất hiện tại đây...', 'placeholder');
+      els.tokenBanner.classList.remove('show');
+      $$('.tpl-item').forEach(item => item.classList.remove('active'));
+      state.selectedTemplateKey = null;
+      saveDraft();
+      saveBridgeSettings();
+      updateCounters();
+      toast('Đã làm mới form');
+    }
+
+    async function pasteArticle() {
+      try {
+        const text = await navigator.clipboard.readText();
+        els.articleInput.value = text;
+        saveDraft();
+        updateCounters();
+        toast('Đã dán nội dung');
+      } catch {
+        toast('Trình duyệt chặn clipboard. Hãy dán thủ công bằng Ctrl+V.', 'warning');
+      }
+    }
+
+    function saveHistory() {
+      const comment = els.output.textContent.trim();
+      if (!comment || els.output.classList.contains('placeholder') || els.output.classList.contains('loading')) {
+        toast('Chưa có bình luận hợp lệ để lưu.', 'warning');
+        return;
+      }
+
+      const history = loadStorage(APP.storage.history, []);
+      history.unshift({
+        comment,
+        product: els.productNameInput.value.trim(),
+        createdAt: new Date().toISOString()
+      });
+      saveStorage(APP.storage.history, history.slice(0, 50));
+      updateStats();
+      toast('Đã lưu bình luận vào lịch sử');
+    }
+
+    function saveDraft() {
+      saveStorage(APP.storage.draft, {
+        article: els.articleInput.value,
+        productName: els.productNameInput.value,
+        productLinks: els.productLinkInput.value,
+        tone: els.toneSelect.value
+      });
+    }
+
+    function restoreDraft() {
+      const draft = loadStorage(APP.storage.draft, null);
+      if (!draft) return;
+      els.articleInput.value = draft.article || '';
+      els.productNameInput.value = draft.productName || '';
+      els.productLinkInput.value = draft.productLinks || '';
+      if (draft.tone) els.toneSelect.value = draft.tone;
+    }
+
+    function openModal(modal) {
+      modal.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(modal) {
+      modal.classList.remove('show');
+      if (!$$('.modal-overlay.show').length) document.body.style.overflow = '';
+    }
+
+    function createTemplateManager({ key, listEl, storageKey, label }) {
+      const manager = {
+        key,
+        label,
+        listEl,
+        storageKey,
+        items: loadStorage(storageKey, []),
+
+        save() {
+          saveStorage(storageKey, this.items);
+          updateStats();
+        },
+
+        render() {
+          listEl.replaceChildren();
+
+          if (!this.items.length) {
+            const empty = document.createElement('div');
+            empty.className = 'tpl-empty';
+            empty.textContent = 'Chưa có mẫu nào. Nhấn “+ Thêm” để tạo mẫu sản phẩm.';
+            listEl.appendChild(empty);
+            updateStats();
+            return;
+          }
+
+          this.items.forEach((tpl, index) => {
+            const item = document.createElement('article');
+            item.className = 'tpl-item';
+            if (state.selectedTemplateKey === `${key}:${index}`) item.classList.add('active');
+            item.dataset.index = String(index);
+            item.tabIndex = 0;
+            item.setAttribute('role', 'button');
+            item.setAttribute('aria-label', `Áp dụng mẫu ${tpl.name}`);
+
+            const icon = document.createElement('div');
+            icon.className = 'tpl-icon';
+            icon.textContent = '📦';
+
+            const info = document.createElement('div');
+            const name = document.createElement('div');
+            name.className = 'tpl-name';
+            name.textContent = tpl.name || 'Chưa đặt tên';
+            const meta = document.createElement('div');
+            meta.className = 'tpl-meta';
+            const linkCount = parseLinks(tpl.links || '').valid.length;
+            meta.textContent = `${tpl.product || 'Chưa có sản phẩm'} • ${linkCount} link`;
+            info.append(name, meta);
+
+            const actions = document.createElement('div');
+            actions.className = 'tpl-actions';
+            const edit = document.createElement('button');
+            edit.type = 'button';
+            edit.className = 'btn btn-soft btn-icon';
+            edit.textContent = '✏️';
+            edit.title = 'Sửa mẫu';
+            edit.dataset.action = 'edit';
+
+            const del = document.createElement('button');
+            del.type = 'button';
+            del.className = 'btn btn-danger btn-icon';
+            del.textContent = '🗑️';
+            del.title = 'Xoá mẫu';
+            del.dataset.action = 'delete';
+
+            actions.append(edit, del);
+            item.append(icon, info, actions);
+            listEl.appendChild(item);
+          });
+          updateStats();
+        },
+
+        apply(index) {
+          const tpl = this.items[index];
+          if (!tpl) return;
+          els.productNameInput.value = tpl.product || '';
+          els.productLinkInput.value = tpl.links || '';
+          state.selectedTemplateKey = `${key}:${index}`;
+          Object.values(state.managers).forEach(mgr => mgr.render());
+          updateCounters();
+          saveDraft();
+          els.productNameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          toast(`Đã áp dụng mẫu: ${tpl.name}`);
+        },
+
+        openAdd() {
+          state.activeManager = this;
+          state.editingIndex = -1;
+          els.modalTitle.textContent = `Thêm mẫu mới — ${label}`;
+          els.tplNameInput.value = '';
+          els.tplProductInput.value = '';
+          els.tplLinksInput.value = '';
+          openModal(els.templateModal);
+          requestAnimationFrame(() => els.tplNameInput.focus());
+        },
+
+        openEdit(index) {
+          const tpl = this.items[index];
+          if (!tpl) return;
+          state.activeManager = this;
+          state.editingIndex = index;
+          els.modalTitle.textContent = `Sửa mẫu — ${label}`;
+          els.tplNameInput.value = tpl.name || '';
+          els.tplProductInput.value = tpl.product || '';
+          els.tplLinksInput.value = tpl.links || '';
+          openModal(els.templateModal);
+          requestAnimationFrame(() => els.tplNameInput.focus());
+        },
+
+        delete(index) {
+          const tpl = this.items[index];
+          if (!tpl) return;
+          if (!confirm(`Xoá mẫu "${tpl.name}"?`)) return;
+          this.items.splice(index, 1);
+          if (state.selectedTemplateKey === `${key}:${index}`) state.selectedTemplateKey = null;
+          this.save();
+          this.render();
+          toast('Đã xoá mẫu');
+          afterTemplateMutation();
+        }
+      };
+
+      listEl.addEventListener('click', (event) => {
+        const item = event.target.closest('.tpl-item');
+        if (!item) return;
+        const index = Number(item.dataset.index);
+        const action = event.target.closest('[data-action]')?.dataset.action;
+        if (action === 'edit') return manager.openEdit(index);
+        if (action === 'delete') return manager.delete(index);
+        manager.apply(index);
+      });
+
+      listEl.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        const item = event.target.closest('.tpl-item');
+        if (!item) return;
+        event.preventDefault();
+        manager.apply(Number(item.dataset.index));
+      });
+
+      manager.render();
+      return manager;
+    }
+
+    function saveTemplateFromModal() {
+      const manager = state.activeManager;
+      if (!manager) return;
+
+      const name = els.tplNameInput.value.trim();
+      const product = els.tplProductInput.value.trim();
+      const links = els.tplLinksInput.value.trim();
+
+      if (!name) {
+        toast('Vui lòng nhập tên mẫu.', 'warning');
+        els.tplNameInput.focus();
+        return;
+      }
+      if (!product) {
+        toast('Vui lòng nhập tên sản phẩm.', 'warning');
+        els.tplProductInput.focus();
+        return;
+      }
+
+      const parsed = parseLinks(links);
+      if (links && !parsed.valid.length) {
+        toast('Danh sách link chưa có URL hợp lệ.', 'warning');
+        els.tplLinksInput.focus();
+        return;
+      }
+
+      const payload = {
+        name,
+        product,
+        links: parsed.valid.join('\n') || links,
+        updatedAt: new Date().toISOString()
+      };
+
+      if (state.editingIndex >= 0) manager.items[state.editingIndex] = payload;
+      else manager.items.push(payload);
+
+      manager.save();
+      manager.render();
+      closeModal(els.templateModal);
+      toast('Đã lưu mẫu sản phẩm');
+      afterTemplateMutation();
+    }
+
+    function wireEvents() {
+      els.loginBtn.addEventListener('click', doSignIn);
+      els.logoutBtn.addEventListener('click', async () => {
+        if (confirm('Đăng xuất khỏi Puter?')) await doSignOut();
+      });
+      els.switchBtn.addEventListener('click', () => openModal(els.switchModal));
+      els.btnRelogin.addEventListener('click', () => openModal(els.switchModal));
+      els.btnConfirmSwitch.addEventListener('click', doSwitchAccount);
+      els.btnCancelSwitch.addEventListener('click', () => closeModal(els.switchModal));
+      els.generateBtn.addEventListener('click', generateComment);
+      els.scanGroupLinksBtn.addEventListener('click', runClosedLoopFromGroupScan);
+      els.stopClosedLoopBtn.addEventListener('click', stopClosedLoop);
+      els.copyScannedLinksBtn.addEventListener('click', copyScannedPostLinks);
+      els.clearCommentedLinksBtn.addEventListener('click', clearCompletedCommentLinks);
+      els.readFbPostBtn.addEventListener('click', async () => {
+        try { await readFacebookPostToArticle({ keepTab: true }); }
+        catch (error) { setBridgeStatus('❌ ' + getErrorText(error), 'error'); toast(getErrorText(error), 'error'); }
+      });
+      els.autoWorkflowBtn.addEventListener('click', runFullFacebookWorkflow);
+      els.commentCurrentTabBtn.addEventListener('click', commentCurrentTabFromOutput);
+      els.clearBtn.addEventListener('click', clearForm);
+      els.pasteBtn.addEventListener('click', pasteArticle);
+      els.copyBtn.addEventListener('click', () => copyText(els.output.textContent));
+      els.saveHistoryBtn.addEventListener('click', saveHistory);
+      els.btnSaveTpl.addEventListener('click', saveTemplateFromModal);
+      els.btnCancelTpl.addEventListener('click', () => closeModal(els.templateModal));
+      $('#btnAddTplLeft').addEventListener('click', () => state.managers.left.openAdd());
+      $('#btnAddTpl').addEventListener('click', () => state.managers.right.openAdd());
+      els.githubSaveSettingsBtn?.addEventListener('click', () => saveGithubSettings(true));
+      els.githubSyncTemplatesBtn?.addEventListener('click', () => syncTemplatesToGithub());
+      [els.githubRepoInput, els.githubPathInput, els.githubBranchInput, els.githubTokenInput, els.githubAutoSyncTpl].forEach(input => {
+        input?.addEventListener('change', () => saveGithubSettings(false));
+      });
+
+      [els.articleInput, els.productNameInput, els.productLinkInput, els.toneSelect].forEach(input => {
+        input.addEventListener('input', () => {
+          updateCounters();
+          saveDraft();
+        });
+        input.addEventListener('change', saveDraft);
+      });
+
+      [els.fbGroupIdInput, els.fbPostLinkInput, els.bridgeExtensionId, els.fbDelayMs, els.fbMaxChars, els.autoCommentAfterGenerate, els.closeAfterComment].forEach(input => {
+        input.addEventListener('input', saveBridgeSettings);
+        input.addEventListener('change', saveBridgeSettings);
+      });
+
+      [els.templateModal, els.switchModal].forEach(modal => {
+        modal.addEventListener('click', event => {
+          if (event.target === modal) closeModal(modal);
+        });
+      });
+
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+          [els.templateModal, els.switchModal].forEach(closeModal);
+        }
+        if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+          event.preventDefault();
+          generateComment();
+        }
+      });
+    }
+
+    async function init() {
+      restoreGithubSettings();
+      seedTemplatesFromEmbedded();
+      state.managers.left = createTemplateManager({
+        key: 'left',
+        listEl: $('#tplListLeft'),
+        storageKey: APP.storage.leftTemplates,
+        label: 'Kho mẫu trái'
+      });
+      state.managers.right = createTemplateManager({
+        key: 'right',
+        listEl: $('#tplList'),
+        storageKey: APP.storage.rightTemplates,
+        label: 'Kho mẫu phải'
+      });
+
+      restoreDraft();
+      restoreBridgeSettings();
+      els.autoCommentAfterGenerate.checked = true;
+      els.closeAfterComment.checked = true;
+      wireEvents();
+      updateStats();
+      await updateAuthUI();
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
