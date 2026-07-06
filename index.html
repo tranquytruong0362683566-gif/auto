@@ -75,23 +75,22 @@
               <div class="hint">Chỉ cần nhập lần đầu. Mỗi lượt sẽ quét theo số link/nhóm bên dưới, tự lọc link đã comment trước đó rồi mới xử lý.</div>
             </div>
 
-            <div class="bridge-grid">
+            <div class="bridge-grid bridge-grid-3">
               <div class="form-group">
                 <label for="groupLimitInput">Số link lấy / nhóm</label>
                 <input id="groupLimitInput" type="number" min="1" max="50" step="1" value="5">
                 <div class="hint">Mặc định 5 link mới nhất cho mỗi nhóm.</div>
               </div>
               <div class="form-group">
-                <label for="loopPauseMinutesInput">Nghỉ sau mỗi vòng</label>
-                <input id="loopPauseMinutesInput" type="number" min="0" max="1440" step="1" value="5">
-                <div class="hint">Tính bằng phút. Nhập 0 nếu muốn chạy tiếp ngay.</div>
+                <label for="loopPauseSecondsInput">Nghỉ sau mỗi vòng</label>
+                <input id="loopPauseSecondsInput" type="number" min="0" max="86400" step="1" value="300">
+                <div class="hint">Tính bằng giây. Nhập 0 nếu muốn quét tiếp ngay.</div>
               </div>
-            </div>
-
-            <div class="actions bridge-actions">
-              <button class="btn btn-soft" id="scanGroupLinksBtn" type="button">🧲 Chạy vòng lặp quét nhóm</button>
-              <button class="btn btn-danger hidden" id="stopClosedLoopBtn" type="button">⛔ Dừng vòng lặp</button>
-              <button class="btn btn-muted" id="copyScannedLinksBtn" type="button">📋 Copy link mới</button>
+              <div class="form-group">
+                <label for="linkPauseSecondsInput">Nghỉ sau mỗi link</label>
+                <input id="linkPauseSecondsInput" type="number" min="0" max="86400" step="1" value="0">
+                <div class="hint">Tính bằng giây. Áp dụng sau khi chạy xong từng link.</div>
+              </div>
             </div>
 
             <div class="form-group">
@@ -116,9 +115,10 @@
               <label class="check-row"><input id="closeAfterComment" type="checkbox" checked> Đóng tab Facebook sau khi gửi bình luận xong</label>
             </div>
 
-            <div class="actions bridge-actions">
-              <button class="btn btn-soft" id="readFbPostBtn" type="button">🔎 Lấy nội dung</button>
+            <div class="actions bridge-actions bridge-actions-main">
+              <button class="btn btn-soft" id="scanGroupLinksBtn" type="button">🧲 Chạy vòng lặp quét nhóm</button>
               <button class="btn btn-primary" id="autoWorkflowBtn" type="button">🚀 Quét → đọc → tạo → comment</button>
+              <button class="btn btn-danger hidden" id="stopClosedLoopBtn" type="button">⛔ Dừng vòng lặp</button>
             </div>
             <div class="automation-status" id="bridgeStatus">Sẵn sàng kết nối extension.</div>
           </div>
@@ -268,12 +268,11 @@
       extensionId: $('#bridgeExtensionId'),
       fbGroupIdInput: $('#fbGroupIdInput'),
       groupLimitInput: $('#groupLimitInput'),
-      loopPauseMinutesInput: $('#loopPauseMinutesInput'),
+      loopPauseSecondsInput: $('#loopPauseSecondsInput'),
+      linkPauseSecondsInput: $('#linkPauseSecondsInput'),
       fbPostLinkInput: $('#fbPostLinkInput'),
       scanGroupLinksBtn: $('#scanGroupLinksBtn'),
       stopClosedLoopBtn: $('#stopClosedLoopBtn'),
-      copyScannedLinksBtn: $('#copyScannedLinksBtn'),
-      readFbPostBtn: $('#readFbPostBtn'),
       autoWorkflowBtn: $('#autoWorkflowBtn'),
       commentCurrentTabBtn: $('#commentCurrentTabBtn'),
       bridgeStatus: $('#bridgeStatus'),
@@ -294,7 +293,9 @@
       extensionId: 'truong_fb_bridge_extension_id_v1',
       groupIds: 'truong_fb_bridge_group_ids_v1',
       groupLimit: 'truong_fb_bridge_group_limit_v1',
-      loopPauseMinutes: 'truong_fb_bridge_loop_pause_minutes_v1',
+      loopPauseSeconds: 'truong_fb_bridge_loop_pause_seconds_v1',
+      oldLoopPauseMinutes: 'truong_fb_bridge_loop_pause_minutes_v1',
+      linkPauseSeconds: 'truong_fb_bridge_link_pause_seconds_v1',
       postLinks: 'truong_fb_bridge_post_links_v1',
       commented: 'truong_fb_bridge_commented_links_v1'
     };
@@ -331,11 +332,37 @@
       return value;
     }
 
-    function getLoopPauseMinutes() {
-      const value = Math.round(clampNumber(B.loopPauseMinutesInput?.value, 5, 0, 1440));
-      if (B.loopPauseMinutesInput) B.loopPauseMinutesInput.value = String(value);
-      save(STORE.loopPauseMinutes, B.loopPauseMinutesInput?.value || String(value));
+    function getLoopPauseSeconds() {
+      let fallback = 300;
+      const savedSeconds = load(STORE.loopPauseSeconds, null);
+      if (savedSeconds === null) {
+        const oldMinutes = load(STORE.oldLoopPauseMinutes, null);
+        if (oldMinutes !== null && oldMinutes !== '') fallback = Math.round(clampNumber(oldMinutes, 5, 0, 1440)) * 60;
+      }
+      const value = Math.round(clampNumber(B.loopPauseSecondsInput?.value, fallback, 0, 86400));
+      if (B.loopPauseSecondsInput) B.loopPauseSecondsInput.value = String(value);
+      save(STORE.loopPauseSeconds, B.loopPauseSecondsInput?.value || String(value));
       return value;
+    }
+
+    function getLinkPauseSeconds() {
+      const value = Math.round(clampNumber(B.linkPauseSecondsInput?.value, 0, 0, 86400));
+      if (B.linkPauseSecondsInput) B.linkPauseSecondsInput.value = String(value);
+      save(STORE.linkPauseSeconds, B.linkPauseSecondsInput?.value || String(value));
+      return value;
+    }
+
+    async function waitAfterLink(linkIndex, totalLinks) {
+      const seconds = getLinkPauseSeconds();
+      if (seconds <= 0 || !closedLoopRunning) return;
+
+      const endAt = Date.now() + seconds * 1000;
+      while (closedLoopRunning && Date.now() < endAt) {
+        const remainMs = Math.max(0, endAt - Date.now());
+        const remainSeconds = Math.ceil(remainMs / 1000);
+        setBridgeStatus(`Đã chạy xong link ${linkIndex}/${totalLinks}. Đang nghỉ ${remainSeconds} giây rồi chạy link tiếp theo...`, 'warn');
+        await delay(Math.min(1000, Math.max(200, remainMs)));
+      }
     }
 
     function setBridgeStatus(message, type = '') {
@@ -715,8 +742,10 @@
         B.stopClosedLoopBtn?.classList.remove('hidden');
       }
 
+      const queue = [...links];
       try {
-        for (const link of [...links]) {
+        for (let index = 0; index < queue.length; index += 1) {
+          const link = queue[index];
           if (!closedLoopRunning) break;
 
           try {
@@ -731,13 +760,14 @@
               await commentToFacebook(link, comment);
               saveCommentedLink(link);
               setPostLinks(getPostLinks().filter(item => normalizeUrl(item) !== normalizeUrl(link)));
-              await delay(800);
             }
           } catch (error) {
-            setBridgeStatus(`Lỗi ở link hiện tại, đã chuyển link kế tiếp:\n${error.message || error}`, 'error');
+            setBridgeStatus(`Lỗi ở link hiện tại, đã chuyển link kế tiếp:
+${error.message || error}`, 'error');
             setPostLinks(getPostLinks().filter(item => normalizeUrl(item) !== normalizeUrl(link)));
-            await delay(900);
           }
+
+          if (index < queue.length - 1) await waitAfterLink(index + 1, queue.length);
         }
       } finally {
         if (manageLoopState) {
@@ -752,10 +782,10 @@
     }
 
     async function waitBeforeNextGroupScan(cycleIndex) {
-      const minutes = getLoopPauseMinutes();
-      const totalMs = minutes * 60 * 1000;
+      const seconds = getLoopPauseSeconds();
+      const totalMs = seconds * 1000;
       if (totalMs <= 0) {
-        setBridgeStatus(`Vòng ${cycleIndex} đã xong. Nghỉ 0 phút, quét tiếp ngay...`, 'warn');
+        setBridgeStatus(`Vòng ${cycleIndex} đã xong. Nghỉ 0 giây, quét tiếp ngay...`, 'warn');
         await delay(500);
         return;
       }
@@ -763,9 +793,9 @@
       const endAt = Date.now() + totalMs;
       while (closedLoopRunning && Date.now() < endAt) {
         const remainMs = Math.max(0, endAt - Date.now());
-        const remainMin = Math.ceil(remainMs / 60000);
-        setBridgeStatus(`Vòng ${cycleIndex} đã xong. Đang nghỉ ${remainMin} phút rồi quét tiếp...`, 'warn');
-        await delay(Math.min(30000, remainMs));
+        const remainSeconds = Math.ceil(remainMs / 1000);
+        setBridgeStatus(`Vòng ${cycleIndex} đã xong. Đang nghỉ ${remainSeconds} giây rồi quét tiếp...`, 'warn');
+        await delay(Math.min(1000, remainMs));
       }
     }
 
@@ -804,12 +834,12 @@
         return;
       }
       bridgeBusy = true;
-      [B.scanGroupLinksBtn, B.readFbPostBtn, B.autoWorkflowBtn, B.commentCurrentTabBtn].forEach(btn => { if (btn) btn.disabled = true; });
+      [B.scanGroupLinksBtn, B.autoWorkflowBtn, B.commentCurrentTabBtn].forEach(btn => { if (btn) btn.disabled = true; });
       try {
         return await task();
       } finally {
         bridgeBusy = false;
-        [B.scanGroupLinksBtn, B.readFbPostBtn, B.autoWorkflowBtn, B.commentCurrentTabBtn].forEach(btn => { if (btn) btn.disabled = false; });
+        [B.scanGroupLinksBtn, B.autoWorkflowBtn, B.commentCurrentTabBtn].forEach(btn => { if (btn) btn.disabled = false; });
       }
     }
 
@@ -817,26 +847,19 @@
       addInputSave(B.extensionId, STORE.extensionId);
       addInputSave(B.fbGroupIdInput, STORE.groupIds);
       addInputSave(B.groupLimitInput, STORE.groupLimit);
-      addInputSave(B.loopPauseMinutesInput, STORE.loopPauseMinutes);
+      addInputSave(B.loopPauseSecondsInput, STORE.loopPauseSeconds);
+      if (B.loopPauseSecondsInput && !B.loopPauseSecondsInput.value) {
+        const oldMinutes = load(STORE.oldLoopPauseMinutes, null);
+        if (oldMinutes !== null && oldMinutes !== '') B.loopPauseSecondsInput.value = String(Math.round(clampNumber(oldMinutes, 5, 0, 1440)) * 60);
+      }
+      addInputSave(B.linkPauseSecondsInput, STORE.linkPauseSeconds);
       addInputSave(B.fbPostLinkInput, STORE.postLinks);
       getGroupLimit();
-      getLoopPauseMinutes();
+      getLoopPauseSeconds();
+      getLinkPauseSeconds();
       renderCommentedLinks();
 
       B.scanGroupLinksBtn?.addEventListener('click', () => runBridgeTask(() => runClosedGroupLoop()).catch(error => setBridgeStatus(error.message || String(error), 'error')));
-      B.copyScannedLinksBtn?.addEventListener('click', async () => {
-        const value = B.fbPostLinkInput?.value || '';
-        if (!value.trim()) return setBridgeStatus('Chưa có link mới để copy.', 'warn');
-        try {
-          await navigator.clipboard.writeText(value);
-          setBridgeStatus('Đã copy danh sách link mới.', 'ok');
-        } catch {
-          B.fbPostLinkInput?.select();
-          document.execCommand('copy');
-          setBridgeStatus('Đã copy danh sách link mới.', 'ok');
-        }
-      });
-      B.readFbPostBtn?.addEventListener('click', () => runBridgeTask(() => readFirstFacebookPost()).catch(error => setBridgeStatus(error.message || String(error), 'error')));
       B.autoWorkflowBtn?.addEventListener('click', () => runBridgeTask(() => autoWorkflow()).catch(error => setBridgeStatus(error.message || String(error), 'error')));
       B.commentCurrentTabBtn?.addEventListener('click', () => runBridgeTask(() => commentCurrentTab()).catch(error => setBridgeStatus(error.message || String(error), 'error')));
       B.stopClosedLoopBtn?.addEventListener('click', () => {
