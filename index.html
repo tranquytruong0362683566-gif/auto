@@ -586,11 +586,24 @@
             <div class="form-group">
               <label for="fbGroupIdInput">UID nhóm Facebook</label>
               <textarea id="fbGroupIdInput" spellcheck="false" placeholder="Nhập nhiều UID nhóm hoặc link nhóm, mỗi dòng một nhóm"></textarea>
-              <div class="hint">Chỉ cần nhập lần đầu. Mỗi lượt sẽ quét 5 permalink mới nhất/nhóm, tự lọc link đã comment trước đó rồi mới xử lý.</div>
+              <div class="hint">Chỉ cần nhập lần đầu. Mỗi lượt sẽ quét theo số link/nhóm bên dưới, tự lọc link đã comment trước đó rồi mới xử lý.</div>
+            </div>
+
+            <div class="bridge-grid">
+              <div class="form-group">
+                <label for="groupLimitInput">Số link lấy / nhóm</label>
+                <input id="groupLimitInput" type="number" min="1" max="50" step="1" value="5">
+                <div class="hint">Mặc định 5 link mới nhất cho mỗi nhóm.</div>
+              </div>
+              <div class="form-group">
+                <label for="loopPauseMinutesInput">Nghỉ sau mỗi vòng</label>
+                <input id="loopPauseMinutesInput" type="number" min="0" max="1440" step="1" value="5">
+                <div class="hint">Tính bằng phút. Nhập 0 nếu muốn chạy tiếp ngay.</div>
+              </div>
             </div>
 
             <div class="actions bridge-actions">
-              <button class="btn btn-soft" id="scanGroupLinksBtn" type="button">🧲 Quét nhóm → lọc trùng</button>
+              <button class="btn btn-soft" id="scanGroupLinksBtn" type="button">🧲 Chạy vòng lặp quét nhóm</button>
               <button class="btn btn-danger hidden" id="stopClosedLoopBtn" type="button">⛔ Dừng vòng lặp</button>
               <button class="btn btn-muted" id="copyScannedLinksBtn" type="button">📋 Copy link mới</button>
             </div>
@@ -598,7 +611,7 @@
             <div class="form-group">
               <label for="fbPostLinkInput">Link bài viết Facebook</label>
               <textarea id="fbPostLinkInput" spellcheck="false" placeholder="Link mới sau khi quét sẽ tự đổ vào đây. Link đã comment trước sẽ tự bị loại."></textarea>
-              <div class="hint">Bấm “🧲 Quét nhóm → lọc trùng” để tự chạy vòng lặp: quét nhóm → lọc trùng → đổ link → chạy “🚀 Quét → đọc → tạo → comment” → xoá ô link → quét lượt mới.</div>
+              <div class="hint">Bấm “🧲 Chạy vòng lặp quét nhóm” để tự chạy vòng lặp: quét nhóm → lọc trùng → đổ link → chạy “🚀 Quét → đọc → tạo → comment” → xoá ô link → quét lượt mới.</div>
             </div>
 
             <div class="bridge-grid hidden">
@@ -1484,6 +1497,8 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
     const B = {
       extensionId: $('#bridgeExtensionId'),
       fbGroupIdInput: $('#fbGroupIdInput'),
+      groupLimitInput: $('#groupLimitInput'),
+      loopPauseMinutesInput: $('#loopPauseMinutesInput'),
       fbPostLinkInput: $('#fbPostLinkInput'),
       scanGroupLinksBtn: $('#scanGroupLinksBtn'),
       stopClosedLoopBtn: $('#stopClosedLoopBtn'),
@@ -1508,6 +1523,8 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
     const STORE = {
       extensionId: 'truong_fb_bridge_extension_id_v1',
       groupIds: 'truong_fb_bridge_group_ids_v1',
+      groupLimit: 'truong_fb_bridge_group_limit_v1',
+      loopPauseMinutes: 'truong_fb_bridge_loop_pause_minutes_v1',
       postLinks: 'truong_fb_bridge_post_links_v1',
       commented: 'truong_fb_bridge_commented_links_v1'
     };
@@ -1528,6 +1545,27 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
 
     function text(value) {
       return String(value || '').trim();
+    }
+
+    function clampNumber(value, fallback, min, max) {
+      if (String(value ?? '').trim() === '') return fallback;
+      const n = Number(value);
+      if (!Number.isFinite(n)) return fallback;
+      return Math.max(min, Math.min(max, n));
+    }
+
+    function getGroupLimit() {
+      const value = Math.round(clampNumber(B.groupLimitInput?.value, 5, 1, 50));
+      if (B.groupLimitInput) B.groupLimitInput.value = String(value);
+      save(STORE.groupLimit, B.groupLimitInput?.value || String(value));
+      return value;
+    }
+
+    function getLoopPauseMinutes() {
+      const value = Math.round(clampNumber(B.loopPauseMinutesInput?.value, 5, 0, 1440));
+      if (B.loopPauseMinutesInput) B.loopPauseMinutesInput.value = String(value);
+      save(STORE.loopPauseMinutes, B.loopPauseMinutesInput?.value || String(value));
+      return value;
     }
 
     function setBridgeStatus(message, type = '') {
@@ -1773,22 +1811,28 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
 
     async function scanGroupLinks({ autoStart = false } = {}) {
       const groups = parseLines(B.fbGroupIdInput?.value);
+      const groupLimit = getGroupLimit();
       if (!groups.length) {
         setBridgeStatus('Hãy nhập UID nhóm hoặc link nhóm trước.', 'warn');
         B.fbGroupIdInput?.focus();
         return [];
       }
 
-      setBridgeStatus('Đang gửi lệnh quét nhóm sang extension...', 'warn');
+      setBridgeStatus(`Đang mở tab mới để quét nhóm, mỗi nhóm lấy tối đa ${groupLimit} link...`, 'warn');
       const response = await sendBridge(
         ['SCAN_GROUP_PERMALINKS', 'SCAN_GROUP_LINKS', 'scanGroupLinks', 'SCAN_GROUP', 'scan_links', 'SCAN_LINKS'],
         {
           groups,
           groupIds: groups,
-          limitPerGroup: 5,
-          perGroupLimit: 5,
+          limit: groupLimit,
+          limitPerGroup: groupLimit,
+          perGroupLimit: groupLimit,
           onlyPermalink: true,
-          newestFirst: true
+          newestFirst: true,
+          openInBackground: false,
+          active: true,
+          activateTab: true,
+          closeAfter: true
         }
       );
 
@@ -1889,45 +1933,98 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
       if (getPostLinks()[0]) saveCommentedLink(getPostLinks()[0]);
     }
 
-    async function autoWorkflow() {
+    async function autoWorkflow({ manageLoopState = true } = {}) {
       let links = getPostLinks();
       if (!links.length) {
         setBridgeStatus('Chưa có link bài viết. Hãy quét nhóm hoặc dán link trước.', 'warn');
         return;
       }
 
-      closedLoopRunning = true;
-      B.stopClosedLoopBtn?.classList.remove('hidden');
+      if (manageLoopState) {
+        closedLoopRunning = true;
+        B.stopClosedLoopBtn?.classList.remove('hidden');
+      }
 
-      for (const link of [...links]) {
-        if (!closedLoopRunning) break;
+      try {
+        for (const link of [...links]) {
+          if (!closedLoopRunning) break;
 
-        try {
-          setPostLinks([link, ...getPostLinks().filter(item => normalizeUrl(item) !== normalizeUrl(link))]);
-          await readFirstFacebookPost();
+          try {
+            setPostLinks([link, ...getPostLinks().filter(item => normalizeUrl(item) !== normalizeUrl(link))]);
+            await readFirstFacebookPost();
 
-          const controller = window.puterAIController || {};
-          if (!controller.generateComment) throw new Error('Chưa nạp được hàm gọi Puter AI.');
-          const comment = await controller.generateComment();
+            const controller = window.puterAIController || {};
+            if (!controller.generateComment) throw new Error('Chưa nạp được hàm gọi Puter AI.');
+            const comment = await controller.generateComment();
 
-          if (B.autoCommentAfterGenerate?.checked !== false && comment) {
-            await commentToFacebook(link, comment);
-            saveCommentedLink(link);
+            if (B.autoCommentAfterGenerate?.checked !== false && comment) {
+              await commentToFacebook(link, comment);
+              saveCommentedLink(link);
+              setPostLinks(getPostLinks().filter(item => normalizeUrl(item) !== normalizeUrl(link)));
+              await delay(800);
+            }
+          } catch (error) {
+            setBridgeStatus(`Lỗi ở link hiện tại, đã chuyển link kế tiếp:\n${error.message || error}`, 'error');
             setPostLinks(getPostLinks().filter(item => normalizeUrl(item) !== normalizeUrl(link)));
-            await delay(800);
+            await delay(900);
           }
-        } catch (error) {
-          setBridgeStatus(`Lỗi ở link hiện tại, đã chuyển link kế tiếp:\n${error.message || error}`, 'error');
-          setPostLinks(getPostLinks().filter(item => normalizeUrl(item) !== normalizeUrl(link)));
-          await delay(900);
+        }
+      } finally {
+        if (manageLoopState) {
+          closedLoopRunning = false;
+          B.stopClosedLoopBtn?.classList.add('hidden');
         }
       }
 
-      closedLoopRunning = false;
-      B.stopClosedLoopBtn?.classList.add('hidden');
-
       if (!getPostLinks().length) {
         setBridgeStatus('Đã xử lý hết link trong ô Link bài viết Facebook.', 'ok');
+      }
+    }
+
+    async function waitBeforeNextGroupScan(cycleIndex) {
+      const minutes = getLoopPauseMinutes();
+      const totalMs = minutes * 60 * 1000;
+      if (totalMs <= 0) {
+        setBridgeStatus(`Vòng ${cycleIndex} đã xong. Nghỉ 0 phút, quét tiếp ngay...`, 'warn');
+        await delay(500);
+        return;
+      }
+
+      const endAt = Date.now() + totalMs;
+      while (closedLoopRunning && Date.now() < endAt) {
+        const remainMs = Math.max(0, endAt - Date.now());
+        const remainMin = Math.ceil(remainMs / 60000);
+        setBridgeStatus(`Vòng ${cycleIndex} đã xong. Đang nghỉ ${remainMin} phút rồi quét tiếp...`, 'warn');
+        await delay(Math.min(30000, remainMs));
+      }
+    }
+
+    async function runClosedGroupLoop() {
+      if (closedLoopRunning) return;
+
+      closedLoopRunning = true;
+      B.stopClosedLoopBtn?.classList.remove('hidden');
+      let cycleIndex = 1;
+
+      try {
+        while (closedLoopRunning) {
+          const links = await scanGroupLinks({ autoStart: false });
+          if (!closedLoopRunning) break;
+
+          if (links.length) {
+            await autoWorkflow({ manageLoopState: false });
+          } else {
+            setPostLinks([]);
+          }
+
+          if (!closedLoopRunning) break;
+          await waitBeforeNextGroupScan(cycleIndex);
+          cycleIndex += 1;
+        }
+      } finally {
+        closedLoopRunning = false;
+        B.stopClosedLoopBtn?.classList.add('hidden');
+        setBridgeStatus('Vòng lặp đã dừng.', 'warn');
       }
     }
 
@@ -1949,10 +2046,14 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
     function wireBridge() {
       addInputSave(B.extensionId, STORE.extensionId);
       addInputSave(B.fbGroupIdInput, STORE.groupIds);
+      addInputSave(B.groupLimitInput, STORE.groupLimit);
+      addInputSave(B.loopPauseMinutesInput, STORE.loopPauseMinutes);
       addInputSave(B.fbPostLinkInput, STORE.postLinks);
+      getGroupLimit();
+      getLoopPauseMinutes();
       renderCommentedLinks();
 
-      B.scanGroupLinksBtn?.addEventListener('click', () => runBridgeTask(() => scanGroupLinks({ autoStart: true })).catch(error => setBridgeStatus(error.message || String(error), 'error')));
+      B.scanGroupLinksBtn?.addEventListener('click', () => runBridgeTask(() => runClosedGroupLoop()).catch(error => setBridgeStatus(error.message || String(error), 'error')));
       B.copyScannedLinksBtn?.addEventListener('click', async () => {
         const value = B.fbPostLinkInput?.value || '';
         if (!value.trim()) return setBridgeStatus('Chưa có link mới để copy.', 'warn');
@@ -1985,6 +2086,7 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
     window.addEventListener('DOMContentLoaded', wireBridge);
     window.fbBridgeController = {
       scanGroupLinks,
+      runClosedGroupLoop,
       readFirstFacebookPost,
       autoWorkflow,
       commentCurrentTab
