@@ -32,51 +32,12 @@
           <span class="pro-badge">⚡ WEB + EXTENSION + PUTER AI</span>
         </header>
 
-        <div class="auth-bar">
-          <div class="auth-left">
-            <div class="auth-avatar" id="authAvatar" aria-hidden="true">👤</div>
-            <div class="auth-info">
-              <div class="auth-status" id="authStatus">⏳ Đang kết nối Puter AI...</div>
-              <div class="auth-username hidden" id="authUsername"></div>
-            </div>
-          </div>
-          <div class="auth-actions">
-            <button class="btn btn-primary btn-sm hidden" id="loginBtn" type="button">🔑 Đăng nhập</button>
-            <button class="btn btn-warning btn-sm hidden" id="switchBtn" type="button">🔄 Đổi tài khoản</button>
-            <button class="btn btn-danger btn-sm hidden" id="logoutBtn" type="button">↩ Đăng xuất</button>
-          </div>
-        </div>
-
-        <div class="notice" id="tokenBanner" role="alert">
-          <div aria-hidden="true">⚠️</div>
-          <div>
-            <strong>Tài khoản Puter có thể đã hết token miễn phí</strong>
-            Hãy đổi tài khoản Puter khác hoặc thử lại sau nếu gặp giới hạn sử dụng.
-          </div>
-          <button class="btn btn-warning btn-sm" id="btnRelogin" type="button">Đổi</button>
-        </div>
-
         <div class="workflow-stack">
-          <section class="workflow-panel" aria-labelledby="connectTitle">
-            <div class="panel-heading">
-              <div>
-                <h2 id="connectTitle">1. Kết nối Extension</h2>
-                <p>Dán Extension ID một lần, web sẽ lưu lại trong trình duyệt.</p>
-              </div>
-              <span class="counter">Local Extension</span>
-            </div>
-            <div class="form-group">
-              <label for="bridgeExtensionId">Extension ID</label>
-              <input type="text" id="bridgeExtensionId" placeholder="Dán ID extension Bridge ở đây">
-              <div class="hint">Mở popup extension, copy ID rồi dán vào ô này để web GitHub gửi lệnh quét/đọc/comment sang Chrome Extension.</div>
-            </div>
-          </section>
-
           <section class="workflow-panel bridge-box" aria-labelledby="autoRunTitle">
             <div class="panel-heading">
               <div>
-                <h2 id="autoRunTitle">2. Chạy tự động từ nhóm Facebook</h2>
-                <p>Nhập UID hoặc link nhóm, chọn số link cần lấy, rồi bấm chạy tự động.</p>
+                <h2 id="autoRunTitle">1. Chạy tự động từ nhóm Facebook</h2>
+                <p>Nhập UID hoặc link nhóm, rồi bấm chạy tự động. Các tuỳ chọn phụ đã gom vào Cài đặt nâng cao.</p>
               </div>
               <span class="counter">Quét → lọc trùng → comment</span>
             </div>
@@ -87,39 +48,79 @@
               <div class="hint">Chỉ cần nhập lần đầu. Mỗi lượt sẽ quét theo số link/nhóm bên dưới, tự lọc link đã comment trước đó rồi mới xử lý.</div>
             </div>
 
-            <div class="bridge-grid bridge-grid-3">
-              <div class="form-group">
-                <label for="groupLimitInput">Số link lấy / nhóm</label>
-                <input id="groupLimitInput" type="number" min="1" max="50" step="1" value="5">
-                <div class="hint">Mặc định 5 link mới nhất cho mỗi nhóm.</div>
-              </div>
-              <div class="form-group">
-                <label for="loopPauseSecondsInput">Nghỉ sau mỗi vòng</label>
-                <input id="loopPauseSecondsInput" type="number" min="0" max="86400" step="1" value="300">
-                <div class="hint">Tính bằng giây. Nhập 0 nếu muốn quét tiếp ngay.</div>
-              </div>
-              <div class="form-group">
-                <label for="linkPauseSecondsInput">Nghỉ sau mỗi link</label>
-                <input id="linkPauseSecondsInput" type="number" min="0" max="86400" step="1" value="0">
-                <div class="hint">Tính bằng giây. Áp dụng sau khi chạy xong từng link.</div>
-              </div>
-            </div>
-
             <details class="advanced-panel">
               <summary>⚙️ Cài đặt nâng cao</summary>
-              <div class="bridge-grid">
-                <div class="form-group">
-                  <label for="fbDelayMs">Thời gian chờ tải tab</label>
-                  <input id="fbDelayMs" type="number" min="1000" max="30000" step="500" value="5000">
+              <div class="advanced-content">
+                <div class="advanced-section">
+                  <div class="advanced-title">Trạng thái Puter</div>
+                  <div class="auth-bar auth-bar-advanced">
+                    <div class="auth-left">
+                      <div class="auth-avatar" id="authAvatar" aria-hidden="true">👤</div>
+                      <div class="auth-info">
+                        <div class="auth-status" id="authStatus">⏳ Đang kết nối Puter AI...</div>
+                        <div class="auth-username hidden" id="authUsername"></div>
+                      </div>
+                    </div>
+                    <div class="auth-actions">
+                      <button class="btn btn-primary btn-sm hidden" id="loginBtn" type="button">🔑 Đăng nhập</button>
+                      <button class="btn btn-warning btn-sm hidden" id="switchBtn" type="button">🔄 Đổi tài khoản</button>
+                      <button class="btn btn-danger btn-sm hidden" id="logoutBtn" type="button">↩ Đăng xuất</button>
+                    </div>
+                  </div>
+
+                  <div class="notice" id="tokenBanner" role="alert">
+                    <div aria-hidden="true">⚠️</div>
+                    <div>
+                      <strong>Tài khoản Puter có thể đã hết token miễn phí</strong>
+                      Hãy đổi tài khoản Puter khác hoặc thử lại sau nếu gặp giới hạn sử dụng.
+                    </div>
+                    <button class="btn btn-warning btn-sm" id="btnRelogin" type="button">Đổi</button>
+                  </div>
                 </div>
-                <div class="form-group">
-                  <label for="fbMaxChars">Giới hạn nội dung lấy</label>
-                  <input id="fbMaxChars" type="number" min="100" max="50000" step="100" value="20000">
+
+                <div class="advanced-section">
+                  <div class="advanced-title">Kết nối Extension</div>
+                  <div class="form-group">
+                    <label for="bridgeExtensionId">Extension ID</label>
+                    <input type="text" id="bridgeExtensionId" placeholder="Dán ID extension Bridge ở đây">
+                    <div class="hint">Mở popup extension, copy ID rồi dán vào ô này để web GitHub gửi lệnh quét/đọc/comment sang Chrome Extension.</div>
+                  </div>
                 </div>
-              </div>
-              <div class="check-list">
-                <label class="check-row"><input id="autoCommentAfterGenerate" type="checkbox" checked> Tạo xong bình luận thì tự gửi bình luận vào tab bài viết Facebook</label>
-                <label class="check-row"><input id="closeAfterComment" type="checkbox" checked> Đóng tab Facebook sau khi gửi bình luận xong</label>
+
+                <div class="advanced-section">
+                  <div class="advanced-title">Tuỳ chỉnh vòng chạy</div>
+                  <div class="bridge-grid bridge-grid-3">
+                    <div class="form-group">
+                      <label for="groupLimitInput">Số link lấy / nhóm</label>
+                      <input id="groupLimitInput" type="number" min="1" max="50" step="1" value="5">
+                      <div class="hint">Mặc định 5 link mới nhất cho mỗi nhóm.</div>
+                    </div>
+                    <div class="form-group">
+                      <label for="loopPauseSecondsInput">Nghỉ sau mỗi vòng</label>
+                      <input id="loopPauseSecondsInput" type="number" min="0" max="86400" step="1" value="240">
+                      <div class="hint">Tính bằng giây. Nhập 0 nếu muốn quét tiếp ngay.</div>
+                    </div>
+                    <div class="form-group">
+                      <label for="linkPauseSecondsInput">Nghỉ sau mỗi link</label>
+                      <input id="linkPauseSecondsInput" type="number" min="0" max="86400" step="1" value="60">
+                      <div class="hint">Tính bằng giây. Áp dụng sau khi chạy xong từng link.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="advanced-section">
+                  <div class="advanced-title">Tuỳ chọn tab Facebook</div>
+                  <div class="bridge-grid">
+                    <div class="form-group">
+                      <label for="fbDelayMs">Thời gian chờ tải tab</label>
+                      <input id="fbDelayMs" type="number" min="1000" max="30000" step="500" value="5000">
+                    </div>
+                  </div>
+                  <div class="check-list">
+                    <label class="check-row"><input id="autoCommentAfterGenerate" type="checkbox" checked> Tạo xong bình luận thì tự gửi bình luận vào tab bài viết Facebook</label>
+                    <label class="check-row"><input id="closeAfterComment" type="checkbox" checked> Đóng tab Facebook sau khi gửi bình luận xong</label>
+                  </div>
+                </div>
               </div>
             </details>
 
@@ -134,7 +135,7 @@
           <section class="workflow-panel" aria-labelledby="linksTitle">
             <div class="panel-heading compact">
               <div>
-                <h2 id="linksTitle">3. Link bài viết Facebook</h2>
+                <h2 id="linksTitle">2. Link bài viết Facebook</h2>
                 <p>Mỗi link một dòng. Link đã comment xong sẽ tự bị loại khỏi ô này.</p>
               </div>
             </div>
@@ -148,7 +149,7 @@
           <section class="workflow-panel" aria-labelledby="contentTitle">
             <div class="panel-heading compact">
               <div>
-                <h2 id="contentTitle">4. Nội dung, sản phẩm và phong cách</h2>
+                <h2 id="contentTitle">3. Nội dung, sản phẩm và phong cách</h2>
                 <p>Phần này dùng cho AI tạo bình luận. Có thể điền thủ công hoặc để extension tự đọc bài viết.</p>
               </div>
             </div>
@@ -197,8 +198,6 @@
 
               <div class="actions">
                 <button class="btn btn-primary" id="generateBtn" type="button">✨ Tạo bình luận</button>
-                <button class="btn btn-soft" id="commentCurrentTabBtn" type="button">💬 Comment tab hiện tại</button>
-                <button class="btn btn-muted" id="clearBtn" type="button">🔄 Làm mới</button>
               </div>
             </div>
           </section>
@@ -207,10 +206,6 @@
         <section class="output-box" aria-live="polite">
           <div class="output-header">
             <span class="output-title">✨ Kết quả bình luận</span>
-            <div class="output-actions">
-              <button class="btn btn-soft btn-sm" id="copyBtn" type="button">Sao chép</button>
-              <button class="btn btn-muted btn-sm" id="saveHistoryBtn" type="button">Lưu lịch sử</button>
-            </div>
           </div>
           <div id="output" class="placeholder">Bình luận sẽ xuất hiện tại đây...</div>
         </section>

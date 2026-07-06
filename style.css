@@ -602,3 +602,34 @@
       .bridge-grid { grid-template-columns: 1fr; }
       .bridge-actions-main { grid-template-columns: 1fr; }
     }
+
+.advanced-content {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+.advanced-section {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: #fff;
+}
+.advanced-title {
+  color: #312e81;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.auth-bar-advanced {
+  margin-bottom: 0;
+}
+.advanced-section .notice {
+  margin-bottom: 0;
+}
+.advanced-section .bridge-grid,
+.advanced-section .check-list {
+  padding: 0;
+}

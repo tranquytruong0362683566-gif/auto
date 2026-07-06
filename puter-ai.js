@@ -330,15 +330,21 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
 
         if (result) {
           const copied = await copyText(els.output.textContent, { silent: true });
-          const oldCopyText = els.copyBtn.textContent;
-          if (copied) {
-            els.copyBtn.textContent = '✔️ Đã tự copy';
+          if (els.copyBtn) {
+            const oldCopyText = els.copyBtn.textContent;
+            if (copied) {
+              els.copyBtn.textContent = '✔️ Đã tự copy';
+              toast('Đã tạo xong và tự động copy kết quả');
+              setTimeout(() => { els.copyBtn.textContent = oldCopyText; }, 2500);
+            } else {
+              els.copyBtn.textContent = 'Copy thủ công';
+              toast('Trình duyệt chặn tự động copy. Có thể bôi đen kết quả để copy thủ công.', 'warning');
+              setTimeout(() => { els.copyBtn.textContent = oldCopyText; }, 3000);
+            }
+          } else if (copied) {
             toast('Đã tạo xong và tự động copy kết quả');
-            setTimeout(() => { els.copyBtn.textContent = oldCopyText; }, 2500);
           } else {
-            els.copyBtn.textContent = 'Copy thủ công';
-            toast('Trình duyệt chặn tự động copy. Bấm nút Sao chép để copy thủ công.', 'warning');
-            setTimeout(() => { els.copyBtn.textContent = oldCopyText; }, 3000);
+            toast('Đã tạo xong. Có thể bôi đen kết quả để copy thủ công.', 'warning');
           }
         }
         return result;
@@ -648,10 +654,10 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
       els.btnConfirmSwitch.addEventListener('click', doSwitchAccount);
       els.btnCancelSwitch.addEventListener('click', () => closeModal(els.switchModal));
       els.generateBtn.addEventListener('click', generateComment);
-      els.clearBtn.addEventListener('click', clearForm);
+      els.clearBtn?.addEventListener('click', clearForm);
       els.pasteBtn.addEventListener('click', pasteArticle);
-      els.copyBtn.addEventListener('click', () => copyText(els.output.textContent));
-      els.saveHistoryBtn.addEventListener('click', saveHistory);
+      els.copyBtn?.addEventListener('click', () => copyText(els.output.textContent));
+      els.saveHistoryBtn?.addEventListener('click', saveHistory);
       els.btnSaveTpl.addEventListener('click', saveTemplateFromModal);
       els.btnCancelTpl.addEventListener('click', () => closeModal(els.templateModal));
       $('#btnAddTplLeft').addEventListener('click', () => state.managers.left.openAdd());

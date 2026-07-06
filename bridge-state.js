@@ -74,7 +74,7 @@
   }
 
   function getLoopPauseSeconds() {
-    let fallback = 300;
+    let fallback = 240;
     const savedSeconds = load(STORE.loopPauseSeconds, null);
     if (savedSeconds === null) {
       const oldMinutes = load(STORE.oldLoopPauseMinutes, null);
@@ -87,7 +87,7 @@
   }
 
   function getLinkPauseSeconds() {
-    const value = Math.round(clampNumber(B.linkPauseSecondsInput?.value, 0, 0, 86400));
+    const value = Math.round(clampNumber(B.linkPauseSecondsInput?.value, 60, 0, 86400));
     if (B.linkPauseSecondsInput) B.linkPauseSecondsInput.value = String(value);
     save(STORE.linkPauseSeconds, B.linkPauseSecondsInput?.value || String(value));
     return value;
