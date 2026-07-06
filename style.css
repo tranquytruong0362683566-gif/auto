@@ -520,3 +520,85 @@
       .output-header { align-items: flex-start; flex-direction: column; }
       .brand h1 { font-size: 16px; }
     }
+
+    /* Layout v1.9.2: tách luồng thao tác thành từng khối dễ bảo trì */
+    .workflow-stack {
+      display: grid;
+      gap: 15px;
+    }
+    .workflow-panel {
+      display: grid;
+      gap: 13px;
+      padding: 15px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: #fff;
+    }
+    .workflow-panel.bridge-box {
+      border-color: var(--border-strong);
+      background: linear-gradient(180deg, #f8faff, #ffffff);
+    }
+    .panel-heading {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: start;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #eef2f6;
+    }
+    .panel-heading.compact {
+      padding-bottom: 8px;
+    }
+    .panel-heading h2 {
+      margin: 0;
+      color: #24205d;
+      font-size: 15px;
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+    }
+    .panel-heading p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .advanced-panel {
+      border: 1px dashed #d0d5dd;
+      border-radius: 14px;
+      background: #fbfcff;
+      padding: 0;
+      overflow: hidden;
+    }
+    .advanced-panel > summary {
+      cursor: pointer;
+      list-style: none;
+      padding: 11px 12px;
+      color: #475467;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      user-select: none;
+    }
+    .advanced-panel > summary::-webkit-details-marker { display: none; }
+    .advanced-panel[open] > summary {
+      border-bottom: 1px dashed #d0d5dd;
+      background: #f8faff;
+    }
+    .advanced-panel .bridge-grid,
+    .advanced-panel .check-list {
+      padding: 12px;
+    }
+    .advanced-panel .check-list {
+      padding-top: 0;
+    }
+    .workflow-panel .actions {
+      margin-top: 0;
+    }
+    @media (max-width: 860px) {
+      .panel-heading { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 520px) {
+      .bridge-grid { grid-template-columns: 1fr; }
+      .bridge-actions-main { grid-template-columns: 1fr; }
+    }
