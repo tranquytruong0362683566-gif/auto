@@ -10,6 +10,7 @@
   function getBridgeTimeoutMs(action) {
     const name = String(action || '');
     if (/SCAN_GROUP|SCAN_LINK/i.test(name)) return 15 * 60 * 1000;
+    if (/SHOPEE|CUSTOM_LINK|AFFILIATE/i.test(name)) return 3 * 60 * 1000;
     if (/COMMENT/i.test(name)) return 4 * 60 * 1000;
     if (/READ/i.test(name)) return 3 * 60 * 1000;
     return 60 * 1000;

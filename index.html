@@ -193,8 +193,14 @@
               </div>
 
               <div class="form-group">
+                <label for="shopeeTargetCountInput">Số link Shopee muốn tạo tự động</label>
+                <input type="number" id="shopeeTargetCountInput" min="1" max="100" step="1" value="5" inputmode="numeric" placeholder="VD: 5">
+                <div class="hint">Khi danh sách còn 1 link Shopee, web sẽ dùng link còn lại để tạo thêm đúng số lượng này.</div>
+              </div>
+
+              <div class="form-group">
                 <label for="productLinkInput">Danh sách link Shopee / link sản phẩm</label>
-                <textarea id="productLinkInput" placeholder="Mỗi link một dòng. Hệ thống sẽ chọn ngẫu nhiên 1 link hợp lệ."></textarea>
+                <textarea id="productLinkInput" placeholder="Mỗi link một dòng. Hệ thống sẽ lấy link đầu tiên đưa cho Puter, xoá link đó khỏi danh sách, rồi tự bù link Shopee khi gần hết."></textarea>
                 <div class="field-status">
                   <span class="link-preview" id="linkStatus">Chưa có link sản phẩm</span>
                   <span class="counter" id="linkCounter">0 link</span>

@@ -6,7 +6,8 @@
         leftTemplates: 'truong_ai_commenter_templates_left_v2',
         rightTemplates: 'truong_ai_commenter_templates_right_v2',
         history: 'truong_ai_commenter_history_v2',
-        draft: 'truong_ai_commenter_draft_v2'
+        draft: 'truong_ai_commenter_draft_v2',
+        shopeeTargetCount: 'truong_ai_commenter_shopee_target_count_v1'
       },
       tokenErrorPatterns: [
         'quota', 'rate limit', 'rate_limit', 'insufficient', 'limit exceeded',
@@ -33,6 +34,7 @@
       articleInput: $('#articleInput'),
       productNameInput: $('#productNameInput'),
       productLinkInput: $('#productLinkInput'),
+      shopeeTargetCountInput: $('#shopeeTargetCountInput'),
       toneSelect: $('#toneSelect'),
       generateBtn: $('#generateBtn'),
       clearBtn: $('#clearBtn'),
@@ -62,7 +64,8 @@
       activeManager: null,
       editingIndex: -1,
       selectedTemplateKey: null,
-      managers: {}
+      managers: {},
+      shopeeGenerating: false
     };
 
     function safeJsonParse(value, fallback) {
@@ -157,9 +160,123 @@
       return array[Math.floor(Math.random() * array.length)] || '';
     }
 
+    const SHOPEE_MAX_LINKS_PER_BATCH = 5;
+
+    function firstFrom(array) {
+      return array[0] || '';
+    }
+
+    function sanitizeShopeeTargetCount(value) {
+      const n = Math.floor(Number(value));
+      return Number.isFinite(n) && n > 0 ? Math.min(n, 100) : 5;
+    }
+
+    function isShopeeLink(link) {
+      return /^https?:\/\//i.test(String(link || '')) && /(shopee\.vn|s\.shopee\.vn|shope\.ee|shp\.ee)/i.test(String(link || ''));
+    }
+
+    function uniqueUrlList(links) {
+      const out = [];
+      const seen = new Set();
+      for (const link of links || []) {
+        const clean = String(link || '').trim();
+        if (!clean) continue;
+        const key = clean.replace(/[?#].*$/, '').toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push(clean);
+      }
+      return out;
+    }
+
+    function buildShopeeBatchLinks(sourceLinks, batchSize, startIndex) {
+      const batch = [];
+      for (let i = 0; i < batchSize; i += 1) {
+        batch.push(sourceLinks[(startIndex + i) % sourceLinks.length]);
+      }
+      return batch;
+    }
+
+    function setProductLinks(links) {
+      els.productLinkInput.value = uniqueUrlList(links).join('\n');
+      els.productLinkInput.dispatchEvent(new Event('input', { bubbles: true }));
+      updateCounters();
+      saveDraft();
+    }
+
+    function removeSelectedProductLink(selectedLink, validLinks) {
+      const selectedKey = selectedLink.replace(/[?#].*$/, '').toLowerCase();
+      const remaining = uniqueUrlList(validLinks).filter(link => link.replace(/[?#].*$/, '').toLowerCase() !== selectedKey);
+      setProductLinks(remaining);
+      return remaining;
+    }
+
+    async function refillShopeeLinksIfNeeded(seedLinks, reason = '') {
+      if (state.shopeeGenerating) return [];
+
+      const targetCount = sanitizeShopeeTargetCount(els.shopeeTargetCountInput?.value || 5);
+      const sourceLinks = uniqueUrlList(seedLinks).filter(isShopeeLink);
+      if (!sourceLinks.length) {
+        if (reason) toast('Danh sách sắp hết nhưng không còn link Shopee hợp lệ để tạo thêm.', 'warning');
+        return [];
+      }
+
+      const API = window.fbBridgeApi;
+      if (!API?.sendBridge) {
+        toast('Chưa nạp bridge extension nên chưa thể tự tạo link Shopee.', 'warning');
+        return [];
+      }
+
+      state.shopeeGenerating = true;
+      const results = [];
+      let cursor = 0;
+      let attempt = 0;
+      const minBatches = Math.ceil(targetCount / SHOPEE_MAX_LINKS_PER_BATCH);
+      const maxAttempts = minBatches + 10;
+
+      try {
+        toast(`Danh sách link sắp hết, đang tự tạo ${targetCount} link Shopee mới...`, 'warning');
+
+        while (results.length < targetCount && attempt < maxAttempts) {
+          attempt += 1;
+          const remaining = targetCount - results.length;
+          const batchSize = Math.min(SHOPEE_MAX_LINKS_PER_BATCH, remaining);
+          const batchLinks = buildShopeeBatchLinks(sourceLinks, batchSize, cursor);
+          cursor += batchSize;
+
+          const response = await API.sendBridge(
+            ['GENERATE_SHOPEE_CUSTOM_LINKS', 'GENERATE_SHOPEE_AFFILIATE_LINKS', 'SHOPEE_CUSTOM_LINKS'],
+            {
+              links: batchLinks,
+              targetCount: batchSize,
+              runInBackground: true,
+              closeTabAfter: true
+            }
+          );
+
+          const newLinks = uniqueUrlList(API.extractLinksFromResponse(response)).filter(Boolean);
+          if (!newLinks.length) throw new Error(`Lượt ${attempt} không lấy được link nào từ Shopee.`);
+          results.push(...newLinks);
+          setProductLinks(results.slice(0, targetCount));
+        }
+
+        const finalLinks = uniqueUrlList(results).slice(0, targetCount);
+        if (!finalLinks.length) return [];
+        setProductLinks(finalLinks);
+        toast(`Đã tự tạo ${finalLinks.length}/${targetCount} link Shopee mới.`);
+        return finalLinks;
+      } catch (error) {
+        toast('Tự tạo link Shopee lỗi: ' + getErrorText(error), 'warning');
+        return [];
+      } finally {
+        state.shopeeGenerating = false;
+      }
+    }
+
     function updateCounters() {
       els.articleCounter.textContent = `${els.articleInput.value.length}/6000`;
       els.productCounter.textContent = `${els.productNameInput.value.length}/160`;
+      if (els.shopeeTargetCountInput) els.shopeeTargetCountInput.value = String(sanitizeShopeeTargetCount(els.shopeeTargetCountInput.value || 5));
 
       const { valid, invalid } = parseLinks(els.productLinkInput.value);
       els.linkCounter.textContent = `${valid.length} link`;
@@ -300,8 +417,9 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
       const article = els.articleInput.value.trim();
       const productName = els.productNameInput.value.trim();
       const selectedTone = els.toneSelect.value;
-      const { valid, invalid } = parseLinks(els.productLinkInput.value);
-      const selectedLink = randomFrom(valid);
+      const { invalid } = parseLinks(els.productLinkInput.value);
+      let selectedLink = '';
+      let refillPromise = Promise.resolve([]);
 
       if (!article) {
         toast('Vui lòng dán nội dung bài viết gốc.', 'warning');
@@ -323,8 +441,16 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
       setOutput('Đang phân tích ngữ cảnh và tạo bình luận...', 'loading');
 
       try {
+        const latestLinks = parseLinks(els.productLinkInput.value).valid;
+        selectedLink = firstFrom(latestLinks);
+        const remainingProductLinks = selectedLink ? removeSelectedProductLink(selectedLink, latestLinks) : latestLinks;
+        refillPromise = selectedLink && remainingProductLinks.length <= 1
+          ? refillShopeeLinksIfNeeded(remainingProductLinks.length ? remainingProductLinks : [selectedLink], 'low_links')
+          : Promise.resolve([]);
+
         const prompt = buildPrompt({ article, productName, selectedLink, selectedTone });
         const response = await window.puter.ai.chat(prompt, { model: APP.model });
+        await refillPromise;
         const result = stripAiWrapper(extractResponseText(response));
         setOutput(result || 'Không có phản hồi từ AI.', result ? '' : 'error');
 
@@ -349,6 +475,7 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
         }
         return result;
       } catch (error) {
+        try { await refillPromise; } catch {}
         const errText = getErrorText(error);
         if (isTokenError(errText)) {
           setOutput('⚠️ Tài khoản Puter hiện tại có thể đã hết token hoặc bị giới hạn. Hãy đổi tài khoản hoặc thử lại sau.', 'error');
@@ -392,6 +519,7 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
       els.articleInput.value = '';
       els.productNameInput.value = '';
       els.productLinkInput.value = '';
+      if (els.shopeeTargetCountInput) els.shopeeTargetCountInput.value = '5';
       els.toneSelect.selectedIndex = 0;
       setOutput('Bình luận sẽ xuất hiện tại đây...', 'placeholder');
       els.tokenBanner.classList.remove('show');
@@ -433,10 +561,13 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
     }
 
     function saveDraft() {
+      const shopeeTargetCount = sanitizeShopeeTargetCount(els.shopeeTargetCountInput?.value || 5);
+      saveStorage(APP.storage.shopeeTargetCount, shopeeTargetCount);
       saveStorage(APP.storage.draft, {
         article: els.articleInput.value,
         productName: els.productNameInput.value,
         productLinks: els.productLinkInput.value,
+        shopeeTargetCount,
         tone: els.toneSelect.value
       });
     }
@@ -447,6 +578,7 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
       els.articleInput.value = draft.article || '';
       els.productNameInput.value = draft.productName || '';
       els.productLinkInput.value = draft.productLinks || '';
+      if (els.shopeeTargetCountInput) els.shopeeTargetCountInput.value = String(sanitizeShopeeTargetCount(draft.shopeeTargetCount || loadStorage(APP.storage.shopeeTargetCount, 5)));
       if (draft.tone) els.toneSelect.value = draft.tone;
     }
 
@@ -663,7 +795,7 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
       $('#btnAddTplLeft').addEventListener('click', () => state.managers.left.openAdd());
       $('#btnAddTpl').addEventListener('click', () => state.managers.right.openAdd());
 
-      [els.articleInput, els.productNameInput, els.productLinkInput, els.toneSelect].forEach(input => {
+      [els.articleInput, els.productNameInput, els.productLinkInput, els.shopeeTargetCountInput, els.toneSelect].filter(Boolean).forEach(input => {
         input.addEventListener('input', () => {
           updateCounters();
           saveDraft();
@@ -714,7 +846,8 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
       doSignIn,
       doSignOut,
       updateAuthUI,
-      copyText
+      copyText,
+      refillShopeeLinksIfNeeded
     };
 
     window.addEventListener('DOMContentLoaded', init);
