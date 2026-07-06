@@ -18,26 +18,48 @@
     }
   }
 
+  function scanModeNeedsGroup(mode) {
+    return mode === 'group_latest' || mode === 'group_top';
+  }
+
+  function scanModeLabel(mode) {
+    const labels = {
+      group_latest: 'Bài viết mới',
+      group_top: 'Bài viết Top',
+      groups_feed: 'Bản Tin Nhóm',
+      home_feed: 'Bài Viết Trang Chủ'
+    };
+    return labels[mode] || labels.group_latest;
+  }
+
   async function scanGroupLinks({ autoStart = false } = {}) {
     const groups = S.parseLines(B.fbGroupIdInput?.value);
     const groupLimit = S.getGroupLimit();
-    if (!groups.length) {
+    const scanMode = S.getScanSourceMode();
+    const needGroups = scanModeNeedsGroup(scanMode);
+
+    if (needGroups && !groups.length) {
       S.setBridgeStatus('Hãy nhập UID nhóm hoặc link nhóm trước.', 'warn');
       B.fbGroupIdInput?.focus();
       return [];
     }
 
-    S.setBridgeStatus(`Đang mở tab mới để quét nhóm, mỗi nhóm lấy tối đa ${groupLimit} link...`, 'warn');
+    const modeLabel = scanModeLabel(scanMode);
+    const targetText = needGroups ? `mỗi nhóm lấy tối đa ${groupLimit} link` : `lấy tối đa ${groupLimit} link`;
+    S.setBridgeStatus(`Đang mở tab mới quét ${modeLabel}, ${targetText}...`, 'warn');
     const response = await API.sendBridge(
       ['SCAN_GROUP_PERMALINKS', 'SCAN_GROUP_LINKS', 'scanGroupLinks', 'SCAN_GROUP', 'scan_links', 'SCAN_LINKS'],
       {
         groups,
         groupIds: groups,
+        scanMode,
+        sourceMode: scanMode,
+        feedMode: scanMode,
         limit: groupLimit,
         limitPerGroup: groupLimit,
         perGroupLimit: groupLimit,
-        onlyPermalink: true,
-        newestFirst: true,
+        onlyPermalink: scanMode !== 'home_feed',
+        newestFirst: scanMode === 'group_latest',
         openInBackground: false,
         active: true,
         activateTab: true,
@@ -49,10 +71,10 @@
     S.setPostLinks(links);
 
     if (links.length) {
-      S.setBridgeStatus(`Đã lấy ${links.length} link mới, đã lọc trùng link đã comment.`, 'ok');
+      S.setBridgeStatus(`Đã lấy ${links.length} link mới từ ${modeLabel}, đã lọc trùng link đã comment.`, 'ok');
       if (autoStart) await autoWorkflow();
     } else {
-      S.setBridgeStatus('Không có link mới sau khi lọc trùng.', 'warn');
+      S.setBridgeStatus(`Không có link mới từ ${modeLabel} sau khi lọc trùng.`, 'warn');
     }
 
     return links;
@@ -258,6 +280,7 @@
     S.addInputSave(B.extensionId, S.STORE.extensionId);
     S.addInputSave(B.fbGroupIdInput, S.STORE.groupIds);
     S.addInputSave(B.groupLimitInput, S.STORE.groupLimit);
+    S.addInputSave(B.scanSourceModeSelect, S.STORE.scanSourceMode);
     S.addInputSave(B.loopPauseSecondsInput, S.STORE.loopPauseSeconds);
     if (B.loopPauseSecondsInput && !B.loopPauseSecondsInput.value) {
       const oldMinutes = S.load(S.STORE.oldLoopPauseMinutes, null);
@@ -265,6 +288,7 @@
     }
     S.addInputSave(B.linkPauseSecondsInput, S.STORE.linkPauseSeconds);
     S.wirePostLinksInput();
+    S.getScanSourceMode();
     S.getGroupLimit();
     S.getLoopPauseSeconds();
     S.getLinkPauseSeconds();

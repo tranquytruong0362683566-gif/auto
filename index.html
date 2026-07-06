@@ -32,22 +32,6 @@
           <span class="pro-badge">⚡ WEB + EXTENSION + PUTER AI</span>
         </header>
 
-        <div class="workflow-stack">
-          <section class="workflow-panel bridge-box" aria-labelledby="autoRunTitle">
-            <div class="panel-heading">
-              <div>
-                <h2 id="autoRunTitle">1. Chạy tự động từ nhóm Facebook</h2>
-                <p>Nhập UID hoặc link nhóm, rồi bấm chạy tự động. Các tuỳ chọn phụ đã gom vào Cài đặt nâng cao.</p>
-              </div>
-              <span class="counter">Quét → lọc trùng → comment</span>
-            </div>
-
-            <div class="form-group">
-              <label for="fbGroupIdInput">UID nhóm Facebook</label>
-              <textarea id="fbGroupIdInput" spellcheck="false" placeholder="Nhập nhiều UID nhóm hoặc link nhóm, mỗi dòng một nhóm"></textarea>
-              <div class="hint">Chỉ cần nhập lần đầu. Mỗi lượt sẽ quét theo số link/nhóm bên dưới, tự lọc link đã comment trước đó rồi mới xử lý.</div>
-            </div>
-
             <details class="advanced-panel">
               <summary>⚙️ Cài đặt nâng cao</summary>
               <div class="advanced-content">
@@ -88,6 +72,20 @@
                 </div>
 
                 <div class="advanced-section">
+                  <div class="advanced-title">Tuỳ chọn quét link</div>
+                  <div class="form-group">
+                    <label for="scanSourceModeSelect">Nguồn quét link</label>
+                    <select id="scanSourceModeSelect">
+                      <option value="group_latest">Bài viết mới — https://www.facebook.com/groups/IDnhom/?sorting_setting=CHRONOLOGICAL</option>
+                      <option value="group_top">Bài viết Top — https://www.facebook.com/groups/IDnhom/?sorting_setting=TOP_POSTS</option>
+                      <option value="groups_feed">Bản Tin Nhóm — https://www.facebook.com/groups/feed/</option>
+                      <option value="home_feed">Bài Viết Trang Chủ — https://www.facebook.com/</option>
+                    </select>
+                    <div class="hint">Bài viết mới/Bài viết Top dùng UID nhóm bên dưới. Bản Tin Nhóm và Trang Chủ sẽ mở đúng trang feed tương ứng để quét link.</div>
+                  </div>
+                </div>
+
+                <div class="advanced-section">
                   <div class="advanced-title">Tuỳ chỉnh vòng chạy</div>
                   <div class="bridge-grid bridge-grid-3">
                     <div class="form-group">
@@ -123,6 +121,24 @@
                 </div>
               </div>
             </details>
+
+
+
+        <div class="workflow-stack">
+          <section class="workflow-panel bridge-box" aria-labelledby="autoRunTitle">
+            <div class="panel-heading">
+              <div>
+                <h2 id="autoRunTitle">1. Chạy tự động từ nhóm Facebook</h2>
+                <p>Nhập UID hoặc link nhóm, rồi bấm chạy tự động. Các tuỳ chọn phụ đã gom vào Cài đặt nâng cao.</p>
+              </div>
+              <span class="counter">Quét → lọc trùng → comment</span>
+            </div>
+
+            <div class="form-group">
+              <label for="fbGroupIdInput">UID nhóm Facebook</label>
+              <textarea id="fbGroupIdInput" spellcheck="false" placeholder="Nhập nhiều UID nhóm hoặc link nhóm, mỗi dòng một nhóm"></textarea>
+              <div class="hint">Chỉ cần nhập lần đầu. Mỗi lượt sẽ quét theo số link/nhóm bên dưới, tự lọc link đã comment trước đó rồi mới xử lý.</div>
+            </div>
 
             <div class="actions bridge-actions bridge-actions-main">
               <button class="btn btn-primary" id="scanGroupLinksBtn" type="button">🚀 Chạy tự động</button>

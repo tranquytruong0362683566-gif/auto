@@ -7,6 +7,7 @@
     extensionId: $('#bridgeExtensionId'),
     fbGroupIdInput: $('#fbGroupIdInput'),
     groupLimitInput: $('#groupLimitInput'),
+    scanSourceModeSelect: $('#scanSourceModeSelect'),
     loopPauseSecondsInput: $('#loopPauseSecondsInput'),
     linkPauseSecondsInput: $('#linkPauseSecondsInput'),
     fbPostLinkInput: $('#fbPostLinkInput'),
@@ -32,6 +33,7 @@
     extensionId: 'truong_fb_bridge_extension_id_v1',
     groupIds: 'truong_fb_bridge_group_ids_v1',
     groupLimit: 'truong_fb_bridge_group_limit_v1',
+    scanSourceMode: 'truong_fb_bridge_scan_source_mode_v1',
     loopPauseSeconds: 'truong_fb_bridge_loop_pause_seconds_v1',
     oldLoopPauseMinutes: 'truong_fb_bridge_loop_pause_minutes_v1',
     linkPauseSeconds: 'truong_fb_bridge_link_pause_seconds_v1',
@@ -64,6 +66,16 @@
     const n = Number(value);
     if (!Number.isFinite(n)) return fallback;
     return Math.max(min, Math.min(max, n));
+  }
+
+
+  function getScanSourceMode() {
+    const allowed = new Set(['group_latest', 'group_top', 'groups_feed', 'home_feed']);
+    const raw = String(B.scanSourceModeSelect?.value || load(STORE.scanSourceMode, 'group_latest') || 'group_latest');
+    const value = allowed.has(raw) ? raw : 'group_latest';
+    if (B.scanSourceModeSelect) B.scanSourceModeSelect.value = value;
+    save(STORE.scanSourceMode, value);
+    return value;
   }
 
   function getGroupLimit() {
@@ -102,7 +114,9 @@
   function addInputSave(el, key) {
     if (!el) return;
     el.value = load(key, '') || '';
-    el.addEventListener('input', () => save(key, el.value));
+    const persist = () => save(key, el.value);
+    el.addEventListener('input', persist);
+    el.addEventListener('change', persist);
   }
 
   function parseLines(raw) {
@@ -239,6 +253,7 @@
     load,
     text,
     clampNumber,
+    getScanSourceMode,
     getGroupLimit,
     getLoopPauseSeconds,
     getLinkPauseSeconds,

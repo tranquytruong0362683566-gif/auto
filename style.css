@@ -569,6 +569,10 @@
       padding: 0;
       overflow: hidden;
     }
+    .hero + .advanced-panel {
+      margin-top: 0;
+      margin-bottom: 14px;
+    }
     .advanced-panel > summary {
       cursor: pointer;
       list-style: none;
