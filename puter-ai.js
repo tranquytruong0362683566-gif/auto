@@ -172,7 +172,34 @@
     }
 
     function isShopeeLink(link) {
-      return /^https?:\/\//i.test(String(link || '')) && /(shopee\.vn|s\.shopee\.vn|shope\.ee|shp\.ee)/i.test(String(link || ''));
+      return /^https?:\/\//i.test(String(link || ''))
+        && /(shopee\.vn|s\.shopee\.vn|shopee?\.ee|shp\.ee)/i.test(String(link || ''));
+    }
+
+    function cleanUrlText(url) {
+      return String(url || '').trim().replace(/[),.;\]}>\"'“”]+$/g, '');
+    }
+
+    function normalizeUrlKey(url) {
+      const clean = cleanUrlText(url);
+      if (!clean) return '';
+      try {
+        const parsed = new URL(clean);
+        parsed.hash = '';
+        parsed.search = '';
+        return parsed.toString().replace(/\/+$/, '').toLowerCase();
+      } catch {
+        return clean.replace(/[?#].*$/, '').replace(/\/+$/, '').toLowerCase();
+      }
+    }
+
+    function extractUrlsFromText(text) {
+      const matches = String(text || '').match(/https?:\/\/[^\s<>\"'“”]+/gi) || [];
+      return uniqueUrlList(matches.map(cleanUrlText));
+    }
+
+    function extractShopeeLinksFromText(text) {
+      return extractUrlsFromText(text).filter(isShopeeLink);
     }
 
     function uniqueUrlList(links) {
@@ -181,7 +208,7 @@
       for (const link of links || []) {
         const clean = String(link || '').trim();
         if (!clean) continue;
-        const key = clean.replace(/[?#].*$/, '').toLowerCase();
+        const key = normalizeUrlKey(clean);
         if (seen.has(key)) continue;
         seen.add(key);
         out.push(clean);
@@ -204,11 +231,52 @@
       saveDraft();
     }
 
-    function removeSelectedProductLink(selectedLink, validLinks) {
-      const selectedKey = selectedLink.replace(/[?#].*$/, '').toLowerCase();
-      const remaining = uniqueUrlList(validLinks).filter(link => link.replace(/[?#].*$/, '').toLowerCase() !== selectedKey);
-      setProductLinks(remaining);
-      return remaining;
+    function exactUrlKey(url) {
+      return cleanUrlText(url);
+    }
+
+    function uniqueExactUrlList(links) {
+      const out = [];
+      const seen = new Set();
+      for (const link of links || []) {
+        const key = exactUrlKey(link);
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        out.push(key);
+      }
+      return out;
+    }
+
+    function removeProductLinksExact(usedLinks, currentLinks = null) {
+      const usedKeys = new Set(uniqueExactUrlList(usedLinks));
+      const links = uniqueUrlList(currentLinks || parseLinks(els.productLinkInput.value).valid);
+      if (!usedKeys.size) return { remaining: links, removed: [] };
+
+      const removed = [];
+      const remaining = [];
+      for (const link of links) {
+        if (usedKeys.has(exactUrlKey(link))) removed.push(link);
+        else remaining.push(link);
+      }
+
+      if (removed.length) setProductLinks(remaining);
+      return { remaining, removed };
+    }
+
+    function removeProductLinksMatchingUrls(usedLinks, currentLinks = null) {
+      const usedKeys = new Set(uniqueUrlList(usedLinks).map(normalizeUrlKey).filter(Boolean));
+      const links = uniqueUrlList(currentLinks || parseLinks(els.productLinkInput.value).valid);
+      if (!usedKeys.size) return { remaining: links, removed: [] };
+
+      const removed = [];
+      const remaining = [];
+      for (const link of links) {
+        if (usedKeys.has(normalizeUrlKey(link))) removed.push(link);
+        else remaining.push(link);
+      }
+
+      if (removed.length) setProductLinks(remaining);
+      return { remaining, removed };
     }
 
     async function refillShopeeLinksIfNeeded(seedLinks, reason = '') {
@@ -443,15 +511,36 @@ Chỉ trả về nội dung bình luận, không thêm tiêu đề, không giả
       try {
         const latestLinks = parseLinks(els.productLinkInput.value).valid;
         selectedLink = firstFrom(latestLinks);
-        const remainingProductLinks = selectedLink ? removeSelectedProductLink(selectedLink, latestLinks) : latestLinks;
-        refillPromise = selectedLink && remainingProductLinks.length <= 1
-          ? refillShopeeLinksIfNeeded(remainingProductLinks.length ? remainingProductLinks : [selectedLink], 'low_links')
+        refillPromise = selectedLink && latestLinks.length <= 1
+          ? refillShopeeLinksIfNeeded([selectedLink], 'low_links')
           : Promise.resolve([]);
 
         const prompt = buildPrompt({ article, productName, selectedLink, selectedTone });
         const response = await window.puter.ai.chat(prompt, { model: APP.model });
-        await refillPromise;
         const result = stripAiWrapper(extractResponseText(response));
+        await refillPromise;
+
+        const resultShopeeLinks = extractShopeeLinksFromText(result);
+        let afterAiRemove = selectedLink && result
+          ? removeProductLinksExact([selectedLink])
+          : { remaining: parseLinks(els.productLinkInput.value).valid, removed: [] };
+
+        if (!afterAiRemove.removed.length && resultShopeeLinks.length) {
+          afterAiRemove = removeProductLinksExact(resultShopeeLinks);
+        }
+        if (!afterAiRemove.removed.length && resultShopeeLinks.length) {
+          afterAiRemove = removeProductLinksMatchingUrls(resultShopeeLinks);
+        }
+        if (afterAiRemove.removed.length) {
+          toast(`Đã xoá ${afterAiRemove.removed.length} link Shopee đã dùng trong kết quả Puter.`);
+        }
+
+        const currentLinksAfterAi = parseLinks(els.productLinkInput.value).valid;
+        if (selectedLink && currentLinksAfterAi.length <= 1) {
+          const seedLinks = currentLinksAfterAi.length ? currentLinksAfterAi : [selectedLink];
+          await refillShopeeLinksIfNeeded(seedLinks, 'ai_result_low_links');
+        }
+
         setOutput(result || 'Không có phản hồi từ AI.', result ? '' : 'error');
 
         if (result) {
