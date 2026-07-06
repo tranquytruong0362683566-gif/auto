@@ -671,7 +671,7 @@
         return '';
       }
 
-      setBridgeStatus('Đang gọi Rakko API lấy description bài viết...', 'warn');
+      setBridgeStatus('Đang gọi API lấy description bài viết...', 'warn');
       const response = await sendBridge(
         ['READ_FB_POST_TITLE', 'SCAN_FACEBOOK_POST', 'READ_FB_POST', 'READ_FACEBOOK_POST', 'readFbPost', 'readFacebookPost', 'READ_POST'],
         {
@@ -701,7 +701,7 @@
         B.articleInput.dispatchEvent(new Event('input', { bubbles: true }));
       }
 
-      setBridgeStatus('Đã lấy description từ Rakko API và điền vào ô nội dung gốc.', 'ok');
+      setBridgeStatus('Đã lấy description từ API và điền vào ô nội dung gốc.', 'ok');
       return article;
     }
 
