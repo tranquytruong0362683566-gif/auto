@@ -36,7 +36,7 @@
           <div class="auth-left">
             <div class="auth-avatar" id="authAvatar" aria-hidden="true">👤</div>
             <div class="auth-info">
-              <div class="auth-status" id="authStatus">⏳ Đang kết nối Puter AI...</div>
+              <div class="auth-status" id="authStatus">⏳ Đang kết nối Puter AI</div>
               <div class="auth-username hidden" id="authUsername"></div>
             </div>
           </div>
@@ -128,7 +128,7 @@
               <label for="articleInput">Nội dung bài viết gốc</label>
               <button class="btn btn-soft btn-sm" id="pasteBtn" type="button">📋 Dán nội dung</button>
             </div>
-            <textarea id="articleInput" maxlength="6000" placeholder="Dán nội dung bài viết cần trả lời vào đây..."></textarea>
+            <textarea id="articleInput" maxlength="6000" placeholder="Dán nội dung bài viết cần trả lời vào đây"></textarea>
             <div class="field-status">
               <span class="hint">AI sẽ đọc ngữ cảnh để viết câu đầu tự nhiên hơn.</span>
               <span class="counter" id="articleCounter">0/6000</span>
@@ -137,7 +137,7 @@
 
           <div class="form-group">
             <label for="productNameInput">Tên sản phẩm</label>
-            <input type="text" id="productNameInput" maxlength="160" placeholder="VD: Đèn năng lượng mặt trời 300W, Inverter LuxPower...">
+            <input type="text" id="productNameInput" maxlength="160" placeholder="VD: Đèn năng lượng mặt trời 300W, Inverter LuxPower">
             <div class="field-status">
               <span class="hint">Không bắt buộc, nhưng nên nhập để bình luận rõ ý hơn.</span>
               <span class="counter" id="productCounter">0/160</span>
@@ -179,7 +179,7 @@
               <button class="btn btn-muted btn-sm" id="saveHistoryBtn" type="button">Lưu lịch sử</button>
             </div>
           </div>
-          <div id="output" class="placeholder">Bình luận sẽ xuất hiện tại đây...</div>
+          <div id="output" class="placeholder">Bình luận sẽ xuất hiện tại đây</div>
         </section>
       </section>
     </main>
@@ -201,7 +201,7 @@
         <button class="btn btn-muted btn-sm" id="clearCommentedLinksBtn" type="button">Xoá log</button>
       </div>
       <div class="stat-row"><span>Tổng link đã chạy</span><strong id="commentedCountStat">0</strong></div>
-      <textarea id="commentedLinksBox" readonly spellcheck="false" placeholder="Các link đã comment xong sẽ được tổng hợp tại đây..."></textarea>
+      <textarea id="commentedLinksBox" readonly spellcheck="false" placeholder="Các link đã comment xong sẽ được tổng hợp tại đây"></textarea>
       <div class="hint">Các link trong danh sách này sẽ được dùng để lọc trùng ở lần quét sau.</div>
       <div class="hidden" aria-hidden="true">
         <strong id="validLinkStat">0</strong>
@@ -360,7 +360,7 @@
       while (closedLoopRunning && Date.now() < endAt) {
         const remainMs = Math.max(0, endAt - Date.now());
         const remainSeconds = Math.ceil(remainMs / 1000);
-        setBridgeStatus(`Đã chạy xong link ${linkIndex}/${totalLinks}. Đang nghỉ ${remainSeconds} giây rồi chạy link tiếp theo...`, 'warn');
+        setBridgeStatus(`Đã chạy xong link ${linkIndex}/${totalLinks}. Đang nghỉ ${remainSeconds} giây rồi chạy link tiếp theo`, 'warn');
         await delay(Math.min(1000, Math.max(200, remainMs)));
       }
     }
@@ -501,7 +501,7 @@
             const err = chrome.runtime.lastError;
             reject(new Error(err?.message || 'Extension port đã đóng trước khi có phản hồi.'));
           });
-          port.postMessage({ ...message, requestId });
+          port.postMessage({ message, requestId });
         } catch (error) {
           cleanup();
           reject(error);
@@ -549,7 +549,7 @@
           cmd: action,
           source: 'github-web',
           payload,
-          ...payload
+          payload
         };
         const timeoutMs = getBridgeTimeoutMs(action);
 
@@ -615,7 +615,7 @@
         return [];
       }
 
-      setBridgeStatus(`Đang mở tab mới để quét nhóm, mỗi nhóm lấy tối đa ${groupLimit} link...`, 'warn');
+      setBridgeStatus(`Đang mở tab mới để quét nhóm, mỗi nhóm lấy tối đa ${groupLimit} link`, 'warn');
       const response = await sendBridge(
         ['SCAN_GROUP_PERMALINKS', 'SCAN_GROUP_LINKS', 'scanGroupLinks', 'SCAN_GROUP', 'scan_links', 'SCAN_LINKS'],
         {
@@ -654,7 +654,7 @@
         return '';
       }
 
-      setBridgeStatus('Đang gọi Rakko API lấy description bài viết...', 'warn');
+      setBridgeStatus('Đang gọi Rakko API lấy description bài viết', 'warn');
       const response = await sendBridge(
         ['READ_FB_POST_TITLE', 'SCAN_FACEBOOK_POST', 'READ_FB_POST', 'READ_FACEBOOK_POST', 'readFbPost', 'readFacebookPost', 'READ_POST'],
         {
@@ -690,7 +690,7 @@
 
     async function commentToFacebook(link, comment) {
       if (!comment) throw new Error('Chưa có nội dung bình luận.');
-      setBridgeStatus('Đang gửi bình luận sang tab Facebook...', 'warn');
+      setBridgeStatus('Đang gửi bình luận sang tab Facebook', 'warn');
 
       const targetLink = link || getPostLinks()[0] || '';
       const tabId = activeReadTabId && normalizeUrl(activeReadLink) === normalizeUrl(targetLink) ? activeReadTabId : null;
@@ -742,14 +742,14 @@
         B.stopClosedLoopBtn?.classList.remove('hidden');
       }
 
-      const queue = [...links];
+      const queue = [links];
       try {
         for (let index = 0; index < queue.length; index += 1) {
           const link = queue[index];
           if (!closedLoopRunning) break;
 
           try {
-            setPostLinks([link, ...getPostLinks().filter(item => normalizeUrl(item) !== normalizeUrl(link))]);
+            setPostLinks([link, getPostLinks().filter(item => normalizeUrl(item) !== normalizeUrl(link))]);
             await readFirstFacebookPost();
 
             const controller = window.puterAIController || {};
@@ -785,7 +785,7 @@ ${error.message || error}`, 'error');
       const seconds = getLoopPauseSeconds();
       const totalMs = seconds * 1000;
       if (totalMs <= 0) {
-        setBridgeStatus(`Vòng ${cycleIndex} đã xong. Nghỉ 0 giây, quét tiếp ngay...`, 'warn');
+        setBridgeStatus(`Vòng ${cycleIndex} đã xong. Nghỉ 0 giây, quét tiếp ngay`, 'warn');
         await delay(500);
         return;
       }
@@ -794,7 +794,7 @@ ${error.message || error}`, 'error');
       while (closedLoopRunning && Date.now() < endAt) {
         const remainMs = Math.max(0, endAt - Date.now());
         const remainSeconds = Math.ceil(remainMs / 1000);
-        setBridgeStatus(`Vòng ${cycleIndex} đã xong. Đang nghỉ ${remainSeconds} giây rồi quét tiếp...`, 'warn');
+        setBridgeStatus(`Vòng ${cycleIndex} đã xong. Đang nghỉ ${remainSeconds} giây rồi quét tiếp`, 'warn');
         await delay(Math.min(1000, remainMs));
       }
     }
