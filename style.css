@@ -455,23 +455,6 @@
     .modal-center { text-align: center; }
     .modal-center p { margin: 8px 0 18px; color: var(--muted); font-size: 13px; line-height: 1.55; }
 
-    .puter-login-modal { width: min(100%, 560px); }
-    .puter-login-frame {
-      width: 100%;
-      min-height: 310px;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      background: #fff;
-      box-shadow: inset 0 0 0 1px rgba(16, 24, 40, 0.02);
-      margin: 6px 0 12px;
-    }
-    .puter-login-note {
-      margin: -4px 0 12px;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.55;
-    }
-
     .toast-host {
       position: fixed;
       right: 18px;

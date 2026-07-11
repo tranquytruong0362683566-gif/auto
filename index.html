@@ -29,46 +29,62 @@
               <p>Quét nhóm, lọc trùng link, đọc nội dung bài viết, tạo bình luận và gửi sang tab Facebook.</p>
             </div>
           </div>
-          <span class="pro-badge">⚡ WEB + EXTENSION + PUTER AI</span>
+          <span class="pro-badge">⚡ WEB + EXTENSION + CHATGPT API</span>
         </header>
 
             <details class="advanced-panel">
               <summary>⚙️ Cài đặt nâng cao</summary>
               <div class="advanced-content">
                 <div class="advanced-section">
-                  <div class="advanced-title">Trạng thái Puter</div>
+                  <div class="advanced-title">API ChatGPT</div>
                   <div class="auth-bar auth-bar-advanced">
                     <div class="auth-left">
-                      <div class="auth-avatar" id="authAvatar" aria-hidden="true">👤</div>
+                      <div class="auth-avatar" id="authAvatar" aria-hidden="true">🔌</div>
                       <div class="auth-info">
-                        <div class="auth-status" id="authStatus">⏳ Đang kết nối Puter AI...</div>
+                        <div class="auth-status" id="authStatus">⚠️ Chưa nhập API key ChatGPT</div>
                         <div class="auth-username hidden" id="authUsername"></div>
                       </div>
                     </div>
-                    <div class="auth-actions">
-                      <button class="btn btn-primary btn-sm hidden" id="loginBtn" type="button">🔑 Đăng nhập</button>
-                      <button class="btn btn-warning btn-sm hidden" id="switchBtn" type="button">🔄 Đổi tài khoản</button>
-                      <button class="btn btn-danger btn-sm hidden" id="logoutBtn" type="button">↩ Đăng xuất</button>
+                  </div>
+
+                  <div class="bridge-grid bridge-grid-3">
+                    <div class="form-group">
+                      <label for="chatApiEndpointInput">API URL</label>
+                      <input type="text" id="chatApiEndpointInput" value="https://console.flatkey.ai/v1/chat/completions" spellcheck="false">
+                    </div>
+                    <div class="form-group">
+                      <label for="chatApiModelInput">Model</label>
+                      <input type="text" id="chatApiModelInput" value="gpt-4o-mini" spellcheck="false">
+                    </div>
+                    <div class="form-group">
+                      <label for="chatApiKeyInput">API key</label>
+                      <input type="password" id="chatApiKeyInput" placeholder="Dán API key dạng sk-..." autocomplete="off" spellcheck="false">
                     </div>
                   </div>
+                  <div class="hint">Web sẽ gọi trực tiếp endpoint Chat Completions bằng header Authorization: Bearer API_KEY. API key được lưu trong localStorage của trình duyệt.</div>
 
                   <div class="notice" id="tokenBanner" role="alert">
                     <div aria-hidden="true">⚠️</div>
                     <div>
-                      <strong>Tài khoản Puter có thể đã hết token miễn phí</strong>
-                      Hãy đổi tài khoản Puter khác hoặc thử lại sau nếu gặp giới hạn sử dụng.
+                      <strong>API ChatGPT đang lỗi hoặc bị giới hạn</strong>
+                      Hãy kiểm tra API key, model, endpoint hoặc quota của tài khoản API.
                     </div>
-                    <button class="btn btn-warning btn-sm" id="btnRelogin" type="button">Đổi</button>
                   </div>
                 </div>
 
                 <div class="advanced-section">
                   <div class="advanced-title">Kết nối Extension</div>
-                  <div class="form-group">
-                    <label for="bridgeExtensionId">Extension ID</label>
-                    <input type="text" id="bridgeExtensionId" placeholder="Dán ID extension Bridge ở đây">
-                    <div class="hint">Mở popup extension, copy ID rồi dán vào ô này để web GitHub gửi lệnh quét/đọc/comment sang Chrome Extension.</div>
+                  <div class="bridge-grid">
+                    <div class="form-group">
+                      <label for="bridgeExtensionId">Extension ID</label>
+                      <input type="text" id="bridgeExtensionId" placeholder="Dán Extension ID từ popup">
+                    </div>
+                    <div class="form-group">
+                      <label for="bridgeToken">Bridge token</label>
+                      <input type="password" id="bridgeToken" placeholder="Dán Bridge token từ popup" autocomplete="off" spellcheck="false">
+                    </div>
                   </div>
+                  <div class="hint">Mở popup extension và copy cả ID lẫn token. Lần kết nối đầu tiên bằng token đúng sẽ tự ghép cặp chính xác với origin GitHub Pages hiện tại.</div>
                 </div>
 
                 <div class="advanced-section">
@@ -107,16 +123,33 @@
                 </div>
 
                 <div class="advanced-section">
-                  <div class="advanced-title">Tuỳ chọn tab Facebook</div>
+                  <div class="advanced-title">Tín hiệu DOM và phục hồi lỗi</div>
+                  <div class="bridge-grid bridge-grid-3">
+                    <div class="form-group">
+                      <label for="fbPageReadyTimeoutMs">Chờ trang sẵn sàng tối đa</label>
+                      <input id="fbPageReadyTimeoutMs" type="number" min="3000" max="120000" step="500" value="10000">
+                      <div class="hint">Mặc định 10.000 ms. Tab phải tải xong và có feed/article.</div>
+                    </div>
+                    <div class="form-group">
+                      <label for="fbEditorTimeoutMs">Chờ ô bình luận tối đa</label>
+                      <input id="fbEditorTimeoutMs" type="number" min="1000" max="60000" step="500" value="5000">
+                      <div class="hint">Mặc định 5.000 ms. Chỉ nhập khi editor đã nhìn thấy và hoạt động.</div>
+                    </div>
+                    <div class="form-group">
+                      <label for="fbVerifyTimeoutMs">Chờ xác minh sau gửi</label>
+                      <input id="fbVerifyTimeoutMs" type="number" min="1500" max="60000" step="500" value="7000">
+                      <div class="hint">Mặc định 7.000 ms. Chỉ hoàn tất khi bình luận xuất hiện trong DOM.</div>
+                    </div>
+                  </div>
                   <div class="bridge-grid">
                     <div class="form-group">
-                      <label for="fbDelayMs">Thời gian chờ tải tab</label>
-                      <input id="fbDelayMs" type="number" min="1000" max="30000" step="500" value="5000">
+                      <label for="fbMaxRetries">Số lần thử lại khi lỗi tạm thời</label>
+                      <input id="fbMaxRetries" type="number" min="0" max="4" step="1" value="2">
                     </div>
                   </div>
                   <div class="check-list">
-                    <label class="check-row"><input id="autoCommentAfterGenerate" type="checkbox" checked> Tạo xong bình luận thì tự gửi bình luận vào tab bài viết Facebook</label>
-                    <label class="check-row"><input id="closeAfterComment" type="checkbox" checked> Đóng tab Facebook sau khi gửi bình luận xong</label>
+                    <label class="check-row"><input id="autoCommentAfterGenerate" type="checkbox" checked> Tạo xong bình luận thì tự gửi và xác minh trên Facebook</label>
+                    <label class="check-row"><input id="closeAfterComment" type="checkbox" checked> Sau khi xác minh, đưa tab bài viết về trạng thái chờ để tái sử dụng</label>
                   </div>
                 </div>
               </div>
@@ -152,7 +185,7 @@
             <div class="panel-heading compact">
               <div>
                 <h2 id="linksTitle">2. Link bài viết Facebook</h2>
-                <p>Mỗi link một dòng. Link đã comment xong sẽ tự bị loại khỏi ô này.</p>
+                <p>Mỗi link một dòng. Link đã xử lý xong sẽ tự bị loại khỏi ô này.</p>
               </div>
             </div>
             <div class="form-group">
@@ -178,7 +211,7 @@
                 </div>
                 <textarea id="articleInput" maxlength="6000" placeholder="Dán nội dung bài viết cần trả lời vào đây..."></textarea>
                 <div class="field-status">
-                  <span class="hint">AI sẽ đọc ngữ cảnh để viết câu đầu tự nhiên hơn.</span>
+                  <span class="hint">AI sẽ phân loại trước: bài người bán/cho thuê trả (next), bài cần mua/tán gẫu mới tạo bình luận.</span>
                   <span class="counter" id="articleCounter">0/6000</span>
                 </div>
               </div>
@@ -200,7 +233,7 @@
 
               <div class="form-group">
                 <label for="productLinkInput">Danh sách link Shopee / link sản phẩm</label>
-                <textarea id="productLinkInput" placeholder="Mỗi link một dòng. Hệ thống sẽ lấy link đầu tiên đưa cho Puter, xoá link đó khỏi danh sách, rồi tự bù link Shopee khi gần hết."></textarea>
+                <textarea id="productLinkInput" placeholder="Mỗi link một dòng. Hệ thống sẽ lấy link đầu tiên đưa cho API ChatGPT, xoá link đó khỏi danh sách, rồi tự bù link Shopee khi gần hết."></textarea>
                 <div class="field-status">
                   <span class="link-preview" id="linkStatus">Chưa có link sản phẩm</span>
                   <span class="counter" id="linkCounter">0 link</span>
@@ -246,11 +279,11 @@
 
     <section class="card stats-card completed-card completed-card-bottom" aria-labelledby="statsTitle">
       <div class="section-title" id="statsTitle">
-        <span>✅ Link đã comment xong</span>
-        <button class="btn btn-muted btn-sm" id="clearCommentedLinksBtn" type="button">Xoá log</button>
+        <span>✅ Link đã xử lý</span>
+        <button class="btn btn-muted btn-sm" id="clearCommentedLinksBtn" type="button">Xoá lịch sử</button>
       </div>
-      <div class="stat-row"><span>Tổng link đã chạy</span><strong id="commentedCountStat">0</strong></div>
-      <textarea id="commentedLinksBox" readonly spellcheck="false" placeholder="Các link đã comment xong sẽ được tổng hợp tại đây..."></textarea>
+      <div class="stat-row"><span>Tổng link đã xử lý</span><strong id="commentedCountStat">0</strong></div>
+      <textarea id="commentedLinksBox" readonly spellcheck="false" placeholder="Các link đã bình luận hoặc bỏ qua next sẽ được tổng hợp tại đây..."></textarea>
       <div class="hint">Các link trong danh sách này sẽ được dùng để lọc trùng ở lần quét sau.</div>
       <div class="hidden" aria-hidden="true">
         <strong id="validLinkStat">0</strong>
@@ -285,28 +318,9 @@
     </div>
   </div>
 
-  <div class="modal-overlay" id="switchModal" role="dialog" aria-modal="true" aria-labelledby="switchTitle">
-    <div class="modal modal-center">
-      <h2 id="switchTitle">🔄 Đổi tài khoản Puter</h2>
-      <p>Bạn sẽ đăng xuất khỏi tài khoản hiện tại rồi đăng nhập tài khoản mới. Các mẫu sản phẩm và lịch sử đã lưu vẫn được giữ trong trình duyệt.</p>
-      <button class="btn btn-warning btn-full mb-10" id="btnConfirmSwitch" type="button">Xác nhận đổi tài khoản</button>
-      <button class="btn btn-muted btn-full" id="btnCancelSwitch" type="button">Huỷ</button>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="puterLoginModal" role="dialog" aria-modal="true" aria-labelledby="puterLoginTitle">
-    <div class="modal modal-center puter-login-modal">
-      <h2 id="puterLoginTitle">🔑 Đăng nhập Puter AI</h2>
-      <p class="puter-login-note">Bấm nút đăng nhập trong khung bên dưới. Cách này giúp Chrome cho phép Puter mở popup đăng nhập đúng quyền.</p>
-      <iframe id="puterSandbox" src="about:blank" class="puter-login-frame" title="Puter AI sandbox"></iframe>
-      <button class="btn btn-muted btn-full" id="btnClosePuterLogin" type="button">Đóng</button>
-    </div>
-  </div>
-
   <div class="toast-host" id="toastHost" aria-live="polite"></div>
 
-  <script src="https://js.puter.com/v2/"></script>
-  <script src="puter-ai.js"></script>
+  <script src="chatgpt-api.js"></script>
   <script src="bridge-state.js"></script>
   <script src="bridge-api.js"></script>
   <script src="bridge-workflow.js"></script>
