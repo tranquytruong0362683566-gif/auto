@@ -529,7 +529,7 @@ Quy tắc bắt buộc:
 Chỉ trả về nội dung bình luận hoặc đúng (next), không thêm tiêu đề, không giải thích.`;
     }
 
-    async function generateComment(options = {}) {
+    async function generateComment() {
       const article = els.articleInput.value.trim();
       const productName = els.productNameInput.value.trim();
       const selectedTone = els.toneSelect.value;
@@ -538,25 +538,19 @@ Chỉ trả về nội dung bình luận hoặc đúng (next), không thêm tiê
       let refillPromise = Promise.resolve([]);
 
       if (!article) {
-        const error = new Error('Vui lòng dán nội dung bài viết gốc.');
-        error.code = 'EMPTY_ARTICLE';
-        toast(error.message, 'warning');
+        toast('Vui lòng dán nội dung bài viết gốc.', 'warning');
         els.articleInput.focus();
-        if (options.throwOnError) throw error;
-        return null;
+        return;
       }
       if (invalid.length) {
         toast(`Đã bỏ qua ${invalid.length} link chưa hợp lệ.`, 'warning');
       }
 
       if (!hasApiKey()) {
-        const error = new Error('Vui lòng nhập API key ChatGPT trước khi tạo bình luận.');
-        error.code = 'MISSING_API_KEY';
-        toast(error.message, 'warning');
+        toast('Vui lòng nhập API key ChatGPT trước khi tạo bình luận.', 'warning');
         els.chatApiKeyInput?.focus();
         updateAuthUI();
-        if (options.throwOnError) throw error;
-        return null;
+        return;
       }
 
       els.generateBtn.disabled = true;
@@ -645,8 +639,6 @@ Chỉ trả về nội dung bình luận hoặc đúng (next), không thêm tiê
         } else {
           setOutput('❌ Lỗi: ' + errText, 'error');
         }
-        if (options.throwOnError) throw error;
-        return null;
       } finally {
         els.generateBtn.disabled = false;
         els.generateBtn.textContent = '✨ Tạo bình luận';
@@ -662,8 +654,17 @@ Chỉ trả về nội dung bình luận hoặc đúng (next), không thêm tiê
         if (!options.silent) toast('Đã sao chép vào clipboard');
         return true;
       } catch {
-        if (!options.silent) toast('Trình duyệt chặn sao chép tự động. Hãy copy thủ công.', 'warning');
-        return false;
+        const ta = document.createElement('textarea');
+        ta.value = value;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        let ok = false;
+        try { ok = document.execCommand('copy'); } catch { ok = false; }
+        ta.remove();
+        if (!options.silent) toast(ok ? 'Đã sao chép vào clipboard' : 'Trình duyệt chặn sao chép tự động.', ok ? 'success' : 'warning');
+        return ok;
       }
     }
 

@@ -4,69 +4,56 @@
   const S = window.fbBridgeShared;
 
   function bridgeAvailable() {
-    return Boolean(window.chrome && chrome.runtime && (chrome.runtime.connect || chrome.runtime.sendMessage));
+    return !!(window.chrome && chrome.runtime && (chrome.runtime.connect || chrome.runtime.sendMessage));
   }
 
   function getBridgeTimeoutMs(action) {
     const name = String(action || '');
     if (/SCAN_GROUP|SCAN_LINK/i.test(name)) return 15 * 60 * 1000;
     if (/SHOPEE|CUSTOM_LINK|AFFILIATE/i.test(name)) return 3 * 60 * 1000;
-    if (/COMMENT/i.test(name)) return 5 * 60 * 1000;
+    if (/COMMENT/i.test(name)) return 4 * 60 * 1000;
     if (/READ/i.test(name)) return 3 * 60 * 1000;
     return 60 * 1000;
   }
 
-  function makeError(response, fallback) {
-    const error = new Error(response?.error || response?.message || fallback || 'Extension báo lỗi.');
-    error.code = response?.errorCode || '';
-    error.response = response;
-    return error;
-  }
-
   function normalizeBridgeResponse(response) {
     if (!response) throw new Error('Extension trả về rỗng.');
-    if (response.ok === false || response.error) throw makeError(response);
+    if (response.ok === false || response.error) throw new Error(response.error || response.message || 'Extension báo lỗi.');
     return response;
-  }
-
-  function createRequestId() {
-    return `${Date.now().toString(36)}-${crypto.randomUUID?.() || Math.random().toString(16).slice(2)}`;
   }
 
   function sendRawBridgeByPort(extensionId, message, timeoutMs) {
     return new Promise((resolve, reject) => {
-      let port = null;
+      let port;
       let done = false;
-      const requestId = message.requestId;
-      const timer = setTimeout(() => {
-        if (done) return;
-        done = true;
-        try { port?.disconnect(); } catch {}
-        reject(new Error('Extension xử lý quá lâu hoặc chưa phản hồi.'));
-      }, timeoutMs);
+      const requestId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
       const cleanup = () => {
-        if (done) return;
         done = true;
         clearTimeout(timer);
         try { port?.disconnect(); } catch {}
       };
 
+      const timer = setTimeout(() => {
+        if (done) return;
+        cleanup();
+        reject(new Error('Extension xử lý quá lâu hoặc chưa phản hồi.'));
+      }, timeoutMs);
+
       try {
-        port = chrome.runtime.connect(extensionId, { name: 'fb-auto-commenter-bridge-v2' });
+        port = chrome.runtime.connect(extensionId, { name: 'fb-auto-commenter-bridge' });
         port.onMessage.addListener(response => {
           if (!response || response.requestId !== requestId) return;
           cleanup();
-          try { resolve(normalizeBridgeResponse(response)); }
-          catch (error) { reject(error); }
+          try { resolve(normalizeBridgeResponse(response)); } catch (error) { reject(error); }
         });
         port.onDisconnect.addListener(() => {
           if (done) return;
-          const lastError = chrome.runtime.lastError;
           cleanup();
-          reject(new Error(lastError?.message || 'Extension port đã đóng trước khi có phản hồi.'));
+          const err = chrome.runtime.lastError;
+          reject(new Error(err?.message || 'Extension port đã đóng trước khi có phản hồi.'));
         });
-        port.postMessage(message);
+        port.postMessage({ ...message, requestId });
       } catch (error) {
         cleanup();
         reject(error);
@@ -90,8 +77,7 @@
           clearTimeout(timer);
           const lastError = chrome.runtime.lastError;
           if (lastError) return reject(new Error(lastError.message || 'Extension không phản hồi.'));
-          try { resolve(normalizeBridgeResponse(response)); }
-          catch (error) { reject(error); }
+          try { resolve(normalizeBridgeResponse(response)); } catch (error) { reject(error); }
         });
       } catch (error) {
         if (!settled) {
@@ -103,35 +89,36 @@
     });
   }
 
-  async function sendRawBridge(action, payload = {}) {
-    const extensionId = S.getExtensionId();
-    const bridgeToken = S.getBridgeToken();
-    if (!extensionId) throw new Error('Chưa nhập Extension ID.');
-    if (!bridgeToken) throw new Error('Chưa nhập Bridge token.');
-    if (!bridgeAvailable()) throw new Error('Không tìm thấy chrome.runtime. Hãy mở web bằng Chrome và cài extension bridge.');
+  function sendRawBridge(action, payload = {}) {
+    return new Promise(async (resolve, reject) => {
+      const extensionId = S.getExtensionId();
+      if (!extensionId) return reject(new Error('Chưa nhập Extension ID.'));
+      if (!bridgeAvailable()) return reject(new Error('Không tìm thấy chrome.runtime. Hãy mở bằng Chrome và cài extension bridge.'));
 
-    const requestId = createRequestId();
-    const message = {
-      action,
-      type: action,
-      cmd: action,
-      source: 'github-web-v2',
-      requestId,
-      bridgeToken,
-      payload: { ...payload, bridgeToken },
-      ...payload
-    };
-    const timeoutMs = getBridgeTimeoutMs(action);
+      const message = {
+        action,
+        type: action,
+        cmd: action,
+        source: 'github-web',
+        payload,
+        ...payload
+      };
+      const timeoutMs = getBridgeTimeoutMs(action);
 
-    try {
-      if (chrome.runtime.connect) return await sendRawBridgeByPort(extensionId, message, timeoutMs);
-      return await sendRawBridgeByMessage(extensionId, message, timeoutMs);
-    } catch (portError) {
-      if (!chrome.runtime.sendMessage) throw portError;
-      // Dùng lại đúng requestId. Extension cache theo requestId nên fallback không chạy trùng tác vụ.
-      try { return await sendRawBridgeByMessage(extensionId, message, timeoutMs); }
-      catch (messageError) { throw messageError || portError; }
-    }
+      try {
+        if (chrome.runtime.connect) {
+          return resolve(await sendRawBridgeByPort(extensionId, message, timeoutMs));
+        }
+        return resolve(await sendRawBridgeByMessage(extensionId, message, timeoutMs));
+      } catch (portError) {
+        if (!chrome.runtime.sendMessage) return reject(portError);
+        try {
+          return resolve(await sendRawBridgeByMessage(extensionId, message, timeoutMs));
+        } catch (messageError) {
+          reject(messageError || portError);
+        }
+      }
+    });
   }
 
   async function sendBridge(actions, payload = {}) {
@@ -141,8 +128,7 @@
         return await sendRawBridge(action, payload);
       } catch (error) {
         lastError = error;
-        const retryAlias = /Receiving end does not exist|message port closed|port closed|port đã đóng|không phản hồi|rỗng|unknown|not found|không hỗ trợ|UNSUPPORTED_ACTION/i.test(String(error.message || error));
-        if (!retryAlias) break;
+        if (!/Receiving end does not exist|message port closed|port closed|port đã đóng|response was received|không phản hồi|rỗng|unknown|not found|không hỗ trợ/i.test(String(error.message || error))) break;
       }
     }
     throw lastError || new Error('Không gửi được lệnh sang extension.');
@@ -162,7 +148,14 @@
 
   function extractArticleFromResponse(response) {
     const data = bridgeResponseData(response);
-    return S.text(data?.article || data?.content || data?.text || data?.title || data?.postText || data?.message);
+    return S.text(
+      data?.article ||
+      data?.content ||
+      data?.text ||
+      data?.title ||
+      data?.postText ||
+      data?.message
+    );
   }
 
   window.fbBridgeApi = {
