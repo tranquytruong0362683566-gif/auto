@@ -204,7 +204,7 @@
         const postId = cleanToken(groupMatch[3]);
         return {
           postKey: `g:${groupId}:${postId}`.toLowerCase(),
-          canonicalUrl: `https://www.facebook.com/groups/${encodeURIComponent(groupId)}/posts/${encodeURIComponent(postId)}/`
+          canonicalUrl: `https://www.facebook.com/groups/${encodeURIComponent(groupId)}/permalink/${encodeURIComponent(postId)}/`
         };
       }
       const pageMatch = path.match(/^\/([^/]+)\/posts\/([^/?#]+)/i);

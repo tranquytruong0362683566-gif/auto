@@ -50,7 +50,7 @@
     }
 
     const modeLabel = scanModeLabel(scanMode);
-    S.setBridgeStatus(`Đang quét ${modeLabel} bằng permalink trực tiếp trong DOM, không click nút Bình luận...`, 'warn');
+    S.setBridgeStatus(`Đang quét ${modeLabel}: click đúng nút Viết bình luận, chờ /permalink/, đóng bài rồi quét bài tiếp theo...`, 'warn');
     const response = await API.sendBridge(
       ['SCAN_GROUP_PERMALINKS', 'SCAN_GROUP_LINKS', 'scanGroupLinks', 'SCAN_GROUP', 'scan_links', 'SCAN_LINKS'],
       {
@@ -76,13 +76,13 @@
     S.setPostLinks(links);
 
     if (links.length) {
-      S.setBridgeStatus(`Đã lấy ${links.length} link mới từ ${modeLabel}. Không phát sinh click dò hoặc modal do quét.`, 'ok');
+      S.setBridgeStatus(`Đã lấy ${links.length} link mới từ ${modeLabel}: mở nút Viết bình luận, lấy /permalink/, đóng bài và tiếp tục quét.`, 'ok');
     } else if (allLinks.length) {
       S.setBridgeStatus(`Quét được ${allLinks.length} link nhưng tất cả đã xử lý. Vòng lặp sẽ nghỉ rồi quét tiếp, không dừng.`, 'warn');
     } else {
       const reports = API.bridgeResponseData(response)?.reports || response?.reports || [];
       const error = reports.find(item => item.error)?.error || API.bridgeResponseData(response)?.error || response?.error || '';
-      S.setBridgeStatus(`Chưa lấy được permalink mới từ ${modeLabel}.${error ? `\n${error}` : ''}`, 'warn');
+      S.setBridgeStatus(`Chưa lấy được URL /permalink/ mới từ ${modeLabel}.${error ? `\n${error}` : ''}`, 'warn');
     }
     return links;
   }
