@@ -620,3 +620,91 @@
 .advanced-section .check-list {
   padding: 0;
 }
+
+
+    .fb-account-strip {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto auto;
+      gap: 10px;
+      align-items: center;
+      margin: -2px 0 16px;
+      padding: 12px 14px;
+      border: 1px solid #bfdbfe;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #eff6ff, #ffffff);
+    }
+    .fb-account-icon {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: #fff;
+      background: #1877f2;
+      font: 900 23px/1 Arial, sans-serif;
+    }
+    .fb-account-main { min-width: 0; }
+    .fb-account-label {
+      color: #64748b;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+    .fb-account-value {
+      margin-top: 3px;
+      color: #1e3a8a;
+      font-family: Consolas, "SFMono-Regular", Menlo, monospace;
+      font-size: 14px;
+      font-weight: 800;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .fb-account-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 28px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      color: #475467;
+      background: #f2f4f7;
+      border: 1px solid #e4e7ec;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .fb-account-badge.ok { color: #166534; background: #ecfdf3; border-color: #bbf7d0; }
+    .fb-account-badge.loading { color: #92400e; background: #fffbeb; border-color: #fde68a; }
+    .fb-account-badge.error { color: #b42318; background: #fef3f2; border-color: #fecaca; }
+    .cookie-status-box {
+      min-height: 88px;
+      font-family: Consolas, "SFMono-Regular", Menlo, monospace;
+      font-size: 12px;
+      background: #fbfcff;
+    }
+    textarea:disabled {
+      color: #667085;
+      background: #f2f4f7;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 760px) {
+      .fb-account-strip { grid-template-columns: auto minmax(0, 1fr); }
+      .fb-account-badge, .fb-account-strip .btn { grid-column: 2; justify-self: start; }
+    }
+
+
+    .fb-account-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      align-items: center;
+    }
+    #fbAccountActionStatus[data-state="ok"] { color: #166534; }
+    #fbAccountActionStatus[data-state="loading"] { color: #92400e; }
+    #fbAccountActionStatus[data-state="error"] { color: #b42318; }
+    @media (max-width: 720px) {
+      .fb-account-actions { grid-template-columns: 1fr; }
+    }

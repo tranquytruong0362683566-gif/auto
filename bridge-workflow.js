@@ -4,6 +4,7 @@
   const S = window.fbBridgeShared;
   const API = window.fbBridgeApi;
   const B = S.B;
+  let fatalStopMessage = '';
 
   async function waitAfterLink(linkIndex, totalLinks) {
     const seconds = S.getLinkPauseSeconds();
@@ -59,7 +60,7 @@
 
     const modeLabel = scanModeLabel(scanMode);
     const targetText = needGroups ? `mỗi nhóm lấy tối đa ${groupLimit} link` : `lấy tối đa ${groupLimit} link`;
-    S.setBridgeStatus(`Đang dùng tab quét chuyên dụng để quét ${modeLabel}, ${targetText}...`, 'warn');
+    S.setBridgeStatus(`Đang mở tab mới quét ${modeLabel}, ${targetText}...`, 'warn');
     const response = await API.sendBridge(
       ['SCAN_GROUP_PERMALINKS', 'SCAN_GROUP_LINKS', 'scanGroupLinks', 'SCAN_GROUP', 'scan_links', 'SCAN_LINKS'],
       {
@@ -73,24 +74,25 @@
         perGroupLimit: groupLimit,
         onlyPermalink: scanMode !== 'home_feed',
         newestFirst: scanMode === 'group_latest',
-        openInBackground: true,
-        active: false,
-        activateTab: false,
-        closeAfter: false
+        openInBackground: false,
+        active: true,
+        activateTab: true,
+        closeAfter: true
       }
     );
 
     const links = S.filterNewLinks(API.extractLinksFromResponse(response));
     S.setPostLinks(links);
+    const queuedLinks = S.getPostLinks();
 
-    if (links.length) {
-      S.setBridgeStatus(`Đã lấy ${links.length} link mới từ ${modeLabel}, đã lọc trùng link đã comment.`, 'ok');
+    if (queuedLinks.length) {
+      S.setBridgeStatus(`Đã lấy ${queuedLinks.length} link mới từ ${modeLabel}, đã lọc trùng link đã comment.`, 'ok');
       if (autoStart) await autoWorkflow();
     } else {
       S.setBridgeStatus(`Không có link mới từ ${modeLabel} sau khi lọc trùng.`, 'warn');
     }
 
-    return links;
+    return queuedLinks;
   }
 
   async function readFirstFacebookPost() {
@@ -140,7 +142,7 @@
       S.setBridgeStatus('AI trả về (next), không gửi bình luận cho bài này.', 'warn');
       return { ok: true, skipped: true, reason: 'next' };
     }
-    S.setBridgeStatus('Đang gửi bình luận sang tab bài viết chuyên dụng...', 'warn');
+    S.setBridgeStatus('Đang gửi bình luận sang tab Facebook...', 'warn');
 
     const targetLink = link || S.getPostLinks()[0] || '';
     const activeTabId = S.getActiveReadTabId();
@@ -163,6 +165,18 @@
         active: true
       }
     );
+
+    const responseData = API.bridgeResponseData(response);
+    if (responseData?.restrictionDetected || responseData?.fatalStop || responseData?.code === 'FACEBOOK_FEATURE_RESTRICTED') {
+      fatalStopMessage = responseData.message || 'Facebook đang tạm giới hạn tính năng đăng bài/bình luận. Hệ thống đã dừng.';
+      S.setClosedLoopRunning(false);
+      B.stopClosedLoopBtn?.classList.add('hidden');
+      S.setBridgeStatus(fatalStopMessage, 'error');
+      const stopError = new Error(fatalStopMessage);
+      stopError.stopClosedLoop = true;
+      stopError.code = 'FACEBOOK_FEATURE_RESTRICTED';
+      throw stopError;
+    }
 
     if (tabId && (B.closeAfterComment?.checked !== false)) S.clearActiveReadTab();
     S.setBridgeStatus('Đã gửi bình luận xong.', 'ok');
@@ -191,6 +205,7 @@
     }
 
     if (manageLoopState) {
+      fatalStopMessage = '';
       S.setClosedLoopRunning(true);
       B.stopClosedLoopBtn?.classList.remove('hidden');
     }
@@ -224,6 +239,13 @@
             S.setPostLinks(S.getPostLinks().filter(item => S.normalizeUrl(item) !== S.normalizeUrl(link)));
           }
         } catch (error) {
+          if (error?.stopClosedLoop || error?.code === 'FACEBOOK_FEATURE_RESTRICTED') {
+            fatalStopMessage = error.message || fatalStopMessage || 'Facebook đang tạm giới hạn tính năng bình luận. Hệ thống đã dừng.';
+            S.setClosedLoopRunning(false);
+            B.stopClosedLoopBtn?.classList.add('hidden');
+            S.setBridgeStatus(fatalStopMessage, 'error');
+            break;
+          }
           S.setBridgeStatus(`Lỗi ở link hiện tại, đã chuyển link kế tiếp:\n${error.message || error}`, 'error');
           S.setPostLinks(S.getPostLinks().filter(item => S.normalizeUrl(item) !== S.normalizeUrl(link)));
         }
@@ -263,6 +285,7 @@
   async function runClosedGroupLoop() {
     if (S.isClosedLoopRunning()) return;
 
+    fatalStopMessage = '';
     S.setClosedLoopRunning(true);
     B.stopClosedLoopBtn?.classList.remove('hidden');
     let cycleIndex = 1;
@@ -270,14 +293,19 @@
     try {
       while (S.isClosedLoopRunning()) {
         S.setBridgeStatus(`Đang chạy vòng ${cycleIndex}...`, 'warn');
-        const links = await scanGroupLinks({ autoStart: false });
+        await scanGroupLinks({ autoStart: false });
         if (!S.isClosedLoopRunning()) break;
 
-        if (links.length) {
-          await autoWorkflow({ manageLoopState: false });
-        } else {
+        const queuedLinks = S.getPostLinks();
+        if (!queuedLinks.length) {
           S.setPostLinks([]);
+          if (!S.isClosedLoopRunning()) break;
+          await waitBeforeNextGroupScan(cycleIndex);
+          cycleIndex += 1;
+          continue;
         }
+
+        await autoWorkflow({ manageLoopState: false });
 
         if (!S.isClosedLoopRunning()) break;
         await waitBeforeNextGroupScan(cycleIndex);
@@ -286,7 +314,8 @@
     } finally {
       S.setClosedLoopRunning(false);
       B.stopClosedLoopBtn?.classList.add('hidden');
-      S.setBridgeStatus('Vòng lặp đã dừng.', 'warn');
+      if (fatalStopMessage) S.setBridgeStatus(fatalStopMessage, 'error');
+      else S.setBridgeStatus('Vòng lặp đã dừng.', 'warn');
     }
   }
 

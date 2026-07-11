@@ -32,6 +32,16 @@
           <span class="pro-badge">⚡ WEB + EXTENSION + CHATGPT API</span>
         </header>
 
+        <section class="fb-account-strip" id="fbAccountStrip" aria-live="polite">
+          <div class="fb-account-icon" aria-hidden="true">f</div>
+          <div class="fb-account-main">
+            <div class="fb-account-label">UID Facebook đang đăng nhập</div>
+            <div class="fb-account-value" id="fbCurrentUid">Chưa kết nối Extension</div>
+          </div>
+          <span class="fb-account-badge" id="fbAccountBadge">Chưa kiểm tra</span>
+          <button class="btn btn-muted btn-sm" id="refreshFbAccountBtn" type="button">Làm mới</button>
+        </section>
+
             <details class="advanced-panel">
               <summary>⚙️ Cài đặt nâng cao</summary>
               <div class="advanced-content">
@@ -82,6 +92,28 @@
                 </div>
 
                 <div class="advanced-section">
+                  <div class="advanced-title">Tài khoản Facebook — điều khiển bằng web</div>
+                  <div class="bridge-grid">
+                    <div class="form-group">
+                      <div class="label-row">
+                        <label for="currentFacebookCookie">Trạng thái tài khoản hiện tại</label>
+                        <button class="btn btn-muted btn-sm" id="copyFbUidBtn" type="button">Sao chép UID</button>
+                      </div>
+                      <textarea id="currentFacebookCookie" class="cookie-status-box" readonly spellcheck="false" placeholder="Kết nối extension để đọc trạng thái đăng nhập..."></textarea>
+                      <div class="hint">Extension đọc cookie <code>c_user</code> để hiển thị UID; các giá trị phiên xác thực không được đưa ra web.</div>
+                    </div>
+                    <div class="form-group">
+                      <label>Điều khiển phiên Facebook</label>
+                      <div class="fb-account-actions">
+                        <button class="btn btn-primary" id="openFbLoginBtn" type="button">🔐 Mở Facebook đăng nhập</button>
+                        <button class="btn btn-danger" id="logoutFbAccountBtn" type="button">🚪 Đăng xuất Facebook</button>
+                      </div>
+                      <div class="hint" id="fbAccountActionStatus">Mọi thao tác được web gửi sang extension hợp nhất; popup không chứa phần quản lý tài khoản.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="advanced-section">
                   <div class="advanced-title">Tuỳ chọn quét link</div>
                   <div class="form-group">
                     <label for="scanSourceModeSelect">Nguồn quét link</label>
@@ -126,7 +158,7 @@
                   </div>
                   <div class="check-list">
                     <label class="check-row"><input id="autoCommentAfterGenerate" type="checkbox" checked> Tạo xong bình luận thì tự gửi bình luận vào tab bài viết Facebook</label>
-                    <label class="check-row"><input id="closeAfterComment" type="checkbox" checked> Chờ Facebook hiển thị bình luận xong trước khi dùng lại tab</label>
+                    <label class="check-row"><input id="closeAfterComment" type="checkbox" checked> Đóng tab Facebook sau khi gửi bình luận xong</label>
                   </div>
                 </div>
               </div>
@@ -300,6 +332,7 @@
   <script src="chatgpt-api.js"></script>
   <script src="bridge-state.js"></script>
   <script src="bridge-api.js"></script>
+  <script src="fb-account.js"></script>
   <script src="bridge-workflow.js"></script>
 </body>
 </html>
