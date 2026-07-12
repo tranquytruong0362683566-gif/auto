@@ -27,7 +27,7 @@
     if (direct && direct !== 'Error') return direct;
 
     const message = String(error?.message || error || '').toLowerCase();
-    if (/spam|có vẻ là spam|co ve la spam|looks like spam|appears to be spam/i.test(message)) return 'SPAM_WARNING';
+    if (/spam|có vẻ là spam|co ve la spam|looks like spam|appears to be spam|you can(?:not|'?t) use this feature right now|we limit how often you can post\s*,?\s*comment|help protect the community from spam/i.test(message)) return 'SPAM_WARNING';
     if (/c_user|cookie không|cookie invalid|cookie|login|đăng nhập|session|auth|checkpoint|captcha|xác minh|security|temporarily blocked|tạm thời bị chặn|tam thoi bi chan|action blocked|hành động này bị chặn|hanh dong nay bi chan|going too fast|quá nhanh|qua nhanh|try again later|thử lại sau|thu lai sau|can't comment|cannot comment|không thể bình luận|khong the binh luan|hạn chế bình luận|han che binh luan|comment.*restricted/i.test(message)) return 'IGNORED_FACEBOOK_STATE';
     if (/ô viết bình luận|comment box|không tìm thấy.*bình luận|khong tim thay.*binh luan/i.test(message)) return 'COMMENT_BOX_NOT_FOUND';
     if (/nút.*gửi|send button|comment\/gửi|submit/i.test(message)) return 'SEND_BUTTON_NOT_FOUND';
@@ -140,11 +140,25 @@
     let logoutResult = null;
 
     if (shouldSwitch) {
-      S.setBridgeStatus(
-        `Đã phát hiện lỗi Facebook (${code}). Đang tự động kích hoạt nút Đăng xuất cạnh UID...`,
-        'warn'
-      );
-      logoutResult = await logoutFacebookFromWeb({ silent: true, reasonCode: code });
+      const extensionResult = error?.response && typeof error.response === 'object' ? error.response : {};
+      if (extensionResult.autoLoggedOut === true) {
+        logoutResult = {
+          ok: true,
+          removed: Number(extensionResult.logoutRemoved || 0),
+          alreadyDoneByExtension: true
+        };
+        S.renderFacebookAccount({ state: 'offline', message: 'Chưa đăng nhập' });
+        S.setBridgeStatus(
+          `Đã phát hiện lỗi Facebook (${code}). Extension đã tự động kích hoạt Đăng xuất UID.`,
+          'warn'
+        );
+      } else {
+        S.setBridgeStatus(
+          `Đã phát hiện lỗi Facebook (${code}). Đang tự động kích hoạt nút Đăng xuất cạnh UID...`,
+          'warn'
+        );
+        logoutResult = await logoutFacebookFromWeb({ silent: true, reasonCode: code });
+      }
     }
 
     const accountHint = shouldSwitch

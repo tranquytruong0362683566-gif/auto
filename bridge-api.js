@@ -59,7 +59,7 @@
     const raw = String(response?.code || response?.errorCode || response?.name || '').trim();
     if (raw) return raw;
     const message = String(response?.error || response?.message || '').toLowerCase();
-    if (/spam|có vẻ là spam|co ve la spam|looks like spam|appears to be spam/i.test(message)) return 'SPAM_WARNING';
+    if (/spam|có vẻ là spam|co ve la spam|looks like spam|appears to be spam|you can(?:not|'?t) use this feature right now|we limit how often you can post\s*,?\s*comment|help protect the community from spam/i.test(message)) return 'SPAM_WARNING';
     if (isRemovedFacebookCondition(response)) return 'IGNORED_FACEBOOK_STATE';
     if (/ô viết bình luận|comment box|không tìm thấy.*bình luận|khong tim thay.*binh luan/i.test(message)) return 'COMMENT_BOX_NOT_FOUND';
     if (/chèn được|chen duoc|insert/i.test(message)) return 'COMMENT_INSERT_FAILED';
