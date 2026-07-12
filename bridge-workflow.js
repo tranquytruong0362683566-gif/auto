@@ -22,6 +22,52 @@
     return /^\(?\s*next\s*\)?$/i.test(String(value || '').trim());
   }
 
+  function getErrorCode(error) {
+    const direct = String(error?.code || error?.errorCode || error?.name || '').trim();
+    if (direct && direct !== 'Error') return direct;
+
+    const message = String(error?.message || error || '').toLowerCase();
+    if (/c_user|cookie không|cookie invalid|cookie/i.test(message)) return 'COOKIE_INVALID';
+    if (/login|đăng nhập|session|auth|checkpoint|captcha|xác minh|security/i.test(message)) return 'FB_LOGIN_REQUIRED';
+    if (/ô viết bình luận|comment box|không tìm thấy.*bình luận|khong tim thay.*binh luan/i.test(message)) return 'COMMENT_BOX_NOT_FOUND';
+    if (/nút.*gửi|send button|comment\/gửi|submit/i.test(message)) return 'SEND_BUTTON_NOT_FOUND';
+    if (/tab|scripting|cannot access|chrome/i.test(message)) return 'FB_TAB_ERROR';
+    if (/rakko|description|nội dung bài viết|read/i.test(message)) return 'READ_POST_ERROR';
+    if (/api|chatgpt|timeout|quá lâu/i.test(message)) return 'AI_OR_TIMEOUT_ERROR';
+    return 'WORKFLOW_ERROR';
+  }
+
+  function isFacebookWorkflowError(error) {
+    const code = getErrorCode(error).toUpperCase();
+    return /FB_|COOKIE|COMMENT_|SEND_BUTTON|TAB_ERROR|LOGIN|CHECKPOINT|CAPTCHA/.test(code);
+  }
+
+  function pauseWorkflowOnError(error, link = '', context = '') {
+    const code = getErrorCode(error);
+    const message = String(error?.message || error || 'Không rõ lỗi');
+
+    S.setClosedLoopRunning(false);
+    B.stopClosedLoopBtn?.classList.add('hidden');
+
+    if (link) {
+      S.setPostLinks([
+        link,
+        ...S.getPostLinks().filter(item => S.normalizeUrl(item) !== S.normalizeUrl(link))
+      ]);
+    }
+
+    const accountHint = isFacebookWorkflowError(error)
+      ? 'Bạn có thể đăng nhập Cookie khác rồi bấm “Chạy link hiện có” để chạy tiếp từ link đang lỗi.'
+      : 'Link hiện tại vẫn được giữ ở đầu danh sách để bạn chạy lại sau khi xử lý lỗi.';
+
+    S.setBridgeStatus(
+      `Đã tự dừng để tránh mất queue${context ? ` (${context})` : ''}.\nMã lỗi: ${code}.\nChi tiết: ${message}\n${accountHint}`,
+      'error'
+    );
+
+    return { paused: true, code, message, link };
+  }
+
   async function closeActiveReadTabIfAny() {
     const tabId = S.getActiveReadTabId();
     if (!tabId) return;
@@ -185,10 +231,10 @@
   }
 
   async function autoWorkflow({ manageLoopState = true } = {}) {
-    let links = S.getPostLinks();
+    const links = S.getPostLinks();
     if (!links.length) {
       S.setBridgeStatus('Chưa có link bài viết. Hãy quét nhóm hoặc dán link trước.', 'warn');
-      return;
+      return { ok: true, processed: 0 };
     }
 
     if (manageLoopState) {
@@ -197,6 +243,8 @@
     }
 
     const queue = [...links];
+    let processed = 0;
+
     try {
       for (let index = 0; index < queue.length; index += 1) {
         const link = queue[index];
@@ -216,6 +264,7 @@
             await closeActiveReadTabIfAny();
             S.saveCommentedLink(link);
             S.setPostLinks(S.getPostLinks().filter(item => S.normalizeUrl(item) !== S.normalizeUrl(link)));
+            processed += 1;
             continue;
           }
 
@@ -223,10 +272,11 @@
             await commentToFacebook(link, comment);
             S.saveCommentedLink(link);
             S.setPostLinks(S.getPostLinks().filter(item => S.normalizeUrl(item) !== S.normalizeUrl(link)));
+            processed += 1;
           }
         } catch (error) {
-          S.setBridgeStatus(`Lỗi ở link hiện tại, đã chuyển link kế tiếp:\n${error.message || error}`, 'error');
-          S.setPostLinks(S.getPostLinks().filter(item => S.normalizeUrl(item) !== S.normalizeUrl(link)));
+          await closeActiveReadTabIfAny();
+          return pauseWorkflowOnError(error, link, `link ${index + 1}/${queue.length}`);
         }
 
         if (index < queue.length - 1) await waitAfterLink(index + 1, queue.length);
@@ -241,6 +291,8 @@
     if (!S.getPostLinks().length) {
       S.setBridgeStatus('Đã xử lý hết link trong ô Link bài viết Facebook.', 'ok');
     }
+
+    return { ok: true, processed };
   }
 
   async function waitBeforeNextGroupScan(cycleIndex) {
@@ -267,11 +319,19 @@
     S.setClosedLoopRunning(true);
     B.stopClosedLoopBtn?.classList.remove('hidden');
     let cycleIndex = 1;
+    let pausedByError = false;
 
     try {
       while (S.isClosedLoopRunning()) {
-        S.setBridgeStatus(`Đang chạy vòng ${cycleIndex}...`, 'warn');
-        await scanGroupLinks({ autoStart: false });
+        try {
+          S.setBridgeStatus(`Đang chạy vòng ${cycleIndex}...`, 'warn');
+          await scanGroupLinks({ autoStart: false });
+        } catch (error) {
+          pausedByError = true;
+          pauseWorkflowOnError(error, S.getPostLinks()[0] || '', `quét vòng ${cycleIndex}`);
+          break;
+        }
+
         if (!S.isClosedLoopRunning()) break;
 
         const queuedLinks = S.getPostLinks();
@@ -283,7 +343,11 @@
           continue;
         }
 
-        await autoWorkflow({ manageLoopState: false });
+        const workflowResult = await autoWorkflow({ manageLoopState: false });
+        if (workflowResult?.paused) {
+          pausedByError = true;
+          break;
+        }
 
         if (!S.isClosedLoopRunning()) break;
         await waitBeforeNextGroupScan(cycleIndex);
@@ -292,7 +356,7 @@
     } finally {
       S.setClosedLoopRunning(false);
       B.stopClosedLoopBtn?.classList.add('hidden');
-      S.setBridgeStatus('Vòng lặp đã dừng.', 'warn');
+      if (!pausedByError) S.setBridgeStatus('Vòng lặp đã dừng.', 'warn');
     }
   }
 

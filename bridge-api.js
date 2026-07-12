@@ -16,9 +16,30 @@
     return 60 * 1000;
   }
 
+  function inferBridgeErrorCode(response) {
+    const raw = String(response?.code || response?.errorCode || response?.name || '').trim();
+    if (raw) return raw;
+    const message = String(response?.error || response?.message || '').toLowerCase();
+    if (/c_user|cookie/i.test(message)) return 'COOKIE_INVALID';
+    if (/đăng nhập|login|checkpoint|session|auth/i.test(message)) return 'FB_LOGIN_REQUIRED';
+    if (/ô viết bình luận|comment box|bình luận|comment/i.test(message)) return 'COMMENT_BOX_NOT_FOUND';
+    if (/nút|button|gửi|send|post/i.test(message)) return 'SEND_BUTTON_NOT_FOUND';
+    if (/tab/i.test(message)) return 'FB_TAB_ERROR';
+    return 'BRIDGE_ERROR';
+  }
+
   function normalizeBridgeResponse(response) {
-    if (!response) throw new Error('Extension trả về rỗng.');
-    if (response.ok === false || response.error) throw new Error(response.error || response.message || 'Extension báo lỗi.');
+    if (!response) {
+      const error = new Error('Extension trả về rỗng.');
+      error.code = 'EMPTY_BRIDGE_RESPONSE';
+      throw error;
+    }
+    if (response.ok === false || response.error) {
+      const error = new Error(response.error || response.message || 'Extension báo lỗi.');
+      error.code = inferBridgeErrorCode(response);
+      error.response = response;
+      throw error;
+    }
     return response;
   }
 
