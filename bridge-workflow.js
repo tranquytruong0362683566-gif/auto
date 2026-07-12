@@ -5,6 +5,63 @@
   const API = window.fbBridgeApi;
   const B = S.B;
 
+
+  const AUTOMATION_ERROR = Object.freeze({
+    PLATFORM: 'PLATFORM_RESTRICTION',
+    AUTH: 'FACEBOOK_SESSION',
+    CONFIG: 'CONFIGURATION',
+    TRANSIENT: 'TRANSIENT_TECHNICAL',
+    ITEM: 'LINK_SPECIFIC',
+    UNKNOWN: 'UNKNOWN'
+  });
+
+  function automationErrorText(error) {
+    return String(error?.message || error || 'Lỗi không xác định.').trim();
+  }
+
+  function classifyAutomationError(error) {
+    const message = automationErrorText(error);
+    const value = message.toLowerCase();
+
+    if (/(spam|temporarily blocked|action blocked|comment blocked|restricted|restriction|checkpoint|captcha|confirm (your )?identity|suspicious activity|account disabled|account locked|bị chặn|tạm thời bị chặn|hạn chế tài khoản|hạn chế bình luận|xác minh danh tính|hoạt động đáng ngờ|vi phạm)/i.test(value)) {
+      return { kind: AUTOMATION_ERROR.PLATFORM, message, fatal: true, retryable: false };
+    }
+
+    if (/(facebook.*(not logged|login required)|chưa đăng nhập facebook|phiên đăng nhập|session expired|invalid session|cookie.*(invalid|expired|không hợp lệ|hết hạn)|không phát hiện c_user|missing c_user)/i.test(value)) {
+      return { kind: AUTOMATION_ERROR.AUTH, message, fatal: true, retryable: false };
+    }
+
+    if (/(api key|quota|model|endpoint|unauthorized|forbidden|http 401|http 403|http 429|chưa nạp được hàm gọi api|chưa nhập extension id|không tìm thấy chrome\.runtime)/i.test(value)) {
+      return { kind: AUTOMATION_ERROR.CONFIG, message, fatal: true, retryable: false };
+    }
+
+    if (/(receiving end does not exist|message port closed|port đã đóng|extension.*(không phản hồi|trả về rỗng|xử lý quá lâu)|network|failed to fetch|fetch failed|timeout|timed out|quá thời gian|econn|connection reset|http 5\d\d)/i.test(value)) {
+      return { kind: AUTOMATION_ERROR.TRANSIENT, message, fatal: false, retryable: true };
+    }
+
+    if (/(không tìm thấy đúng ô viết bình luận|không chèn được nội dung|chưa tìm thấy nút comment|không có trường description|chưa trả về nội dung bài viết|uid\/link không hợp lệ|bình luận rỗng)/i.test(value)) {
+      return { kind: AUTOMATION_ERROR.ITEM, message, fatal: false, retryable: false };
+    }
+
+    return { kind: AUTOMATION_ERROR.UNKNOWN, message, fatal: true, retryable: false };
+  }
+
+  async function runWithTechnicalRetry(task, label, maxAttempts = 2) {
+    let lastError = null;
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        return await task();
+      } catch (error) {
+        lastError = error;
+        const info = classifyAutomationError(error);
+        if (!info.retryable || attempt >= maxAttempts || !S.isClosedLoopRunning()) throw error;
+        S.setBridgeStatus(`${label} lỗi kỹ thuật: ${info.message}\nTự thử lại lần ${attempt + 1}/${maxAttempts} sau 5 giây...`, 'warn');
+        await S.delay(5000);
+      }
+    }
+    throw lastError || new Error(`${label} thất bại.`);
+  }
+
   async function waitAfterLink(linkIndex, totalLinks) {
     const seconds = S.getLinkPauseSeconds();
     if (seconds <= 0 || !S.isClosedLoopRunning()) return;
@@ -20,52 +77,6 @@
 
   function isNextCommentResult(value) {
     return /^\(?\s*next\s*\)?$/i.test(String(value || '').trim());
-  }
-
-  function getErrorCode(error) {
-    const direct = String(error?.code || error?.errorCode || error?.name || '').trim();
-    if (direct && direct !== 'Error') return direct;
-
-    const message = String(error?.message || error || '').toLowerCase();
-    if (/c_user|cookie không|cookie invalid|cookie/i.test(message)) return 'COOKIE_INVALID';
-    if (/login|đăng nhập|session|auth|checkpoint|captcha|xác minh|security/i.test(message)) return 'FB_LOGIN_REQUIRED';
-    if (/ô viết bình luận|comment box|không tìm thấy.*bình luận|khong tim thay.*binh luan/i.test(message)) return 'COMMENT_BOX_NOT_FOUND';
-    if (/nút.*gửi|send button|comment\/gửi|submit/i.test(message)) return 'SEND_BUTTON_NOT_FOUND';
-    if (/tab|scripting|cannot access|chrome/i.test(message)) return 'FB_TAB_ERROR';
-    if (/rakko|description|nội dung bài viết|read/i.test(message)) return 'READ_POST_ERROR';
-    if (/api|chatgpt|timeout|quá lâu/i.test(message)) return 'AI_OR_TIMEOUT_ERROR';
-    return 'WORKFLOW_ERROR';
-  }
-
-  function isFacebookWorkflowError(error) {
-    const code = getErrorCode(error).toUpperCase();
-    return /FB_|COOKIE|COMMENT_|SEND_BUTTON|TAB_ERROR|LOGIN|CHECKPOINT|CAPTCHA/.test(code);
-  }
-
-  function pauseWorkflowOnError(error, link = '', context = '') {
-    const code = getErrorCode(error);
-    const message = String(error?.message || error || 'Không rõ lỗi');
-
-    S.setClosedLoopRunning(false);
-    B.stopClosedLoopBtn?.classList.add('hidden');
-
-    if (link) {
-      S.setPostLinks([
-        link,
-        ...S.getPostLinks().filter(item => S.normalizeUrl(item) !== S.normalizeUrl(link))
-      ]);
-    }
-
-    const accountHint = isFacebookWorkflowError(error)
-      ? 'Bạn có thể đăng nhập Cookie khác rồi bấm “Chạy link hiện có” để chạy tiếp từ link đang lỗi.'
-      : 'Link hiện tại vẫn được giữ ở đầu danh sách để bạn chạy lại sau khi xử lý lỗi.';
-
-    S.setBridgeStatus(
-      `Đã tự dừng để tránh mất queue${context ? ` (${context})` : ''}.\nMã lỗi: ${code}.\nChi tiết: ${message}\n${accountHint}`,
-      'error'
-    );
-
-    return { paused: true, code, message, link };
   }
 
   async function closeActiveReadTabIfAny() {
@@ -231,10 +242,10 @@
   }
 
   async function autoWorkflow({ manageLoopState = true } = {}) {
-    const links = S.getPostLinks();
+    let links = S.getPostLinks();
     if (!links.length) {
       S.setBridgeStatus('Chưa có link bài viết. Hãy quét nhóm hoặc dán link trước.', 'warn');
-      return { ok: true, processed: 0 };
+      return;
     }
 
     if (manageLoopState) {
@@ -243,8 +254,6 @@
     }
 
     const queue = [...links];
-    let processed = 0;
-
     try {
       for (let index = 0; index < queue.length; index += 1) {
         const link = queue[index];
@@ -253,18 +262,17 @@
         try {
           S.setBridgeStatus(`Đang xử lý link ${index + 1}/${queue.length}...`, 'warn');
           S.setPostLinks([link, ...S.getPostLinks().filter(item => S.normalizeUrl(item) !== S.normalizeUrl(link))]);
-          await readFirstFacebookPost();
+          await runWithTechnicalRetry(() => readFirstFacebookPost(), 'Đọc bài viết');
 
           const controller = window.chatGPTApiController || {};
           if (!controller.generateComment) throw new Error('Chưa nạp được hàm gọi API ChatGPT.');
-          const comment = await controller.generateComment();
+          const comment = await runWithTechnicalRetry(() => controller.generateComment(), 'Tạo bình luận');
 
           if (isNextCommentResult(comment) || controller.isNextResult?.(comment)) {
             S.setBridgeStatus(`AI xác định link ${index + 1}/${queue.length} là bài người bán/cho thuê, đã bỏ qua và chuyển bài tiếp theo.`, 'warn');
             await closeActiveReadTabIfAny();
             S.saveCommentedLink(link);
             S.setPostLinks(S.getPostLinks().filter(item => S.normalizeUrl(item) !== S.normalizeUrl(link)));
-            processed += 1;
             continue;
           }
 
@@ -272,11 +280,18 @@
             await commentToFacebook(link, comment);
             S.saveCommentedLink(link);
             S.setPostLinks(S.getPostLinks().filter(item => S.normalizeUrl(item) !== S.normalizeUrl(link)));
-            processed += 1;
           }
         } catch (error) {
+          const info = classifyAutomationError(error);
           await closeActiveReadTabIfAny();
-          return pauseWorkflowOnError(error, link, `link ${index + 1}/${queue.length}`);
+
+          if (info.kind === AUTOMATION_ERROR.ITEM) {
+            S.setBridgeStatus(`Lỗi riêng ở link ${index + 1}/${queue.length} [${info.kind}], đã giữ lại link để kiểm tra và chuyển link kế tiếp:\n${info.message}`, 'error');
+          } else {
+            S.setClosedLoopRunning(false);
+            S.setBridgeStatus(`Đã dừng tự động [${info.kind}] và giữ nguyên link chưa xử lý:\n${info.message}`, 'error');
+            throw new Error(`[${info.kind}] ${info.message}`);
+          }
         }
 
         if (index < queue.length - 1) await waitAfterLink(index + 1, queue.length);
@@ -291,8 +306,6 @@
     if (!S.getPostLinks().length) {
       S.setBridgeStatus('Đã xử lý hết link trong ô Link bài viết Facebook.', 'ok');
     }
-
-    return { ok: true, processed };
   }
 
   async function waitBeforeNextGroupScan(cycleIndex) {
@@ -319,19 +332,12 @@
     S.setClosedLoopRunning(true);
     B.stopClosedLoopBtn?.classList.remove('hidden');
     let cycleIndex = 1;
-    let pausedByError = false;
 
+    let stopError = null;
     try {
       while (S.isClosedLoopRunning()) {
-        try {
-          S.setBridgeStatus(`Đang chạy vòng ${cycleIndex}...`, 'warn');
-          await scanGroupLinks({ autoStart: false });
-        } catch (error) {
-          pausedByError = true;
-          pauseWorkflowOnError(error, S.getPostLinks()[0] || '', `quét vòng ${cycleIndex}`);
-          break;
-        }
-
+        S.setBridgeStatus(`Đang chạy vòng ${cycleIndex}...`, 'warn');
+        await runWithTechnicalRetry(() => scanGroupLinks({ autoStart: false }), 'Quét link nhóm');
         if (!S.isClosedLoopRunning()) break;
 
         const queuedLinks = S.getPostLinks();
@@ -343,20 +349,22 @@
           continue;
         }
 
-        const workflowResult = await autoWorkflow({ manageLoopState: false });
-        if (workflowResult?.paused) {
-          pausedByError = true;
-          break;
-        }
+        await autoWorkflow({ manageLoopState: false });
 
         if (!S.isClosedLoopRunning()) break;
         await waitBeforeNextGroupScan(cycleIndex);
         cycleIndex += 1;
       }
+    } catch (error) {
+      stopError = classifyAutomationError(error);
     } finally {
       S.setClosedLoopRunning(false);
       B.stopClosedLoopBtn?.classList.add('hidden');
-      if (!pausedByError) S.setBridgeStatus('Vòng lặp đã dừng.', 'warn');
+      if (stopError) {
+        S.setBridgeStatus(`Vòng lặp đã dừng [${stopError.kind}]. Link chưa xử lý vẫn được giữ lại:\n${stopError.message}`, 'error');
+      } else {
+        S.setBridgeStatus('Vòng lặp đã dừng.', 'warn');
+      }
     }
   }
 
