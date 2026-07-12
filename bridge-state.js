@@ -16,12 +16,19 @@
     scanSourceModeSelect: $('#scanSourceModeSelect'),
     loopPauseSecondsInput: $('#loopPauseSecondsInput'),
     linkPauseSecondsInput: $('#linkPauseSecondsInput'),
+    autoRunDelaySecondsInput: $('#autoRunDelaySecondsInput'),
     fbPostLinkInput: $('#fbPostLinkInput'),
     scanGroupLinksBtn: $('#scanGroupLinksBtn'),
     stopClosedLoopBtn: $('#stopClosedLoopBtn'),
     autoWorkflowBtn: $('#autoWorkflowBtn'),
     commentCurrentTabBtn: $('#commentCurrentTabBtn'),
     bridgeStatus: $('#bridgeStatus'),
+    bridgeErrorPanel: $('#bridgeErrorPanel'),
+    bridgeErrorAction: $('#bridgeErrorAction'),
+    bridgeErrorCode: $('#bridgeErrorCode'),
+    bridgeErrorContext: $('#bridgeErrorContext'),
+    bridgeErrorLink: $('#bridgeErrorLink'),
+    bridgeErrorMessage: $('#bridgeErrorMessage'),
     articleInput: $('#articleInput'),
     output: $('#output'),
     fbDelayMs: $('#fbDelayMs'),
@@ -43,6 +50,7 @@
     loopPauseSeconds: 'truong_fb_bridge_loop_pause_seconds_v1',
     oldLoopPauseMinutes: 'truong_fb_bridge_loop_pause_minutes_v1',
     linkPauseSeconds: 'truong_fb_bridge_link_pause_seconds_v1',
+    autoRunDelaySeconds: 'truong_fb_bridge_auto_run_delay_seconds_v1',
     postLinks: 'truong_fb_bridge_post_links_v1',
     commented: 'truong_fb_bridge_commented_links_v1'
   };
@@ -111,10 +119,41 @@
     return value;
   }
 
+  function getAutoRunDelaySeconds() {
+    const value = Math.round(clampNumber(B.autoRunDelaySecondsInput?.value, 15, 0, 86400));
+    if (B.autoRunDelaySecondsInput) B.autoRunDelaySecondsInput.value = String(value);
+    save(STORE.autoRunDelaySeconds, B.autoRunDelaySecondsInput?.value || String(value));
+    return value;
+  }
+
   function setBridgeStatus(message, type = '') {
     if (!B.bridgeStatus) return;
     B.bridgeStatus.textContent = message;
     B.bridgeStatus.className = 'automation-status' + (type ? ' ' + type : '');
+    if (type !== 'error') clearBridgeErrorPanel();
+  }
+
+  function clearBridgeErrorPanel() {
+    B.bridgeErrorPanel?.classList.add('hidden');
+    if (B.bridgeErrorAction) B.bridgeErrorAction.textContent = 'Chưa có lỗi.';
+    if (B.bridgeErrorCode) B.bridgeErrorCode.textContent = '—';
+    if (B.bridgeErrorContext) B.bridgeErrorContext.textContent = '—';
+    if (B.bridgeErrorLink) B.bridgeErrorLink.textContent = '—';
+    if (B.bridgeErrorMessage) B.bridgeErrorMessage.textContent = '—';
+  }
+
+  function renderBridgeStopError({ code = '', message = '', link = '', context = '', shouldSwitch = false } = {}) {
+    if (!B.bridgeErrorPanel) return;
+    B.bridgeErrorPanel.classList.remove('hidden');
+    if (B.bridgeErrorAction) {
+      B.bridgeErrorAction.textContent = shouldSwitch
+        ? 'Dừng để đổi tài khoản Facebook khác'
+        : 'Dừng để kiểm tra lỗi, giữ nguyên queue';
+    }
+    if (B.bridgeErrorCode) B.bridgeErrorCode.textContent = String(code || 'UNKNOWN_ERROR');
+    if (B.bridgeErrorContext) B.bridgeErrorContext.textContent = String(context || 'Không rõ vị trí');
+    if (B.bridgeErrorLink) B.bridgeErrorLink.textContent = String(link || 'Không có link');
+    if (B.bridgeErrorMessage) B.bridgeErrorMessage.textContent = String(message || 'Không có chi tiết');
   }
 
   function renderFacebookAccount({ loggedIn = false, uid = '', state = '', message = '' } = {}) {
@@ -296,7 +335,10 @@
     getGroupLimit,
     getLoopPauseSeconds,
     getLinkPauseSeconds,
+    getAutoRunDelaySeconds,
     setBridgeStatus,
+    clearBridgeErrorPanel,
+    renderBridgeStopError,
     renderFacebookAccount,
     setCookieLoginStatus,
     getSelectedCookieLine,

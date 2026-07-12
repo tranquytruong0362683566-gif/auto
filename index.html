@@ -91,7 +91,7 @@
                   <div class="form-group cookie-login-group">
                     <label for="facebookCookieListInput">Cookie Facebook — mỗi dòng một tài khoản</label>
                     <textarea id="facebookCookieListInput" class="cookie-list-input" rows="6" spellcheck="false" placeholder="100012345678901|c_user=100012345678901;xs=...;fr=...;|Mozilla/5.0...&#10;100098765432100|c_user=100098765432100;xs=...;fr=...;|Mozilla/5.0..."></textarea>
-                    <div class="hint">Đặt con trỏ tại dòng muốn sử dụng rồi bấm Login Cookie. Nếu chưa chọn dòng, hệ thống dùng dòng Cookie hợp lệ đầu tiên. Danh sách này đồng bộ với ô Login Cookie New trong popup Extension.</div>
+                    <div class="hint">Đặt con trỏ tại dòng muốn sử dụng rồi bấm Login Cookie. Khi Web báo Chưa đăng nhập, hệ thống tự dùng dòng Cookie đầu tiên; sau khi xác nhận UID, Web đếm theo mục “Tự bấm Chạy tự động sau” rồi mới chạy. Danh sách này đồng bộ với ô Login Cookie New trong popup Extension.</div>
                     <div class="actions cookie-login-actions">
                       <button class="btn btn-primary" id="facebookLoginCookieBtn" type="button">Login Cookie</button>
                       <span class="inline-status" id="facebookCookieLoginStatus" aria-live="polite">Sẵn sàng đăng nhập Cookie.</span>
@@ -130,6 +130,11 @@
                       <label for="linkPauseSecondsInput">Nghỉ sau mỗi link</label>
                       <input id="linkPauseSecondsInput" type="number" min="0" max="86400" step="1" value="60">
                       <div class="hint">Tính bằng giây. Áp dụng sau khi chạy xong từng link.</div>
+                    </div>
+                    <div class="form-group">
+                      <label for="autoRunDelaySecondsInput">Tự bấm Chạy tự động sau</label>
+                      <input id="autoRunDelaySecondsInput" type="number" min="0" max="86400" step="1" value="15">
+                      <div class="hint">Tính bằng giây. Khi đã có UID Facebook, Web tự bấm “Chạy tự động”. Nhập 0 để tắt.</div>
                     </div>
                   </div>
                 </div>
@@ -174,6 +179,22 @@
               <button class="btn btn-danger hidden" id="stopClosedLoopBtn" type="button">⛔ Dừng</button>
             </div>
             <div class="automation-status" id="bridgeStatus">Sẵn sàng kết nối extension.</div>
+            <div class="bridge-error-panel hidden" id="bridgeErrorPanel" aria-live="polite">
+              <div class="bridge-error-head">
+                <strong>Lỗi làm web dừng</strong>
+                <span id="bridgeErrorAction">Chưa có lỗi.</span>
+              </div>
+              <div class="bridge-error-grid">
+                <div><b>Mã lỗi:</b> <span id="bridgeErrorCode">—</span></div>
+                <div><b>Vị trí:</b> <span id="bridgeErrorContext">—</span></div>
+                <div class="bridge-error-full"><b>Link giữ lại:</b> <span id="bridgeErrorLink">—</span></div>
+                <div class="bridge-error-full"><b>Chi tiết:</b> <span id="bridgeErrorMessage">—</span></div>
+              </div>
+              <div class="bridge-error-trigger">
+                <b>Chỉ dừng và đăng xuất khi:</b>
+                <span>SPAM_WARNING</span>
+              </div>
+            </div>
           </section>
 
           <section class="workflow-panel" aria-labelledby="linksTitle">

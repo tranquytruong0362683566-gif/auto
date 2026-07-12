@@ -16,9 +16,86 @@
     return 60 * 1000;
   }
 
+  const NON_FATAL_BRIDGE_CODES = new Set([
+    'IGNORED_FACEBOOK_STATE',
+    'COOKIE_LOGIN_SKIPPED',
+    'COMMENT_EMPTY',
+    'COMMENT_BOX_NOT_FOUND',
+    'SEND_BUTTON_NOT_FOUND',
+    'COMMENT_INSERT_FAILED',
+    'COMMENT_POSTER_ERROR',
+    'COMMENT_TAB_ERROR',
+    'COMMENT_SEND_REJECTED',
+    'FB_TAB_ERROR',
+    'FB_LINK_MISSING',
+    'FB_LINK_INVALID',
+    'FB_GROUP_ID_MISSING',
+    'TAB_ID_MISSING',
+    'MESSENGER_BOX_DETECTED',
+    'TAB_CLOSE_ERROR'
+  ]);
+
+
+  const REMOVED_FACEBOOK_CODES = new Set([
+    ['FB', 'LOGIN', 'REQUIRED'].join('_'),
+    ['LOGIN', 'PAGE', 'DETECTED'].join('_'),
+    ['COOKIE', 'INVALID'].join('_'),
+    ['COOKIE', 'MISSING', 'C', 'USER'].join('_'),
+    ['COOKIE', 'PARSE', 'FAILED'].join('_'),
+    ['NO', 'COOKIE', 'SELECTED'].join('_'),
+    ['ACTION', 'BLOCKED'].join('_'),
+    ['TEMPORARY', 'BLOCKED'].join('_'),
+    ['COMMENT', 'RESTRICTED'].join('_')
+  ]);
+
+  function isRemovedFacebookCondition(response, code = '') {
+    const normalizedCode = String(code || response?.code || response?.errorCode || '').trim().toUpperCase();
+    if (REMOVED_FACEBOOK_CODES.has(normalizedCode)) return true;
+    const message = String(response?.error || response?.message || '').toLowerCase();
+    return /c_user|cookie không|cookie invalid|cookie|login|đăng nhập|session|auth|checkpoint|captcha|xác minh|security|temporarily blocked|tạm thời bị chặn|tam thoi bi chan|action blocked|hành động này bị chặn|hanh dong nay bi chan|going too fast|quá nhanh|qua nhanh|try again later|thử lại sau|thu lai sau|can't comment|cannot comment|không thể bình luận|khong the binh luan|hạn chế bình luận|han che binh luan|comment.*restricted/i.test(message);
+  }
+
+  function inferBridgeErrorCode(response) {
+    const raw = String(response?.code || response?.errorCode || response?.name || '').trim();
+    if (raw) return raw;
+    const message = String(response?.error || response?.message || '').toLowerCase();
+    if (/spam|có vẻ là spam|co ve la spam|looks like spam|appears to be spam/i.test(message)) return 'SPAM_WARNING';
+    if (isRemovedFacebookCondition(response)) return 'IGNORED_FACEBOOK_STATE';
+    if (/ô viết bình luận|comment box|không tìm thấy.*bình luận|khong tim thay.*binh luan/i.test(message)) return 'COMMENT_BOX_NOT_FOUND';
+    if (/chèn được|chen duoc|insert/i.test(message)) return 'COMMENT_INSERT_FAILED';
+    if (/nút.*gửi|button|gửi|send|post/i.test(message)) return 'SEND_BUTTON_NOT_FOUND';
+    if (/tab|scripting|cannot access|chrome/i.test(message)) return 'FB_TAB_ERROR';
+    if (/rakko|description|nội dung bài viết|read/i.test(message)) return 'READ_POST_ERROR';
+    if (/api|chatgpt|timeout|quá lâu/i.test(message)) return 'AI_OR_TIMEOUT_ERROR';
+    return 'BRIDGE_ERROR';
+  }
+
   function normalizeBridgeResponse(response) {
-    if (!response) throw new Error('Extension trả về rỗng.');
-    if (response.ok === false || response.error) throw new Error(response.error || response.message || 'Extension báo lỗi.');
+    if (!response) {
+      const error = new Error('Extension trả về rỗng.');
+      error.code = 'EMPTY_BRIDGE_RESPONSE';
+      throw error;
+    }
+    if (response.ok === false || response.error) {
+      const code = String(inferBridgeErrorCode(response) || '').toUpperCase();
+      if (NON_FATAL_BRIDGE_CODES.has(code) || isRemovedFacebookCondition(response, code)) {
+        const data = response?.data && typeof response.data === 'object' ? response.data : {};
+        return {
+          ...response,
+          ...data,
+          data: { ...data, skipped: true, nonFatal: true, code },
+          ok: true,
+          skipped: true,
+          nonFatal: true,
+          code,
+          error: ''
+        };
+      }
+      const error = new Error(response.error || response.message || 'Extension báo lỗi.');
+      error.code = code;
+      error.response = response;
+      throw error;
+    }
     return response;
   }
 

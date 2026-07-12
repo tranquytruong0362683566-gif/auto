@@ -398,6 +398,50 @@
     .automation-status.ok { color: var(--success); background: var(--success-soft); border-color: #bbf7d0; }
     .automation-status.warn { color: var(--warning); background: var(--warning-soft); border-color: #fed7aa; }
     .automation-status.error { color: var(--danger); background: var(--danger-soft); border-color: #fecaca; }
+    .bridge-error-panel {
+      margin-top: 10px;
+      padding: 12px;
+      border: 1px solid #fecaca;
+      border-radius: 14px;
+      background: #fff7f7;
+      color: var(--danger);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .bridge-error-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .bridge-error-head span { font-weight: 700; text-align: right; }
+    .bridge-error-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px 12px;
+      color: #991b1b;
+      word-break: break-word;
+    }
+    .bridge-error-full { grid-column: 1 / -1; }
+    .bridge-error-trigger {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed #fecaca;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      color: #7f1d1d;
+    }
+    .bridge-error-trigger span {
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: #fee2e2;
+      border: 1px solid #fecaca;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+    }
     #generateBtn { min-height: 48px; font-size: 15px; }
 
     .output-box {
