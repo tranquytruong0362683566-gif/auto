@@ -4,7 +4,6 @@
   const S = window.fbBridgeShared;
   const API = window.fbBridgeApi;
   const B = S.B;
-  let fatalStopMessage = '';
 
   async function waitAfterLink(linkIndex, totalLinks) {
     const seconds = S.getLinkPauseSeconds();
@@ -166,18 +165,6 @@
       }
     );
 
-    const responseData = API.bridgeResponseData(response);
-    if (responseData?.restrictionDetected || responseData?.fatalStop || responseData?.code === 'FACEBOOK_FEATURE_RESTRICTED') {
-      fatalStopMessage = responseData.message || 'Facebook đang tạm giới hạn tính năng đăng bài/bình luận. Hệ thống đã dừng.';
-      S.setClosedLoopRunning(false);
-      B.stopClosedLoopBtn?.classList.add('hidden');
-      S.setBridgeStatus(fatalStopMessage, 'error');
-      const stopError = new Error(fatalStopMessage);
-      stopError.stopClosedLoop = true;
-      stopError.code = 'FACEBOOK_FEATURE_RESTRICTED';
-      throw stopError;
-    }
-
     if (tabId && (B.closeAfterComment?.checked !== false)) S.clearActiveReadTab();
     S.setBridgeStatus('Đã gửi bình luận xong.', 'ok');
     return response;
@@ -205,7 +192,6 @@
     }
 
     if (manageLoopState) {
-      fatalStopMessage = '';
       S.setClosedLoopRunning(true);
       B.stopClosedLoopBtn?.classList.remove('hidden');
     }
@@ -239,13 +225,6 @@
             S.setPostLinks(S.getPostLinks().filter(item => S.normalizeUrl(item) !== S.normalizeUrl(link)));
           }
         } catch (error) {
-          if (error?.stopClosedLoop || error?.code === 'FACEBOOK_FEATURE_RESTRICTED') {
-            fatalStopMessage = error.message || fatalStopMessage || 'Facebook đang tạm giới hạn tính năng bình luận. Hệ thống đã dừng.';
-            S.setClosedLoopRunning(false);
-            B.stopClosedLoopBtn?.classList.add('hidden');
-            S.setBridgeStatus(fatalStopMessage, 'error');
-            break;
-          }
           S.setBridgeStatus(`Lỗi ở link hiện tại, đã chuyển link kế tiếp:\n${error.message || error}`, 'error');
           S.setPostLinks(S.getPostLinks().filter(item => S.normalizeUrl(item) !== S.normalizeUrl(link)));
         }
@@ -285,7 +264,6 @@
   async function runClosedGroupLoop() {
     if (S.isClosedLoopRunning()) return;
 
-    fatalStopMessage = '';
     S.setClosedLoopRunning(true);
     B.stopClosedLoopBtn?.classList.remove('hidden');
     let cycleIndex = 1;
@@ -314,8 +292,7 @@
     } finally {
       S.setClosedLoopRunning(false);
       B.stopClosedLoopBtn?.classList.add('hidden');
-      if (fatalStopMessage) S.setBridgeStatus(fatalStopMessage, 'error');
-      else S.setBridgeStatus('Vòng lặp đã dừng.', 'warn');
+      S.setBridgeStatus('Vòng lặp đã dừng.', 'warn');
     }
   }
 
@@ -334,8 +311,181 @@
     }
   }
 
+  let facebookStatusTimer = null;
+  let extensionIdRefreshTimer = null;
+  let cookieDraftSyncTimer = null;
+
+  async function syncCookieDraftToExtension({ silent = true } = {}) {
+    if (!B.facebookCookieListInput || !S.getExtensionId()) return null;
+    const cookieList = String(B.facebookCookieListInput.value || '');
+    let updatedAt = Number(S.load(S.STORE.facebookCookieListUpdatedAt, 0)) || 0;
+    if (!updatedAt) {
+      updatedAt = Date.now();
+      S.save(S.STORE.facebookCookieListUpdatedAt, updatedAt);
+    }
+    try {
+      const response = await API.sendBridge([
+        'SET_LOGIN_COOKIE_DRAFT',
+        'SET_FACEBOOK_COOKIE_DRAFT'
+      ], { cookieList, updatedAt });
+      if (!silent) S.setCookieLoginStatus('Đã đồng bộ danh sách Cookie với Extension.', 'ok');
+      return API.bridgeResponseData(response);
+    } catch (error) {
+      if (!silent) S.setCookieLoginStatus(`Không đồng bộ được Cookie: ${error.message || error}`, 'error');
+      return null;
+    }
+  }
+
+  async function loadCookieDraftFromExtension() {
+    if (!B.facebookCookieListInput || !S.getExtensionId()) return null;
+    try {
+      const response = await API.sendBridge([
+        'GET_LOGIN_COOKIE_DRAFT',
+        'GET_FACEBOOK_COOKIE_DRAFT'
+      ]);
+      const data = API.bridgeResponseData(response);
+      const extensionCookieList = String(data?.cookieList || '');
+      const extensionUpdatedAt = Number(data?.updatedAt || 0) || 0;
+      const webCookieList = String(B.facebookCookieListInput.value || '');
+      const webUpdatedAt = Number(S.load(S.STORE.facebookCookieListUpdatedAt, 0)) || 0;
+
+      if (extensionUpdatedAt > webUpdatedAt || (!webCookieList.trim() && extensionCookieList.trim())) {
+        B.facebookCookieListInput.value = extensionCookieList;
+        S.save(S.STORE.facebookCookieList, extensionCookieList);
+        S.save(S.STORE.facebookCookieListUpdatedAt, extensionUpdatedAt || Date.now());
+        S.setCookieLoginStatus('Đã đồng bộ danh sách Cookie mới nhất từ Extension.', 'ok');
+      } else if (webCookieList !== extensionCookieList || webUpdatedAt > extensionUpdatedAt) {
+        await syncCookieDraftToExtension({ silent: true });
+      }
+      return data;
+    } catch (error) {
+      S.setCookieLoginStatus(`Chưa đồng bộ được ô Login Cookie New: ${error.message || error}`, 'warn');
+      return null;
+    }
+  }
+
+  async function loginFacebookCookieFromWeb() {
+    if (!S.getExtensionId()) {
+      S.setCookieLoginStatus('Hãy nhập Extension ID trước khi đăng nhập Cookie.', 'warn');
+      return;
+    }
+
+    const cookieList = String(B.facebookCookieListInput?.value || '');
+    const selected = S.getSelectedCookieLine(B.facebookCookieListInput);
+    if (!selected.line) {
+      S.setCookieLoginStatus('Chưa có Cookie hợp lệ trong danh sách.', 'error');
+      B.facebookCookieListInput?.focus();
+      return;
+    }
+
+    const button = B.facebookLoginCookieBtn;
+    const oldText = button?.textContent || 'Login Cookie';
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'Đang đăng nhập...';
+    }
+    if (B.facebookLogoutBtn) B.facebookLogoutBtn.disabled = true;
+    S.setCookieLoginStatus(`Đang đăng nhập bằng dòng ${selected.index + 1}...`);
+
+    try {
+      const response = await API.sendBridge([
+        'LOGIN_FACEBOOK_COOKIE',
+        'FACEBOOK_LOGIN_COOKIE',
+        'FB_LOGIN_COOKIE'
+      ], {
+        cookieList,
+        selectedCookie: selected.line,
+        selectedLineIndex: selected.index
+      });
+      const data = API.bridgeResponseData(response);
+      const uid = S.text(data?.uid);
+      S.setCookieLoginStatus(`Đăng nhập Cookie thành công${uid ? ` — UID ${uid}` : ''}.`, 'ok');
+      S.setBridgeStatus(`Đã đăng nhập Facebook bằng Cookie dòng ${selected.index + 1}${uid ? `, UID ${uid}` : ''}.`, 'ok');
+      await refreshFacebookLoginStatus({ silent: true });
+    } catch (error) {
+      S.setCookieLoginStatus(`Đăng nhập Cookie thất bại: ${error.message || error}`, 'error');
+      S.setBridgeStatus(`Đăng nhập Cookie thất bại: ${error.message || error}`, 'error');
+      await refreshFacebookLoginStatus({ silent: true });
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = oldText;
+      }
+    }
+  }
+
+  async function refreshFacebookLoginStatus({ silent = false } = {}) {
+    if (!S.getExtensionId()) {
+      S.renderFacebookAccount({ state: 'offline', message: 'Chưa kết nối Extension' });
+      return null;
+    }
+
+    if (!silent) S.renderFacebookAccount({ state: 'loading', message: 'Đang kiểm tra...' });
+
+    try {
+      const response = await API.sendBridge([
+        'GET_FB_LOGIN_STATUS',
+        'GET_FACEBOOK_LOGIN_STATUS',
+        'FB_LOGIN_STATUS'
+      ]);
+      const data = API.bridgeResponseData(response);
+      const uid = S.text(data?.uid);
+      const loggedIn = Boolean(data?.loggedIn && uid);
+      S.renderFacebookAccount({
+        loggedIn,
+        uid,
+        state: loggedIn ? 'online' : 'offline',
+        message: loggedIn ? '' : 'Chưa đăng nhập'
+      });
+      return data;
+    } catch (error) {
+      S.renderFacebookAccount({ state: 'error', message: 'Không đọc được UID' });
+      if (!silent) S.setBridgeStatus(`Không lấy được UID Facebook: ${error.message || error}`, 'error');
+      return null;
+    }
+  }
+
+  async function logoutFacebookFromWeb() {
+    if (!S.getExtensionId()) {
+      S.renderFacebookAccount({ state: 'offline', message: 'Chưa kết nối Extension' });
+      S.setBridgeStatus('Hãy nhập Extension ID trước khi đăng xuất Facebook.', 'warn');
+      return;
+    }
+
+    const button = B.facebookLogoutBtn;
+    const oldText = button?.textContent || 'Đăng xuất';
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'Đang đăng xuất...';
+    }
+
+    try {
+      const response = await API.sendBridge(['LOGOUT_FACEBOOK', 'FACEBOOK_LOGOUT', 'FB_LOGOUT']);
+      const data = API.bridgeResponseData(response);
+      S.renderFacebookAccount({ state: 'offline', message: 'Chưa đăng nhập' });
+      S.setBridgeStatus(`Đã đăng xuất Facebook và xóa ${Number(data?.removed || 0)} Cookie.`, 'ok');
+    } catch (error) {
+      S.renderFacebookAccount({ state: 'error', message: 'Đăng xuất thất bại' });
+      S.setBridgeStatus(`Đăng xuất Facebook thất bại: ${error.message || error}`, 'error');
+    } finally {
+      if (button) button.textContent = oldText;
+      await refreshFacebookLoginStatus({ silent: true });
+    }
+  }
+
+  function startFacebookStatusSync() {
+    if (facebookStatusTimer) clearInterval(facebookStatusTimer);
+    facebookStatusTimer = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        refreshFacebookLoginStatus({ silent: true });
+        loadCookieDraftFromExtension();
+      }
+    }, 15000);
+  }
+
   function wireBridge() {
     S.addInputSave(B.extensionId, S.STORE.extensionId);
+    S.addInputSave(B.facebookCookieListInput, S.STORE.facebookCookieList);
     S.addInputSave(B.fbGroupIdInput, S.STORE.groupIds);
     S.addInputSave(B.groupLimitInput, S.STORE.groupLimit);
     S.addInputSave(B.scanSourceModeSelect, S.STORE.scanSourceMode);
@@ -351,6 +501,31 @@
     S.getLoopPauseSeconds();
     S.getLinkPauseSeconds();
     S.renderCommentedLinks();
+    refreshFacebookLoginStatus();
+    loadCookieDraftFromExtension();
+    startFacebookStatusSync();
+
+    B.facebookLogoutBtn?.addEventListener('click', logoutFacebookFromWeb);
+    B.facebookLoginCookieBtn?.addEventListener('click', loginFacebookCookieFromWeb);
+    B.facebookCookieListInput?.addEventListener('input', () => {
+      S.save(S.STORE.facebookCookieList, B.facebookCookieListInput.value);
+      S.save(S.STORE.facebookCookieListUpdatedAt, Date.now());
+      clearTimeout(cookieDraftSyncTimer);
+      cookieDraftSyncTimer = setTimeout(() => syncCookieDraftToExtension({ silent: true }), 500);
+    });
+    B.extensionId?.addEventListener('input', () => {
+      clearTimeout(extensionIdRefreshTimer);
+      extensionIdRefreshTimer = setTimeout(async () => {
+        await refreshFacebookLoginStatus({ silent: false });
+        await loadCookieDraftFromExtension();
+      }, 450);
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        refreshFacebookLoginStatus({ silent: true });
+        loadCookieDraftFromExtension();
+      }
+    });
 
     B.scanGroupLinksBtn?.addEventListener('click', () => runBridgeTask(() => runClosedGroupLoop()).catch(error => S.setBridgeStatus(error.message || String(error), 'error')));
     B.autoWorkflowBtn?.addEventListener('click', () => runBridgeTask(() => autoWorkflow()).catch(error => S.setBridgeStatus(error.message || String(error), 'error')));
@@ -374,6 +549,11 @@
     runClosedGroupLoop,
     readFirstFacebookPost,
     autoWorkflow,
-    commentCurrentTab
+    commentCurrentTab,
+    refreshFacebookLoginStatus,
+    logoutFacebookFromWeb,
+    loginFacebookCookieFromWeb,
+    syncCookieDraftToExtension,
+    loadCookieDraftFromExtension
   };
 }());

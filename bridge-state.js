@@ -5,6 +5,12 @@
 
   const B = {
     extensionId: $('#bridgeExtensionId'),
+    facebookSession: $('#facebookSession'),
+    facebookUidValue: $('#facebookUidValue'),
+    facebookLogoutBtn: $('#facebookLogoutBtn'),
+    facebookCookieListInput: $('#facebookCookieListInput'),
+    facebookLoginCookieBtn: $('#facebookLoginCookieBtn'),
+    facebookCookieLoginStatus: $('#facebookCookieLoginStatus'),
     fbGroupIdInput: $('#fbGroupIdInput'),
     groupLimitInput: $('#groupLimitInput'),
     scanSourceModeSelect: $('#scanSourceModeSelect'),
@@ -29,6 +35,8 @@
 
   const STORE = {
     extensionId: 'truong_fb_bridge_extension_id_v1',
+    facebookCookieList: 'truong_fb_cookie_list_v1',
+    facebookCookieListUpdatedAt: 'truong_fb_cookie_list_updated_at_v1',
     groupIds: 'truong_fb_bridge_group_ids_v1',
     groupLimit: 'truong_fb_bridge_group_limit_v1',
     scanSourceMode: 'truong_fb_bridge_scan_source_mode_v1',
@@ -107,6 +115,39 @@
     if (!B.bridgeStatus) return;
     B.bridgeStatus.textContent = message;
     B.bridgeStatus.className = 'automation-status' + (type ? ' ' + type : '');
+  }
+
+  function renderFacebookAccount({ loggedIn = false, uid = '', state = '', message = '' } = {}) {
+    const normalizedUid = text(uid);
+    const resolvedState = state || (loggedIn && normalizedUid ? 'online' : 'offline');
+    if (B.facebookSession) B.facebookSession.dataset.state = resolvedState;
+    if (B.facebookUidValue) {
+      B.facebookUidValue.textContent = normalizedUid || message || (resolvedState === 'loading' ? 'Đang kiểm tra...' : 'Chưa đăng nhập');
+      B.facebookUidValue.title = normalizedUid || message || '';
+    }
+    if (B.facebookLogoutBtn) B.facebookLogoutBtn.disabled = !(loggedIn && normalizedUid);
+  }
+
+  function setCookieLoginStatus(message, type = '') {
+    if (!B.facebookCookieLoginStatus) return;
+    B.facebookCookieLoginStatus.textContent = message || '';
+    B.facebookCookieLoginStatus.className = 'inline-status' + (type ? ' ' + type : '');
+  }
+
+  function getSelectedCookieLine(textarea = B.facebookCookieListInput) {
+    const value = String(textarea?.value || '');
+    const lines = value.split(/\r?\n/);
+    if (!lines.length) return { line: '', index: -1 };
+
+    const caret = Number.isFinite(textarea?.selectionStart) ? textarea.selectionStart : -1;
+    if (caret >= 0) {
+      const index = value.slice(0, caret).split(/\r?\n/).length - 1;
+      const line = String(lines[index] || '').trim();
+      if (line) return { line, index };
+    }
+
+    const index = lines.findIndex(item => String(item || '').trim());
+    return { line: index >= 0 ? String(lines[index]).trim() : '', index };
   }
 
   function addInputSave(el, key) {
@@ -256,6 +297,9 @@
     getLoopPauseSeconds,
     getLinkPauseSeconds,
     setBridgeStatus,
+    renderFacebookAccount,
+    setCookieLoginStatus,
+    getSelectedCookieLine,
     addInputSave,
     parseLines,
     normalizeUrl,
