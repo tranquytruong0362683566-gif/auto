@@ -78,63 +78,6 @@
       border-bottom: 1px solid var(--border);
     }
     .brand { display: flex; gap: 12px; align-items: center; min-width: 0; }
-    .hero-actions {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 8px;
-      min-width: 0;
-    }
-    .facebook-session {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 7px;
-      max-width: 100%;
-      min-height: 36px;
-      padding: 5px 6px 5px 10px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: #fff;
-      box-shadow: var(--shadow-sm);
-      font-size: 12px;
-      color: var(--muted);
-    }
-    .facebook-session-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: var(--subtle);
-      box-shadow: 0 0 0 3px rgba(152, 162, 179, .14);
-      flex: 0 0 auto;
-    }
-    .facebook-session[data-state="online"] {
-      color: var(--success);
-      border-color: #bbf7d0;
-      background: var(--success-soft);
-    }
-    .facebook-session[data-state="online"] .facebook-session-dot {
-      background: var(--success);
-      box-shadow: 0 0 0 3px rgba(21, 128, 61, .13);
-    }
-    .facebook-session[data-state="offline"] {
-      color: var(--warning);
-      border-color: #fed7aa;
-      background: var(--warning-soft);
-    }
-    .facebook-session[data-state="error"] {
-      color: var(--danger);
-      border-color: #fecaca;
-      background: var(--danger-soft);
-    }
-    .facebook-session-label { font-weight: 700; white-space: nowrap; }
-    #facebookUidValue {
-      max-width: 190px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      color: currentColor;
-    }
     .brand-logo {
       width: 44px; height: 44px;
       display: grid; place-items: center;
@@ -259,7 +202,7 @@
     .hint { color: var(--subtle); font-size: 12px; line-height: 1.4; }
     .counter { color: var(--subtle); font-size: 11px; white-space: nowrap; }
 
-    textarea, input[type="text"], select {
+    textarea, input[type="text"], input[type="password"], select {
       width: 100%;
       color: var(--text);
       background: #fff;
@@ -271,7 +214,7 @@
       box-shadow: 0 1px 0 rgba(16, 24, 40, 0.02);
       transition: border-color .14s ease, box-shadow .14s ease;
     }
-    textarea:focus, input[type="text"]:focus, select:focus {
+    textarea:focus, input[type="text"]:focus, input[type="password"]:focus, select:focus {
       border-color: var(--primary);
       box-shadow: 0 0 0 4px rgba(79, 70, 229, .09);
       outline: none;
@@ -398,50 +341,6 @@
     .automation-status.ok { color: var(--success); background: var(--success-soft); border-color: #bbf7d0; }
     .automation-status.warn { color: var(--warning); background: var(--warning-soft); border-color: #fed7aa; }
     .automation-status.error { color: var(--danger); background: var(--danger-soft); border-color: #fecaca; }
-    .bridge-error-panel {
-      margin-top: 10px;
-      padding: 12px;
-      border: 1px solid #fecaca;
-      border-radius: 14px;
-      background: #fff7f7;
-      color: var(--danger);
-      font-size: 13px;
-      line-height: 1.45;
-    }
-    .bridge-error-head {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: flex-start;
-      margin-bottom: 8px;
-    }
-    .bridge-error-head span { font-weight: 700; text-align: right; }
-    .bridge-error-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 6px 12px;
-      color: #991b1b;
-      word-break: break-word;
-    }
-    .bridge-error-full { grid-column: 1 / -1; }
-    .bridge-error-trigger {
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px dashed #fecaca;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      align-items: center;
-      color: #7f1d1d;
-    }
-    .bridge-error-trigger span {
-      padding: 2px 7px;
-      border-radius: 999px;
-      background: #fee2e2;
-      border: 1px solid #fecaca;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 12px;
-    }
     #generateBtn { min-height: 48px; font-size: 15px; }
 
     .output-box {
@@ -722,46 +621,68 @@
   padding: 0;
 }
 
-    @media (max-width: 760px) {
-      .hero { grid-template-columns: 1fr; }
-      .hero-actions { align-items: stretch; }
-      .hero-actions .pro-badge { align-self: flex-start; }
-      .facebook-session { justify-content: flex-start; flex-wrap: wrap; }
-      #facebookUidValue { max-width: min(100%, 210px); }
-    }
 
-
-/* Multi-account Facebook Cookie login */
-.cookie-login-group {
-  margin-top: 14px;
-}
-
-.cookie-list-input {
-  min-height: 138px;
-  font-family: Consolas, "Courier New", monospace;
-  font-size: 12px;
-  line-height: 1.5;
-  white-space: pre;
-  overflow: auto;
-}
-
-.cookie-login-actions {
+/* API key field */
+.api-key-field {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  flex-wrap: wrap;
-  margin-top: 10px;
+  gap: 9px;
+  min-height: 46px;
+  padding: 4px 5px 4px 12px;
+  border: 1px solid #c7d2fe;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.08);
+  transition: border-color .14s ease, box-shadow .14s ease, background .14s ease;
 }
-
-.cookie-login-actions .btn {
-  min-width: 150px;
+.api-key-field:focus-within {
+  border-color: var(--primary);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, .09), 0 8px 20px rgba(79, 70, 229, 0.10);
 }
-
-.inline-status {
-  min-height: 20px;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.45;
+.api-key-icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: var(--primary-soft);
+  font-size: 14px;
 }
-
-.inline-status.ok { color: var(--success); }
-.inline-status.warn { color: var(--warning); }
-.inline-status.error { color: var(--danger); }
+.api-key-field #chatApiKeyInput {
+  min-width: 0;
+  padding: 8px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-family: Consolas, "SFMono-Regular", Menlo, monospace;
+}
+.api-key-field #chatApiKeyInput:focus {
+  border: 0;
+  outline: none;
+  box-shadow: none;
+}
+.api-key-toggle {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  color: #475467;
+  background: #eef2ff;
+  cursor: pointer;
+  transition: background .14s ease, color .14s ease, transform .14s ease;
+}
+.api-key-toggle:hover {
+  color: var(--primary);
+  background: #e0e7ff;
+}
+.api-key-toggle:active { transform: scale(.96); }
+.api-key-toggle:focus-visible {
+  outline: 3px solid rgba(79, 70, 229, .18);
+  outline-offset: 1px;
+}

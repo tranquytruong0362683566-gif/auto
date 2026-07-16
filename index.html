@@ -29,15 +29,7 @@
               <p>Quét nhóm, lọc trùng link, đọc nội dung bài viết, tạo bình luận và gửi sang tab Facebook.</p>
             </div>
           </div>
-          <div class="hero-actions">
-            <span class="pro-badge">⚡ WEB + EXTENSION + CHATGPT API</span>
-            <div class="facebook-session" id="facebookSession" data-state="loading" aria-live="polite">
-              <span class="facebook-session-dot" aria-hidden="true"></span>
-              <span class="facebook-session-label">UID Facebook:</span>
-              <strong id="facebookUidValue">Đang kiểm tra...</strong>
-              <button class="btn btn-danger btn-sm" id="facebookLogoutBtn" type="button" disabled>Đăng xuất</button>
-            </div>
-          </div>
+          <span class="pro-badge">⚡ WEB + EXTENSION + CHATGPT API</span>
         </header>
 
             <details class="advanced-panel">
@@ -62,11 +54,19 @@
                     </div>
                     <div class="form-group">
                       <label for="chatApiModelInput">Model</label>
-                      <input type="text" id="chatApiModelInput" value="gpt-4o-mini" spellcheck="false">
+                      <select id="chatApiModelInput">
+                        <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+                        <option value="gpt-5.4-mini">gpt-5.4-mini</option>
+                        <option value="gpt-5-mini">gpt-5-mini</option>
+                      </select>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group api-key-group">
                       <label for="chatApiKeyInput">API key</label>
-                      <input type="password" id="chatApiKeyInput" placeholder="Dán API key dạng sk-..." autocomplete="off" spellcheck="false">
+                      <div class="api-key-field">
+                        <span class="api-key-icon" aria-hidden="true">🔑</span>
+                        <input type="password" id="chatApiKeyInput" placeholder="Dán API key dạng sk-..." autocomplete="off" spellcheck="false">
+                        <button class="api-key-toggle" id="chatApiKeyToggle" type="button" aria-label="Hiện API key" title="Hiện API key">👁</button>
+                      </div>
                     </div>
                   </div>
                   <div class="hint">Web sẽ gọi trực tiếp endpoint Chat Completions bằng header Authorization: Bearer API_KEY. API key được lưu trong localStorage của trình duyệt.</div>
@@ -87,16 +87,6 @@
                     <input type="text" id="bridgeExtensionId" placeholder="Dán ID extension Bridge ở đây">
                     <div class="hint">Mở popup extension, copy ID rồi dán vào ô này để web GitHub gửi lệnh quét/đọc/comment sang Chrome Extension.</div>
                   </div>
-
-                  <div class="form-group cookie-login-group">
-                    <label for="facebookCookieListInput">Cookie Facebook — mỗi dòng một tài khoản</label>
-                    <textarea id="facebookCookieListInput" class="cookie-list-input" rows="6" spellcheck="false" placeholder="100012345678901|c_user=100012345678901;xs=...;fr=...;|Mozilla/5.0...&#10;100098765432100|c_user=100098765432100;xs=...;fr=...;|Mozilla/5.0..."></textarea>
-                    <div class="hint">Đặt con trỏ tại dòng muốn sử dụng rồi bấm Login Cookie. Khi Web báo Chưa đăng nhập, hệ thống tự dùng dòng Cookie đầu tiên; sau khi xác nhận UID, Web đếm theo mục “Tự bấm Chạy tự động sau” rồi mới chạy. Danh sách này đồng bộ với ô Login Cookie New trong popup Extension.</div>
-                    <div class="actions cookie-login-actions">
-                      <button class="btn btn-primary" id="facebookLoginCookieBtn" type="button">Login Cookie</button>
-                      <span class="inline-status" id="facebookCookieLoginStatus" aria-live="polite">Sẵn sàng đăng nhập Cookie.</span>
-                    </div>
-                  </div>
                 </div>
 
                 <div class="advanced-section">
@@ -106,10 +96,8 @@
                     <select id="scanSourceModeSelect">
                       <option value="group_latest">Bài viết mới — https://www.facebook.com/groups/IDnhom/?sorting_setting=CHRONOLOGICAL</option>
                       <option value="group_top">Bài viết Top — https://www.facebook.com/groups/IDnhom/?sorting_setting=TOP_POSTS</option>
-                      <option value="groups_feed">Bản Tin Nhóm — https://www.facebook.com/groups/feed/</option>
-                      <option value="home_feed">Bài Viết Trang Chủ — https://www.facebook.com/</option>
                     </select>
-                    <div class="hint">Bài viết mới/Bài viết Top dùng UID nhóm bên dưới. Bản Tin Nhóm và Trang Chủ sẽ mở đúng trang feed tương ứng để quét link.</div>
+                    <div class="hint">Bài viết mới và Bài viết Top dùng UID nhóm bên dưới để quét link.</div>
                   </div>
                 </div>
 
@@ -130,11 +118,6 @@
                       <label for="linkPauseSecondsInput">Nghỉ sau mỗi link</label>
                       <input id="linkPauseSecondsInput" type="number" min="0" max="86400" step="1" value="60">
                       <div class="hint">Tính bằng giây. Áp dụng sau khi chạy xong từng link.</div>
-                    </div>
-                    <div class="form-group">
-                      <label for="autoRunDelaySecondsInput">Tự bấm Chạy tự động sau</label>
-                      <input id="autoRunDelaySecondsInput" type="number" min="0" max="86400" step="1" value="15">
-                      <div class="hint">Tính bằng giây. Khi đã có UID Facebook, Web tự bấm “Chạy tự động”. Nhập 0 để tắt.</div>
                     </div>
                   </div>
                 </div>
@@ -179,22 +162,6 @@
               <button class="btn btn-danger hidden" id="stopClosedLoopBtn" type="button">⛔ Dừng</button>
             </div>
             <div class="automation-status" id="bridgeStatus">Sẵn sàng kết nối extension.</div>
-            <div class="bridge-error-panel hidden" id="bridgeErrorPanel" aria-live="polite">
-              <div class="bridge-error-head">
-                <strong>Lỗi làm web dừng</strong>
-                <span id="bridgeErrorAction">Chưa có lỗi.</span>
-              </div>
-              <div class="bridge-error-grid">
-                <div><b>Mã lỗi:</b> <span id="bridgeErrorCode">—</span></div>
-                <div><b>Vị trí:</b> <span id="bridgeErrorContext">—</span></div>
-                <div class="bridge-error-full"><b>Link giữ lại:</b> <span id="bridgeErrorLink">—</span></div>
-                <div class="bridge-error-full"><b>Chi tiết:</b> <span id="bridgeErrorMessage">—</span></div>
-              </div>
-              <div class="bridge-error-trigger">
-                <b>Chỉ dừng và đăng xuất khi:</b>
-                <span>SPAM_WARNING</span>
-              </div>
-            </div>
           </section>
 
           <section class="workflow-panel" aria-labelledby="linksTitle">
@@ -227,7 +194,7 @@
                 </div>
                 <textarea id="articleInput" maxlength="6000" placeholder="Dán nội dung bài viết cần trả lời vào đây..."></textarea>
                 <div class="field-status">
-                  <span class="hint">AI sẽ phân loại trước: bài người bán/cho thuê trả (next), bài cần mua/tán gẫu mới tạo bình luận.</span>
+                  <span class="hint">AI sẽ phân loại trước: bài người bán/cho thuê chỉ trả (next) khi không trùng tên sản phẩm; nếu trùng sản phẩm đang bán thì vẫn tạo lời giới thiệu.</span>
                   <span class="counter" id="articleCounter">0/6000</span>
                 </div>
               </div>

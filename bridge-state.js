@@ -5,30 +5,17 @@
 
   const B = {
     extensionId: $('#bridgeExtensionId'),
-    facebookSession: $('#facebookSession'),
-    facebookUidValue: $('#facebookUidValue'),
-    facebookLogoutBtn: $('#facebookLogoutBtn'),
-    facebookCookieListInput: $('#facebookCookieListInput'),
-    facebookLoginCookieBtn: $('#facebookLoginCookieBtn'),
-    facebookCookieLoginStatus: $('#facebookCookieLoginStatus'),
     fbGroupIdInput: $('#fbGroupIdInput'),
     groupLimitInput: $('#groupLimitInput'),
     scanSourceModeSelect: $('#scanSourceModeSelect'),
     loopPauseSecondsInput: $('#loopPauseSecondsInput'),
     linkPauseSecondsInput: $('#linkPauseSecondsInput'),
-    autoRunDelaySecondsInput: $('#autoRunDelaySecondsInput'),
     fbPostLinkInput: $('#fbPostLinkInput'),
     scanGroupLinksBtn: $('#scanGroupLinksBtn'),
     stopClosedLoopBtn: $('#stopClosedLoopBtn'),
     autoWorkflowBtn: $('#autoWorkflowBtn'),
     commentCurrentTabBtn: $('#commentCurrentTabBtn'),
     bridgeStatus: $('#bridgeStatus'),
-    bridgeErrorPanel: $('#bridgeErrorPanel'),
-    bridgeErrorAction: $('#bridgeErrorAction'),
-    bridgeErrorCode: $('#bridgeErrorCode'),
-    bridgeErrorContext: $('#bridgeErrorContext'),
-    bridgeErrorLink: $('#bridgeErrorLink'),
-    bridgeErrorMessage: $('#bridgeErrorMessage'),
     articleInput: $('#articleInput'),
     output: $('#output'),
     fbDelayMs: $('#fbDelayMs'),
@@ -42,15 +29,12 @@
 
   const STORE = {
     extensionId: 'truong_fb_bridge_extension_id_v1',
-    facebookCookieList: 'truong_fb_cookie_list_v1',
-    facebookCookieListUpdatedAt: 'truong_fb_cookie_list_updated_at_v1',
     groupIds: 'truong_fb_bridge_group_ids_v1',
     groupLimit: 'truong_fb_bridge_group_limit_v1',
     scanSourceMode: 'truong_fb_bridge_scan_source_mode_v1',
     loopPauseSeconds: 'truong_fb_bridge_loop_pause_seconds_v1',
     oldLoopPauseMinutes: 'truong_fb_bridge_loop_pause_minutes_v1',
     linkPauseSeconds: 'truong_fb_bridge_link_pause_seconds_v1',
-    autoRunDelaySeconds: 'truong_fb_bridge_auto_run_delay_seconds_v1',
     postLinks: 'truong_fb_bridge_post_links_v1',
     commented: 'truong_fb_bridge_commented_links_v1'
   };
@@ -84,7 +68,7 @@
 
 
   function getScanSourceMode() {
-    const allowed = new Set(['group_latest', 'group_top', 'groups_feed', 'home_feed']);
+    const allowed = new Set(['group_latest', 'group_top']);
     const raw = String(B.scanSourceModeSelect?.value || load(STORE.scanSourceMode, 'group_latest') || 'group_latest');
     const value = allowed.has(raw) ? raw : 'group_latest';
     if (B.scanSourceModeSelect) B.scanSourceModeSelect.value = value;
@@ -119,74 +103,10 @@
     return value;
   }
 
-  function getAutoRunDelaySeconds() {
-    const value = Math.round(clampNumber(B.autoRunDelaySecondsInput?.value, 15, 0, 86400));
-    if (B.autoRunDelaySecondsInput) B.autoRunDelaySecondsInput.value = String(value);
-    save(STORE.autoRunDelaySeconds, B.autoRunDelaySecondsInput?.value || String(value));
-    return value;
-  }
-
   function setBridgeStatus(message, type = '') {
     if (!B.bridgeStatus) return;
     B.bridgeStatus.textContent = message;
     B.bridgeStatus.className = 'automation-status' + (type ? ' ' + type : '');
-    if (type !== 'error') clearBridgeErrorPanel();
-  }
-
-  function clearBridgeErrorPanel() {
-    B.bridgeErrorPanel?.classList.add('hidden');
-    if (B.bridgeErrorAction) B.bridgeErrorAction.textContent = 'Chưa có lỗi.';
-    if (B.bridgeErrorCode) B.bridgeErrorCode.textContent = '—';
-    if (B.bridgeErrorContext) B.bridgeErrorContext.textContent = '—';
-    if (B.bridgeErrorLink) B.bridgeErrorLink.textContent = '—';
-    if (B.bridgeErrorMessage) B.bridgeErrorMessage.textContent = '—';
-  }
-
-  function renderBridgeStopError({ code = '', message = '', link = '', context = '', shouldSwitch = false } = {}) {
-    if (!B.bridgeErrorPanel) return;
-    B.bridgeErrorPanel.classList.remove('hidden');
-    if (B.bridgeErrorAction) {
-      B.bridgeErrorAction.textContent = shouldSwitch
-        ? 'Dừng để đổi tài khoản Facebook khác'
-        : 'Dừng để kiểm tra lỗi, giữ nguyên queue';
-    }
-    if (B.bridgeErrorCode) B.bridgeErrorCode.textContent = String(code || 'UNKNOWN_ERROR');
-    if (B.bridgeErrorContext) B.bridgeErrorContext.textContent = String(context || 'Không rõ vị trí');
-    if (B.bridgeErrorLink) B.bridgeErrorLink.textContent = String(link || 'Không có link');
-    if (B.bridgeErrorMessage) B.bridgeErrorMessage.textContent = String(message || 'Không có chi tiết');
-  }
-
-  function renderFacebookAccount({ loggedIn = false, uid = '', state = '', message = '' } = {}) {
-    const normalizedUid = text(uid);
-    const resolvedState = state || (loggedIn && normalizedUid ? 'online' : 'offline');
-    if (B.facebookSession) B.facebookSession.dataset.state = resolvedState;
-    if (B.facebookUidValue) {
-      B.facebookUidValue.textContent = normalizedUid || message || (resolvedState === 'loading' ? 'Đang kiểm tra...' : 'Chưa đăng nhập');
-      B.facebookUidValue.title = normalizedUid || message || '';
-    }
-    if (B.facebookLogoutBtn) B.facebookLogoutBtn.disabled = !(loggedIn && normalizedUid);
-  }
-
-  function setCookieLoginStatus(message, type = '') {
-    if (!B.facebookCookieLoginStatus) return;
-    B.facebookCookieLoginStatus.textContent = message || '';
-    B.facebookCookieLoginStatus.className = 'inline-status' + (type ? ' ' + type : '');
-  }
-
-  function getSelectedCookieLine(textarea = B.facebookCookieListInput) {
-    const value = String(textarea?.value || '');
-    const lines = value.split(/\r?\n/);
-    if (!lines.length) return { line: '', index: -1 };
-
-    const caret = Number.isFinite(textarea?.selectionStart) ? textarea.selectionStart : -1;
-    if (caret >= 0) {
-      const index = value.slice(0, caret).split(/\r?\n/).length - 1;
-      const line = String(lines[index] || '').trim();
-      if (line) return { line, index };
-    }
-
-    const index = lines.findIndex(item => String(item || '').trim());
-    return { line: index >= 0 ? String(lines[index]).trim() : '', index };
   }
 
   function addInputSave(el, key) {
@@ -335,13 +255,7 @@
     getGroupLimit,
     getLoopPauseSeconds,
     getLinkPauseSeconds,
-    getAutoRunDelaySeconds,
     setBridgeStatus,
-    clearBridgeErrorPanel,
-    renderBridgeStopError,
-    renderFacebookAccount,
-    setCookieLoginStatus,
-    getSelectedCookieLine,
     addInputSave,
     parseLines,
     normalizeUrl,

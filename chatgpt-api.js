@@ -2,7 +2,7 @@
 
     const APP = {
       apiEndpoint: 'https://console.flatkey.ai/v1/chat/completions',
-      model: 'gpt-4o-mini',
+      model: 'gpt-4.1-mini',
       storage: {
         leftTemplates: 'truong_ai_commenter_templates_left_v2',
         rightTemplates: 'truong_ai_commenter_templates_right_v2',
@@ -30,6 +30,7 @@
       tokenBanner: $('#tokenBanner'),
       chatApiEndpointInput: $('#chatApiEndpointInput'),
       chatApiKeyInput: $('#chatApiKeyInput'),
+      chatApiKeyToggle: $('#chatApiKeyToggle'),
       chatApiModelInput: $('#chatApiModelInput'),
       articleInput: $('#articleInput'),
       productNameInput: $('#productNameInput'),
@@ -106,7 +107,10 @@
     }
 
     function getApiModel() {
-      const value = String(els.chatApiModelInput?.value || loadStorage(APP.storage.apiModel, APP.model) || APP.model).trim() || APP.model;
+      const allowedModels = new Set(['gpt-4.1-mini', 'gpt-5.4-mini', 'gpt-5-mini']);
+      const storedValue = String(loadStorage(APP.storage.apiModel, APP.model) || APP.model).trim();
+      const selectedValue = String(els.chatApiModelInput?.value || storedValue || APP.model).trim();
+      const value = allowedModels.has(selectedValue) ? selectedValue : APP.model;
       if (els.chatApiModelInput && els.chatApiModelInput.value !== value) els.chatApiModelInput.value = value;
       saveStorage(APP.storage.apiModel, value);
       return value;
@@ -121,7 +125,10 @@
 
     function restoreApiSettings() {
       if (els.chatApiEndpointInput) els.chatApiEndpointInput.value = loadStorage(APP.storage.apiEndpoint, APP.apiEndpoint) || APP.apiEndpoint;
-      if (els.chatApiModelInput) els.chatApiModelInput.value = loadStorage(APP.storage.apiModel, APP.model) || APP.model;
+      if (els.chatApiModelInput) {
+        const storedModel = String(loadStorage(APP.storage.apiModel, APP.model) || APP.model).trim();
+        els.chatApiModelInput.value = ['gpt-4.1-mini', 'gpt-5.4-mini', 'gpt-5-mini'].includes(storedModel) ? storedModel : APP.model;
+      }
       if (els.chatApiKeyInput) els.chatApiKeyInput.value = loadStorage(APP.storage.apiKey, '') || '';
     }
 
@@ -476,16 +483,94 @@
       return /^\(?\s*next\s*\)?$/i.test(String(text || '').trim());
     }
 
-    function buildArticleIntentPrompt({ article }) {
+    const PRODUCT_MATCH_STOP_WORDS = new Set([
+      'san', 'pham', 'hang', 'loai', 'bo', 'cai', 'chiec', 'mau', 'moi',
+      'chinh', 'hang', 'cao', 'cap', 'gia', 're', 'sale', 'ban', 'dang',
+      'co', 'can', 'cho', 'va', 'voi', 'cua', 'the', 'he'
+    ]);
+
+    function normalizeProductMatchText(value) {
+      return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'D')
+        .toLowerCase()
+        .replace(/https?:\/\/\S+/g, ' ')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function getProductNameMatch(article, productName) {
+      const normalizedArticle = normalizeProductMatchText(article);
+      const normalizedProduct = normalizeProductMatchText(productName);
+      const noMatch = {
+        matched: false,
+        type: 'none',
+        ratio: 0,
+        matchedTokens: [],
+        normalizedProduct
+      };
+
+      if (!normalizedArticle || !normalizedProduct || normalizedProduct.length < 3) return noMatch;
+
+      if (normalizedArticle.includes(normalizedProduct)) {
+        return {
+          matched: true,
+          type: 'exact_phrase',
+          ratio: 1,
+          matchedTokens: normalizedProduct.split(' ').filter(Boolean),
+          normalizedProduct
+        };
+      }
+
+      const articleTokens = new Set(normalizedArticle.split(' ').filter(Boolean));
+      const productTokens = [...new Set(
+        normalizedProduct
+          .split(' ')
+          .filter(token => token.length >= 2 && !PRODUCT_MATCH_STOP_WORDS.has(token))
+      )];
+
+      if (productTokens.length < 2) return noMatch;
+
+      const matchedTokens = productTokens.filter(token => articleTokens.has(token));
+      const ratio = matchedTokens.length / productTokens.length;
+      const hasDistinctiveToken = matchedTokens.some(token => /\d/.test(token) || token.length >= 5);
+      const hasModelToken = matchedTokens.some(token => /\d/.test(token));
+      const enoughMatchedTokens = matchedTokens.length >= Math.min(3, productTokens.length);
+      const matched = enoughMatchedTokens
+        && hasDistinctiveToken
+        && (ratio >= 0.5 || (hasModelToken && matchedTokens.length >= 3 && ratio >= 0.4));
+
+      return {
+        matched,
+        type: matched ? 'keyword_overlap' : 'none',
+        ratio,
+        matchedTokens,
+        normalizedProduct
+      };
+    }
+
+    function buildArticleIntentPrompt({ article, productName, productMatch }) {
+      const matchDescription = productMatch?.matched
+        ? `CÓ KHỚP (${productMatch.type}, các từ khớp: ${productMatch.matchedTokens.join(', ') || productName})`
+        : 'KHÔNG KHỚP';
+
       return `Bạn là bộ phân loại bài viết Facebook trước khi tạo bình luận.
 
 Nhiệm vụ: Đọc nội dung bài viết và quyết định có nên tạo bình luận bán hàng hay bỏ qua.
 
-Quy tắc phân loại:
-1. Nếu người đăng là người bán, người cho thuê, chủ shop, môi giới, đại lý, đăng thanh lý, đăng báo giá, đăng sẵn hàng, tuyển khách, quảng cáo dịch vụ/sản phẩm, để SĐT/Zalo/IB chốt đơn, hoặc nội dung có ý định bán/cho thuê/cung cấp hàng hóa/dịch vụ thì trả về đúng: (next)
-2. Nếu bài viết là người cần mua, cần thuê, tìm mua, tìm phòng, hỏi nơi bán, hỏi tư vấn, xin gợi ý, tán ngẫu, chia sẻ vấn đề, hỏi kinh nghiệm, hoặc nội dung không phải bài người bán thì trả về đúng: comment
-3. Chỉ trả về một trong hai kết quả: (next) hoặc comment
-4. Không giải thích, không thêm ký tự khác.
+Dữ liệu sản phẩm của người bình luận:
+- Tên sản phẩm đang bán: "${productName || 'Chưa nhập'}"
+- Kết quả so khớp tên sản phẩm với bài viết: ${matchDescription}
+
+Quy tắc phân loại theo đúng thứ tự ưu tiên:
+1. NGOẠI LỆ ƯU TIÊN: Nếu nội dung bài viết nhắc đúng hoặc gần đúng tên sản phẩm đang bán, trả về đúng: comment. Quy tắc này áp dụng cả khi người đăng cũng đang bán, thanh lý, báo giá hoặc giới thiệu chính sản phẩm đó, vì người bình luận được phép tiện giới thiệu sản phẩm của mình.
+2. Chỉ khi KHÔNG có sản phẩm trùng: nếu người đăng là người bán, người cho thuê, chủ shop, môi giới, đại lý, đăng thanh lý, đăng báo giá, đăng sẵn hàng, tuyển khách, quảng cáo dịch vụ/sản phẩm, để SĐT/Zalo/IB chốt đơn, hoặc có ý định bán/cho thuê/cung cấp hàng hóa/dịch vụ thì trả về đúng: (next)
+3. Nếu bài viết là người cần mua, cần thuê, tìm mua, tìm phòng, hỏi nơi bán, hỏi tư vấn, xin gợi ý, tán ngẫu, chia sẻ vấn đề, hỏi kinh nghiệm, hoặc nội dung không phải bài người bán thì trả về đúng: comment
+4. Chỉ trả về một trong hai kết quả: (next) hoặc comment
+5. Không giải thích, không thêm ký tự khác.
 
 Nội dung bài viết:
 """
@@ -493,17 +578,25 @@ ${article}
 """`;
     }
 
-    async function classifyArticleIntent(article) {
-      const prompt = buildArticleIntentPrompt({ article });
+    async function classifyArticleIntent(article, productName = '') {
+      const productMatch = getProductNameMatch(article, productName);
+
+      // Khi mã đã xác định tên sản phẩm trùng rõ ràng, luôn cho phép tạo bình luận.
+      if (productMatch.matched) return 'comment';
+
+      const prompt = buildArticleIntentPrompt({ article, productName, productMatch });
       const response = await callChatCompletion(prompt);
       const result = stripAiWrapper(extractResponseText(response)).toLowerCase();
       return isNextResult(result) ? 'next' : 'comment';
     }
 
-    function buildPrompt({ article, productName, selectedLink, selectedTone }) {
+    function buildPrompt({ article, productName, selectedLink, selectedTone, productMatch }) {
       const linkInstruction = selectedLink
         ? `- Link sản phẩm được phép dùng: ${selectedLink}`
         : '- Không có link sản phẩm, không được tự bịa link';
+      const matchedProductInstruction = productMatch?.matched
+        ? `- Tên sản phẩm đã được hệ thống xác định là trùng với nội dung bài viết (${productMatch.matchedTokens.join(', ') || productName}). BẮT BUỘC viết bình luận, không được trả về (next), kể cả bài gốc là bài người bán. Hãy chuyển ý tự nhiên theo hướng "tiện giới thiệu bên mình cũng đang có sản phẩm này".`
+        : '- Tên sản phẩm không trùng rõ ràng với nội dung bài viết.';
 
       return `Bạn là chuyên gia Social Content và Affiliate Marketing có kinh nghiệm viết bình luận Facebook tự nhiên.
 
@@ -513,20 +606,52 @@ Dữ liệu:
 - Nội dung bài viết gốc: "${article}"
 - Tên sản phẩm: "${productName || 'Sản phẩm'}"
 ${linkInstruction}
+${matchedProductInstruction}
 - Phong cách yêu cầu: ${selectedTone}
 
 Quy tắc bắt buộc:
-1. Chỉ viết khi bài viết không phải của người bán/cho thuê/cung cấp dịch vụ. Nếu phát hiện bài người bán thì trả về đúng: (next)
-2. Đọc bài viết trước, chọn 1 chi tiết/cảm xúc chính để mở đầu bằng 1 câu đồng cảm thật tự nhiên.
-3. Nếu sản phẩm liên quan trực tiếp đến bài viết, lồng ghép như một gợi ý hữu ích.
-4. Nếu sản phẩm không liên quan trực tiếp, chuyển ý nhẹ bằng cụm như "À tiện thể", "Sẵn tiện", "Nhân đây".
-5. Không phóng đại công dụng, không cam kết chắc chắn, không giả vờ đã mua nếu dữ liệu không nói vậy.
-6. Không spam, không hashtag, không viết hoa toàn bộ, không dùng quá 1 emoji.
-7. Tổng 2-4 câu. Mỗi câu nên dưới 20 từ. Ngôn ngữ giống người thật bình luận.
-8. Nếu có link, để URL trần ở cuối hoặc gần cuối, không dùng markdown, không đặt trong ngoặc kép.
-9. Câu cuối không có dấu chấm.
+1. Nếu tên sản phẩm đã trùng với nội dung bài viết thì luôn viết bình luận giới thiệu sản phẩm của mình một cách tự nhiên, dù người đăng cũng đang bán/cho thuê/cung cấp sản phẩm đó.
+2. Chỉ trả về đúng (next) khi bài là người bán/cho thuê/cung cấp dịch vụ VÀ tên sản phẩm của mình không trùng với nội dung bài viết.
+3. Đọc bài viết trước, chọn 1 chi tiết chính để mở đầu tự nhiên, không tranh luận hoặc chê sản phẩm của người đăng.
+4. Nếu sản phẩm liên quan trực tiếp, dùng cách chuyển ý như "Tiện đây", "Bên mình cũng đang có", "Ai cần tham khảo thêm".
+5. Nếu sản phẩm không liên quan trực tiếp nhưng bài vẫn phù hợp để bình luận, chuyển ý nhẹ bằng cụm như "À tiện thể", "Sẵn tiện", "Nhân đây".
+6. Không phóng đại công dụng, không cam kết chắc chắn, không giả vờ đã mua nếu dữ liệu không nói vậy.
+7. Không hashtag, không viết hoa toàn bộ, không dùng quá 1 emoji.
+8. Tổng 2-4 câu. Mỗi câu nên dưới 20 từ. Ngôn ngữ giống người thật bình luận.
+9. Nếu có link, để URL trần ở cuối hoặc gần cuối, không dùng markdown, không đặt trong ngoặc kép.
+10. Câu cuối không có dấu chấm.
 
 Chỉ trả về nội dung bình luận hoặc đúng (next), không thêm tiêu đề, không giải thích.`;
+    }
+
+    function buildMatchedProductRetryPrompt({ article, productName, selectedLink, selectedTone }) {
+      const linkInstruction = selectedLink
+        ? `Chèn đúng link này gần cuối bình luận: ${selectedLink}`
+        : 'Không chèn hoặc tự tạo link.';
+
+      return `Viết ngay 1 bình luận Facebook tiếng Việt dài 2-4 câu.
+
+Bài viết đang nhắc đúng hoặc gần đúng sản phẩm: "${productName}".
+Nội dung bài viết:
+"""
+${article}
+"""
+
+Yêu cầu bắt buộc:
+- Không được trả về (next).
+- Dù người đăng đang bán sản phẩm này, vẫn giới thiệu tự nhiên rằng bên mình cũng đang có sản phẩm cùng tên để mọi người tham khảo.
+- Không chê, không so sánh tiêu cực, không tranh khách trực diện.
+- Phong cách: ${selectedTone}.
+- ${linkInstruction}
+- Câu cuối không có dấu chấm.
+
+Chỉ trả về nội dung bình luận.`;
+    }
+
+    function buildMatchedProductFallback(productName, selectedLink) {
+      const cleanName = String(productName || 'sản phẩm này').trim();
+      const linkText = selectedLink ? ` Ai cần tham khảo thêm có thể xem ${selectedLink}` : ' Ai cần tham khảo thêm có thể nhắn mình';
+      return `Đúng dòng ${cleanName} này rồi. Tiện đây bên mình cũng đang có sản phẩm này để mọi người tham khảo.${linkText}`;
     }
 
     async function generateComment() {
@@ -559,23 +684,45 @@ Chỉ trả về nội dung bình luận hoặc đúng (next), không thêm tiê
       setOutput('Đang gửi bài viết cho AI phân loại trước...', 'loading');
 
       try {
-        const articleIntent = await classifyArticleIntent(article);
+        const productMatch = getProductNameMatch(article, productName);
+        if (productMatch.matched) {
+          setOutput(`Đã phát hiện bài viết trùng tên sản phẩm (${productMatch.matchedTokens.join(', ') || productName}). Đang tạo bình luận giới thiệu...`, 'loading');
+        }
+
+        const articleIntent = await classifyArticleIntent(article, productName);
         if (articleIntent === 'next') {
           setOutput('(next)');
-          toast('AI xác định đây là bài người bán/cho thuê, đã bỏ qua tạo comment.', 'warning');
+          toast('Bài người bán/cho thuê không trùng sản phẩm đang bán, đã bỏ qua.', 'warning');
           return '(next)';
         }
 
-        setOutput('Bài phù hợp để trả lời. Đang tạo bình luận...', 'loading');
+        setOutput(
+          productMatch.matched
+            ? 'Sản phẩm trùng nội dung bài viết. Đang tạo lời giới thiệu tự nhiên...'
+            : 'Bài phù hợp để trả lời. Đang tạo bình luận...',
+          'loading'
+        );
         const latestLinks = parseLinks(els.productLinkInput.value).valid;
         selectedLink = firstFrom(latestLinks);
         refillPromise = selectedLink && latestLinks.length <= 1
           ? refillShopeeLinksIfNeeded([selectedLink], 'low_links')
           : Promise.resolve([]);
 
-        const prompt = buildPrompt({ article, productName, selectedLink, selectedTone });
+        const prompt = buildPrompt({ article, productName, selectedLink, selectedTone, productMatch });
         const response = await callChatCompletion(prompt);
-        const result = stripAiWrapper(extractResponseText(response));
+        let result = stripAiWrapper(extractResponseText(response));
+
+        if (isNextResult(result) && productMatch.matched) {
+          setOutput('AI vừa trả về (next) dù sản phẩm trùng. Đang tự viết lại bình luận...', 'loading');
+          const retryPrompt = buildMatchedProductRetryPrompt({ article, productName, selectedLink, selectedTone });
+          const retryResponse = await callChatCompletion(retryPrompt);
+          result = stripAiWrapper(extractResponseText(retryResponse));
+
+          if (!result || isNextResult(result)) {
+            result = buildMatchedProductFallback(productName, selectedLink);
+          }
+        }
+
         await refillPromise;
 
         if (isNextResult(result)) {
@@ -942,6 +1089,16 @@ Chỉ trả về nội dung bình luận hoặc đúng (next), không thêm tiê
         input.addEventListener('change', updateAuthUI);
       });
 
+      els.chatApiKeyToggle?.addEventListener('click', () => {
+        const isHidden = els.chatApiKeyInput?.type === 'password';
+        if (!els.chatApiKeyInput) return;
+        els.chatApiKeyInput.type = isHidden ? 'text' : 'password';
+        els.chatApiKeyToggle.textContent = isHidden ? '🙈' : '👁';
+        els.chatApiKeyToggle.setAttribute('aria-label', isHidden ? 'Ẩn API key' : 'Hiện API key');
+        els.chatApiKeyToggle.title = isHidden ? 'Ẩn API key' : 'Hiện API key';
+        els.chatApiKeyInput.focus();
+      });
+
       els.generateBtn.addEventListener('click', generateComment);
       els.clearBtn?.addEventListener('click', clearForm);
       els.pasteBtn.addEventListener('click', pasteArticle);
@@ -1003,6 +1160,7 @@ Chỉ trả về nội dung bình luận hoặc đúng (next), không thêm tiê
       generateComment,
       callChatCompletion,
       classifyArticleIntent,
+      getProductNameMatch,
       isNextResult,
       updateAuthUI,
       copyText,
