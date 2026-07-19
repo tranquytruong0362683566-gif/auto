@@ -5,13 +5,30 @@
 
   const B = {
     extensionId: $('#bridgeExtensionId'),
+    facebookAccountBar: $('#facebookAccountBar'),
+    facebookUidDisplay: $('#facebookUidDisplay'),
+    facebookLogoutBtn: $('#facebookLogoutBtn'),
+    facebookCookiesInput: $('#facebookCookiesInput'),
+    vpsApiUrlInput: $('#vpsApiUrlInput'),
+    vpsApiTokenInput: $('#vpsApiTokenInput'),
+    vpsApiTokenToggle: $('#vpsApiTokenToggle'),
+    vpsTestBtn: $('#vpsTestBtn'),
+    vpsRefreshAccountsBtn: $('#vpsRefreshAccountsBtn'),
+    vpsImportCookieBtn: $('#vpsImportCookieBtn'),
+    vpsAccountSelect: $('#vpsAccountSelect'),
+    vpsConnectionStatus: $('#vpsConnectionStatus'),
+    apifyActorIdInput: $('#apifyActorIdInput'),
+    apifyApiTokenInput: $('#apifyApiTokenInput'),
+    apifyApiTokenToggle: $('#apifyApiTokenToggle'),
     fbGroupIdInput: $('#fbGroupIdInput'),
     groupLimitInput: $('#groupLimitInput'),
     scanSourceModeSelect: $('#scanSourceModeSelect'),
     loopPauseSecondsInput: $('#loopPauseSecondsInput'),
     linkPauseSecondsInput: $('#linkPauseSecondsInput'),
     fbPostLinkInput: $('#fbPostLinkInput'),
+    fbPostLinkCounter: $('#fbPostLinkCounter'),
     scanGroupLinksBtn: $('#scanGroupLinksBtn'),
+    apifyScanBtn: $('#apifyScanBtn'),
     stopClosedLoopBtn: $('#stopClosedLoopBtn'),
     autoWorkflowBtn: $('#autoWorkflowBtn'),
     commentCurrentTabBtn: $('#commentCurrentTabBtn'),
@@ -29,6 +46,12 @@
 
   const STORE = {
     extensionId: 'truong_fb_bridge_extension_id_v1',
+    facebookCookies: 'truong_fb_bridge_facebook_cookies_v1',
+    vpsApiUrl: 'truong_fb_vps_api_url_v1',
+    vpsApiToken: 'truong_fb_vps_api_token_v1',
+    vpsAccountId: 'truong_fb_vps_account_id_v1',
+    apifyActorId: 'truong_fb_bridge_apify_actor_id_v1',
+    apifyToken: 'truong_fb_bridge_apify_token_v1',
     groupIds: 'truong_fb_bridge_group_ids_v1',
     groupLimit: 'truong_fb_bridge_group_limit_v1',
     scanSourceMode: 'truong_fb_bridge_scan_source_mode_v1',
@@ -38,6 +61,32 @@
     postLinks: 'truong_fb_bridge_post_links_v1',
     commented: 'truong_fb_bridge_commented_links_v1'
   };
+
+  function importPreconfiguredVpsConnection() {
+    const config = window.FB_VPS_WEB_CONFIG;
+    if (config?.preconfiguredVpsConnection !== true) return;
+    const apiUrl = String(config.defaultVpsApiUrl || '').trim().replace(/\/+$/, '');
+    const apiToken = String(config.defaultVpsApiToken || '').trim();
+    if (/^https:\/\//i.test(apiUrl)) localStorage.setItem(STORE.vpsApiUrl, JSON.stringify(apiUrl));
+    if (apiToken) localStorage.setItem(STORE.vpsApiToken, JSON.stringify(apiToken));
+  }
+
+  function importVpsBootstrapFromUrlFragment() {
+    if (!location.hash || !location.hash.includes('fbVpsSetup=1')) return;
+    try {
+      const params = new URLSearchParams(location.hash.slice(1));
+      if (params.get('fbVpsSetup') !== '1') return;
+      const apiUrl = String(params.get('vpsApiUrl') || '').trim().replace(/\/+$/, '');
+      const apiToken = String(params.get('vpsApiToken') || '').trim();
+      if (/^https:\/\//i.test(apiUrl)) localStorage.setItem(STORE.vpsApiUrl, JSON.stringify(apiUrl));
+      if (apiToken) localStorage.setItem(STORE.vpsApiToken, JSON.stringify(apiToken));
+    } finally {
+      history.replaceState(null, document.title, location.pathname + location.search);
+    }
+  }
+
+  importPreconfiguredVpsConnection();
+  importVpsBootstrapFromUrlFragment();
 
   const bridgeState = {
     closedLoopRunning: false,
@@ -128,8 +177,25 @@
     try {
       const url = new URL(String(raw).trim());
       url.hash = '';
+      url.protocol = 'https:';
       url.hostname = url.hostname.toLowerCase().replace(/^(m|mbasic|web)\.facebook\.com$/i, 'www.facebook.com');
-      url.pathname = url.pathname.replace(/\/+$/, '');
+
+      const pathname = url.pathname.replace(/\/{2,}/g, '/').replace(/\/+$/, '');
+      const groupPostMatch = pathname.match(/^\/groups\/([^/?#]+)\/(?:posts|permalink)\/([^/?#]+)$/i);
+      if (url.hostname === 'www.facebook.com' && groupPostMatch?.[1] && groupPostMatch?.[2]) {
+        const encodePart = value => {
+          try {
+            return encodeURIComponent(decodeURIComponent(value));
+          } catch {
+            return encodeURIComponent(value);
+          }
+        };
+        const groupId = encodePart(groupPostMatch[1]);
+        const postId = encodePart(groupPostMatch[2]);
+        return `https://www.facebook.com/groups/${groupId}/permalink/${postId}/`;
+      }
+
+      url.pathname = pathname;
       const drop = ['fbclid', 'mibextid', '__cft__', '__tn__', 'ref', 'refid', 'paipv'];
       drop.forEach(key => url.searchParams.delete(key));
       return url.toString();
@@ -138,12 +204,24 @@
     }
   }
 
+  function isGroupPermalinkUrl(value) {
+    try {
+      const url = new URL(String(value || '').trim());
+      const hostname = url.hostname.toLowerCase().replace(/^(m|mbasic|web)\.facebook\.com$/i, 'www.facebook.com');
+      const pathname = url.pathname.replace(/\/{2,}/g, '/').replace(/\/+$/, '');
+      return hostname === 'www.facebook.com'
+        && /^\/groups\/[^/?#]+\/permalink\/[^/?#]+$/i.test(pathname);
+    } catch {
+      return false;
+    }
+  }
+
   function uniqueLinks(lines) {
     const out = [];
     const seen = new Set();
     for (const line of lines) {
       const clean = normalizeUrl(line);
-      if (!clean || seen.has(clean)) continue;
+      if (!clean || !isGroupPermalinkUrl(clean) || seen.has(clean)) continue;
       seen.add(clean);
       out.push(clean);
     }
@@ -165,11 +243,21 @@
     return uniqueLinks(links).filter(link => !commented.has(normalizeUrl(link)));
   }
 
+  function updatePostLinkCounter(links = null) {
+    if (!B.fbPostLinkCounter) return;
+    const count = Array.isArray(links)
+      ? links.length
+      : filterNewLinks(parseLines(B.fbPostLinkInput?.value)).length;
+    B.fbPostLinkCounter.textContent = `${count} link`;
+  }
+
   function syncPostLinksInput() {
     if (!B.fbPostLinkInput) return;
-    const value = filterNewLinks(parseLines(B.fbPostLinkInput.value)).join('\n');
+    const links = filterNewLinks(parseLines(B.fbPostLinkInput.value));
+    const value = links.join('\n');
     if (B.fbPostLinkInput.value !== value) B.fbPostLinkInput.value = value;
     save(STORE.postLinks, value);
+    updatePostLinkCounter(links);
   }
 
   function setPostLinks(links) {
@@ -203,6 +291,84 @@
     const id = text(B.extensionId?.value);
     if (id) save(STORE.extensionId, id);
     return id;
+  }
+
+
+  function getDefaultVpsApiUrl() {
+    return text(window.FB_VPS_WEB_CONFIG?.defaultVpsApiUrl);
+  }
+
+  function normalizeVpsApiUrl(rawValue) {
+    const value = text(rawValue);
+    if (!value) return '';
+
+    let url;
+    try {
+      url = new URL(value);
+    } catch {
+      const error = new Error('URL API VPS không hợp lệ. Ví dụ: https://ten-domain.ngrok-free.app');
+      error.code = 'VPS_API_URL_INVALID';
+      throw error;
+    }
+
+    if (!/^https?:$/.test(url.protocol)) {
+      const error = new Error('URL API VPS chỉ hỗ trợ HTTP hoặc HTTPS.');
+      error.code = 'VPS_API_PROTOCOL_INVALID';
+      throw error;
+    }
+
+    const requireHttps = window.FB_VPS_WEB_CONFIG?.requireHttpsApiOnHttpsPage !== false;
+    if (requireHttps && location.protocol === 'https:' && url.protocol !== 'https:') {
+      const error = new Error('Web GitHub đang dùng HTTPS nên API VPS cũng phải dùng HTTPS.');
+      error.code = 'VPS_HTTPS_REQUIRED';
+      throw error;
+    }
+
+    url.pathname = url.pathname.replace(/\/+$/, '');
+    url.search = '';
+    url.hash = '';
+    return url.toString().replace(/\/+$/, '');
+  }
+
+  function getVpsApiUrl() {
+    const rawValue = text(B.vpsApiUrlInput?.value) || getDefaultVpsApiUrl();
+    const value = normalizeVpsApiUrl(rawValue);
+    if (B.vpsApiUrlInput) B.vpsApiUrlInput.value = value;
+    if (value) save(STORE.vpsApiUrl, value);
+    return value;
+  }
+
+  function getVpsApiToken() {
+    const value = text(B.vpsApiTokenInput?.value);
+    if (value) save(STORE.vpsApiToken, value);
+    return value;
+  }
+
+  function getVpsAccountId() {
+    const value = text(B.vpsAccountSelect?.value) || text(load(STORE.vpsAccountId, ''));
+    if (value) save(STORE.vpsAccountId, value);
+    return value;
+  }
+
+  function setVpsAccountId(accountId) {
+    const value = text(accountId);
+    save(STORE.vpsAccountId, value);
+    if (B.vpsAccountSelect) B.vpsAccountSelect.value = value;
+    return value;
+  }
+
+  function getApifyActorId() {
+    const defaultActorId = 'caprolok~facebook-groups-scraper';
+    const actorId = text(B.apifyActorIdInput?.value) || defaultActorId;
+    if (B.apifyActorIdInput) B.apifyActorIdInput.value = actorId;
+    save(STORE.apifyActorId, actorId);
+    return actorId;
+  }
+
+  function getApifyToken() {
+    const token = text(B.apifyApiTokenInput?.value);
+    if (token) save(STORE.apifyToken, token);
+    return token;
   }
 
   function delay(ms) {
@@ -259,6 +425,7 @@
     addInputSave,
     parseLines,
     normalizeUrl,
+    isGroupPermalinkUrl,
     uniqueLinks,
     getPostLinks,
     setPostLinks,
@@ -267,8 +434,16 @@
     renderCommentedLinks,
     filterNewLinks,
     syncPostLinksInput,
+    updatePostLinkCounter,
     wirePostLinksInput,
     getExtensionId,
+    getDefaultVpsApiUrl,
+    getVpsApiUrl,
+    getVpsApiToken,
+    getVpsAccountId,
+    setVpsAccountId,
+    getApifyActorId,
+    getApifyToken,
     delay,
     setClosedLoopRunning,
     isClosedLoopRunning,
