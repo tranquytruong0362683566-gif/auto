@@ -4,19 +4,10 @@
   const $ = (selector, root = document) => root.querySelector(selector);
 
   const B = {
-    extensionId: $('#bridgeExtensionId'),
     facebookAccountBar: $('#facebookAccountBar'),
     facebookUidDisplay: $('#facebookUidDisplay'),
     facebookLogoutBtn: $('#facebookLogoutBtn'),
     facebookCookiesInput: $('#facebookCookiesInput'),
-    vpsApiUrlInput: $('#vpsApiUrlInput'),
-    vpsApiTokenInput: $('#vpsApiTokenInput'),
-    vpsApiTokenToggle: $('#vpsApiTokenToggle'),
-    vpsTestBtn: $('#vpsTestBtn'),
-    vpsRefreshAccountsBtn: $('#vpsRefreshAccountsBtn'),
-    vpsImportCookieBtn: $('#vpsImportCookieBtn'),
-    vpsAccountSelect: $('#vpsAccountSelect'),
-    vpsConnectionStatus: $('#vpsConnectionStatus'),
     apifyActorIdInput: $('#apifyActorIdInput'),
     apifyApiTokenInput: $('#apifyApiTokenInput'),
     apifyApiTokenToggle: $('#apifyApiTokenToggle'),
@@ -35,21 +26,17 @@
     bridgeStatus: $('#bridgeStatus'),
     articleInput: $('#articleInput'),
     output: $('#output'),
-    fbDelayMs: $('#fbDelayMs'),
     fbMaxChars: $('#fbMaxChars'),
-    autoCommentAfterGenerate: $('#autoCommentAfterGenerate'),
-    closeAfterComment: $('#closeAfterComment'),
     clearCommentedLinksBtn: $('#clearCommentedLinksBtn'),
     commentedLinksBox: $('#commentedLinksBox'),
-    commentedCountStat: $('#commentedCountStat')
+    commentedCountStat: $('#commentedCountStat'),
+    clearRemovedLinksBtn: $('#clearRemovedLinksBtn'),
+    removedLinksBox: $('#removedLinksBox'),
+    removedCountStat: $('#removedCountStat')
   };
 
   const STORE = {
-    extensionId: 'truong_fb_bridge_extension_id_v1',
     facebookCookies: 'truong_fb_bridge_facebook_cookies_v1',
-    vpsApiUrl: 'truong_fb_vps_api_url_v1',
-    vpsApiToken: 'truong_fb_vps_api_token_v1',
-    vpsAccountId: 'truong_fb_vps_account_id_v1',
     apifyActorId: 'truong_fb_bridge_apify_actor_id_v1',
     apifyToken: 'truong_fb_bridge_apify_token_v1',
     groupIds: 'truong_fb_bridge_group_ids_v1',
@@ -59,34 +46,9 @@
     oldLoopPauseMinutes: 'truong_fb_bridge_loop_pause_minutes_v1',
     linkPauseSeconds: 'truong_fb_bridge_link_pause_seconds_v1',
     postLinks: 'truong_fb_bridge_post_links_v1',
-    commented: 'truong_fb_bridge_commented_links_v1'
+    commented: 'truong_fb_bridge_commented_links_v1',
+    removed: 'truong_fb_bridge_removed_links_v1'
   };
-
-  function importPreconfiguredVpsConnection() {
-    const config = window.FB_VPS_WEB_CONFIG;
-    if (config?.preconfiguredVpsConnection !== true) return;
-    const apiUrl = String(config.defaultVpsApiUrl || '').trim().replace(/\/+$/, '');
-    const apiToken = String(config.defaultVpsApiToken || '').trim();
-    if (/^https:\/\//i.test(apiUrl)) localStorage.setItem(STORE.vpsApiUrl, JSON.stringify(apiUrl));
-    if (apiToken) localStorage.setItem(STORE.vpsApiToken, JSON.stringify(apiToken));
-  }
-
-  function importVpsBootstrapFromUrlFragment() {
-    if (!location.hash || !location.hash.includes('fbVpsSetup=1')) return;
-    try {
-      const params = new URLSearchParams(location.hash.slice(1));
-      if (params.get('fbVpsSetup') !== '1') return;
-      const apiUrl = String(params.get('vpsApiUrl') || '').trim().replace(/\/+$/, '');
-      const apiToken = String(params.get('vpsApiToken') || '').trim();
-      if (/^https:\/\//i.test(apiUrl)) localStorage.setItem(STORE.vpsApiUrl, JSON.stringify(apiUrl));
-      if (apiToken) localStorage.setItem(STORE.vpsApiToken, JSON.stringify(apiToken));
-    } finally {
-      history.replaceState(null, document.title, location.pathname + location.search);
-    }
-  }
-
-  importPreconfiguredVpsConnection();
-  importVpsBootstrapFromUrlFragment();
 
   const bridgeState = {
     closedLoopRunning: false,
@@ -94,6 +56,8 @@
     activeReadLink: '',
     bridgeBusy: false
   };
+
+  try { localStorage.removeItem('truong_fb_bridge_extension_id_v1'); } catch {}
 
   function save(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
@@ -238,9 +202,48 @@
     if (B.commentedCountStat) B.commentedCountStat.textContent = String(list.length);
   }
 
-  function filterNewLinks(links) {
+  function getRemovedLinks() {
+    return uniqueLinks(load(STORE.removed, []));
+  }
+
+  function renderRemovedLinks() {
+    const list = getRemovedLinks();
+    if (B.removedLinksBox) B.removedLinksBox.value = list.join('\n');
+    if (B.removedCountStat) B.removedCountStat.textContent = String(list.length);
+  }
+
+  function filterLinksAgainstHistory(links) {
+    const candidates = uniqueLinks(Array.isArray(links) ? links : parseLines(links));
     const commented = new Set(getCommentedLinks().map(normalizeUrl));
-    return uniqueLinks(links).filter(link => !commented.has(normalizeUrl(link)));
+    const removed = new Set(getRemovedLinks().map(normalizeUrl));
+    const accepted = [];
+    const duplicateCommented = [];
+    const duplicateRemoved = [];
+
+    for (const link of candidates) {
+      const key = normalizeUrl(link);
+      if (commented.has(key)) {
+        duplicateCommented.push(link);
+        continue;
+      }
+      if (removed.has(key)) {
+        duplicateRemoved.push(link);
+        continue;
+      }
+      accepted.push(link);
+    }
+
+    return {
+      links: accepted,
+      duplicateCommented,
+      duplicateRemoved,
+      duplicateHistoryCount: duplicateCommented.length + duplicateRemoved.length,
+      candidateCount: candidates.length
+    };
+  }
+
+  function filterNewLinks(links) {
+    return filterLinksAgainstHistory(links).links;
   }
 
   function updatePostLinkCounter(links = null) {
@@ -280,81 +283,20 @@
     syncPostLinksInput();
   }
 
+  function saveRemovedLink(link) {
+    const list = getRemovedLinks();
+    const clean = normalizeUrl(link);
+    if (clean && !list.includes(clean)) list.unshift(clean);
+    save(STORE.removed, list);
+    renderRemovedLinks();
+    syncPostLinksInput();
+  }
+
   function wirePostLinksInput() {
     if (!B.fbPostLinkInput) return;
     B.fbPostLinkInput.value = load(STORE.postLinks, '') || '';
     syncPostLinksInput();
     B.fbPostLinkInput.addEventListener('input', syncPostLinksInput);
-  }
-
-  function getExtensionId() {
-    const id = text(B.extensionId?.value);
-    if (id) save(STORE.extensionId, id);
-    return id;
-  }
-
-
-  function getDefaultVpsApiUrl() {
-    return text(window.FB_VPS_WEB_CONFIG?.defaultVpsApiUrl);
-  }
-
-  function normalizeVpsApiUrl(rawValue) {
-    const value = text(rawValue);
-    if (!value) return '';
-
-    let url;
-    try {
-      url = new URL(value);
-    } catch {
-      const error = new Error('URL API VPS không hợp lệ. Ví dụ: https://ten-domain.ngrok-free.app');
-      error.code = 'VPS_API_URL_INVALID';
-      throw error;
-    }
-
-    if (!/^https?:$/.test(url.protocol)) {
-      const error = new Error('URL API VPS chỉ hỗ trợ HTTP hoặc HTTPS.');
-      error.code = 'VPS_API_PROTOCOL_INVALID';
-      throw error;
-    }
-
-    const requireHttps = window.FB_VPS_WEB_CONFIG?.requireHttpsApiOnHttpsPage !== false;
-    if (requireHttps && location.protocol === 'https:' && url.protocol !== 'https:') {
-      const error = new Error('Web GitHub đang dùng HTTPS nên API VPS cũng phải dùng HTTPS.');
-      error.code = 'VPS_HTTPS_REQUIRED';
-      throw error;
-    }
-
-    url.pathname = url.pathname.replace(/\/+$/, '');
-    url.search = '';
-    url.hash = '';
-    return url.toString().replace(/\/+$/, '');
-  }
-
-  function getVpsApiUrl() {
-    const rawValue = text(B.vpsApiUrlInput?.value) || getDefaultVpsApiUrl();
-    const value = normalizeVpsApiUrl(rawValue);
-    if (B.vpsApiUrlInput) B.vpsApiUrlInput.value = value;
-    if (value) save(STORE.vpsApiUrl, value);
-    return value;
-  }
-
-  function getVpsApiToken() {
-    const value = text(B.vpsApiTokenInput?.value);
-    if (value) save(STORE.vpsApiToken, value);
-    return value;
-  }
-
-  function getVpsAccountId() {
-    const value = text(B.vpsAccountSelect?.value) || text(load(STORE.vpsAccountId, ''));
-    if (value) save(STORE.vpsAccountId, value);
-    return value;
-  }
-
-  function setVpsAccountId(accountId) {
-    const value = text(accountId);
-    save(STORE.vpsAccountId, value);
-    if (B.vpsAccountSelect) B.vpsAccountSelect.value = value;
-    return value;
   }
 
   function getApifyActorId() {
@@ -432,16 +374,14 @@
     getCommentedLinks,
     saveCommentedLink,
     renderCommentedLinks,
+    getRemovedLinks,
+    saveRemovedLink,
+    renderRemovedLinks,
+    filterLinksAgainstHistory,
     filterNewLinks,
     syncPostLinksInput,
     updatePostLinkCounter,
     wirePostLinksInput,
-    getExtensionId,
-    getDefaultVpsApiUrl,
-    getVpsApiUrl,
-    getVpsApiToken,
-    getVpsAccountId,
-    setVpsAccountId,
     getApifyActorId,
     getApifyToken,
     delay,

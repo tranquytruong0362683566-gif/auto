@@ -1,0 +1,63 @@
+AUTOVIP WEB — ĐA CHIẾN DỊCH + PROMPT AI + ẢNH BÌNH LUẬN v1.2.0
+
+1. Giải nén file ZIP.
+2. Tải TẤT CẢ file bên trong ZIP lên đúng thư mục /autovip/ đang chứa index.html trên GitHub Pages.
+3. Không tải cả thư mục cha lồng thêm một cấp.
+4. Ghi đè toàn bộ file cũ bằng toàn bộ file trong gói v1.2.0.
+5. Đảm bảo incokit-workflow-v1.0.5.css và incokit-ui-v1.0.5.js nằm cùng cấp với index.html.
+6. Cài hoặc Reload extension Autovip Full v2.2.0 tại chrome://extensions.
+7. Đóng tab Web Autovip cũ, mở lại:
+   https://tranquytruong0362683566-gif.github.io/autovip/?v=20260720-120
+8. Nhấn Ctrl + Shift + R một lần.
+
+Web không còn ô Extension ID. Extension tự liên kết bằng content bridge chỉ trên đúng URL /autovip/.
+
+THAY ĐỔI v1.0.5:
+- Giao diện xanh đen theo phong cách Incokit, có nền lưới tương tác theo chuột.
+- Sắp xếp lại chức năng theo đúng trình tự: nguồn nhóm → hàng đợi → soạn bình luận → kết quả.
+- Gộp hai kho mẫu vào một khu vực chung.
+- Tách riêng link bình luận thành công và link bị AI loại bỏ.
+- Cả hai danh sách vẫn được dùng để lọc trùng ở lần quét tiếp theo.
+
+THAY ĐỔI v1.1.0:
+- Giữ nguyên toàn bộ giao diện Incokit v1.0.5.
+- Ghép lại quy trình autogpt-main: quét link nhóm → đọc description → AI phân loại/tạo bình luận → gửi → theo dõi spam → đóng tab → lưu kết quả → nghỉ → lặp vòng.
+- Khi có Apify token, web ưu tiên lấy URL qua Apify; khi chưa có token, tự chuyển sang bộ quét nhóm trực tiếp trong Extension.
+- Khôi phục đầy đủ action quét nhóm và đọc bài của Extension.
+- Đồng bộ UID, đăng xuất và đăng nhập Cookie trực tiếp giữa web và Extension.
+
+THAY ĐỔI v1.1.1:
+- Link mới được chuẩn hóa rồi đối chiếu riêng với cả Link đã bình luận thành công và Link đã loại bỏ; chỉ link không trùng mới vào hàng đợi.
+- Sau khi quét và lọc xong, vòng tự động đọc description của link đầu tiên ngay, không chờ thừa.
+- Trước mỗi vòng tự động, web kiểm tra UID; nếu chưa đăng nhập sẽ lấy và xóa dòng Cookie Facebook đầu tiên, login rồi tiếp tục vòng hiện tại.
+
+THAY ĐỔI v1.1.2:
+- Mỗi nhóm Facebook được gọi bằng một Apify Actor run độc lập, đúng nguồn Bài viết mới hoặc Bài viết Top đã chọn.
+- Gửi đồng thời maxResults và giới hạn dataset output theo đúng Số link lấy mỗi nhóm; kết quả phía web tiếp tục được cắt cứng lần cuối nên không thể vượt quá giới hạn.
+- Mỗi lần quét tạo một hàng đợi mới và thay thế kết quả vòng trước, không còn gộp Bài viết Top với Bài viết mới qua các vòng tự động.
+
+THAY ĐỔI v1.1.3:
+- Tăng độ trong suốt của thẻ, khu vực nhập liệu, thanh điều hướng và bảng kết quả để nền lưới hiện rõ hơn mà nội dung vẫn dễ đọc.
+- Tăng độ rõ và độ phản ứng của nền lưới theo vị trí chuột; chế độ Giảm chuyển động của hệ điều hành vẫn giữ tương tác ở mức nhẹ.
+- Bổ sung hover dễ nhận biết cho thẻ chức năng, menu, nút, ô nhập liệu, tài khoản Facebook và các mục kho mẫu.
+- Chỉ thay đổi giao diện và hiệu ứng; giữ nguyên toàn bộ logic Apify, lọc link, bình luận tự động và Extension bridge của v1.1.2.
+
+THAY ĐỔI v1.1.4:
+- Nhận diện ngay trang Facebook hiện “Bạn hiện không xem được nội dung này” khi mở link để bình luận.
+- Trả thông báo “bài viết đã bị xóa”, đóng tab ngay và chuyển link vào Link đã loại bỏ.
+- Bỏ qua thời gian nghỉ của link đã bị xóa để chạy link kế tiếp ngay lập tức.
+
+THAY ĐỔI v1.1.5:
+- Giảm độ đục của toàn bộ thẻ, khung chức năng và khung cài đặt để nhìn rõ nền lưới phía sau.
+- Giảm độ đục của textarea, input, select, trạng thái, kết quả, mẫu và danh sách link bên trong các khung.
+- Giữ nguyên viền, chữ, bố cục và làm trạng thái hover/focus sáng hơn nền thường để dễ thao tác.
+
+THAY ĐỔI v1.2.0:
+- Kho mẫu chỉ còn 4 thể loại: Bán hàng/Affiliate, Tuyển dụng, Cho thuê phòng và Bán bất động sản; bỏ giao diện Nhóm mẫu A/B.
+- Tự động chuyển toàn bộ mẫu A/B cũ sang Bán hàng/Affiliate, không xóa dữ liệu cũ.
+- Mỗi chiến dịch và mỗi mẫu có prompt phân loại riêng; AI chỉ trả comment hoặc (next). Kết quả (next) được chuyển sang Link đã loại bỏ và chạy link kế tiếp ngay.
+- Mỗi chiến dịch và mỗi mẫu có prompt tạo bình luận riêng, hỗ trợ các biến ARTICLE, CATEGORY, SUBJECT, DETAILS, CONTACT, LINK và TONE.
+- Prompt chỉnh tay được ghi nhớ riêng theo từng thể loại khi chuyển qua lại giữa bốn chiến dịch.
+- Mỗi mẫu có thể lưu một ảnh bình luận JPG/PNG/WebP tối đa 8 MB trong trình duyệt.
+- Extension v2.2.0 gắn ảnh trước, chờ Facebook xử lý ảnh rồi mới dán chữ và nhấn Enter.
+- Giữ nguyên logic bài đã bị xóa, chống dán nhầm Messenger, theo dõi chặn spam, Apify, Cookie/UID và Shopee Custom Link.
