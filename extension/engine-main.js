@@ -563,6 +563,21 @@
     }
   }
 
+  function asciiHeaderFilename(name, fallback = 'video.mp4') {
+    const normalized = String(name || '')
+      .replaceAll('đ', 'd')
+      .replaceAll('Đ', 'D')
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\x20-\x7e]/g, '_')
+      .replace(/["\\]/g, '_')
+      .replace(/\s+/g, ' ')
+      .replace(/_+/g, '_')
+      .trim()
+      .slice(0, 180);
+    return normalized || fallback;
+  }
+
   async function uploadVideoRupload(session, groupId, file, metadata, signal) {
     const mediaConfigResponse = await graphqlOperation(
       session,
@@ -594,6 +609,7 @@
       || `${location.origin}/ajax/video/upload/requests/receive/`;
     const waterfallId = crypto.randomUUID().replaceAll('-', '');
     const extension = String(metadata.name || '').split('.').pop()?.toLowerCase() || 'mp4';
+    const headerFilename = asciiHeaderFilename(metadata.name, `video.${extension}`);
     const startBody = new URLSearchParams({
       waterfall_id: waterfallId,
       target_id: session.userId,
@@ -655,7 +671,7 @@
             'start-offset': startOffset,
             id: 'undefined',
             'x-entity-length': String(metadata.size),
-            'x-entity-name': metadata.name,
+            'x-entity-name': headerFilename,
             'x-entity-type': metadata.type || 'video/mp4',
             'x-total-asset-size': String(metadata.size)
           },

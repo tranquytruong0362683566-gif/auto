@@ -215,3 +215,93 @@ for (const mediaCase of [
     assert.deepEqual(variables.input.attachments, [mediaCase.expectedAttachment]);
   });
 }
+
+test('Rupload chuẩn hóa tên video tiếng Việt thành header ASCII', async () => {
+  const requests = [];
+  let ruploadEntityName = '';
+  const groupId = '3234611540008677';
+  const videoId = '998877665544';
+  const engine = createEngine({
+    CurrentUserInitialData: { USER_ID: '123456789012345' },
+    DTSGInitialData: { token: 'dtsg-token' },
+    LSD: { token: 'lsd-token' },
+    SiteData: { client_revision: '101' },
+    MediaUploadFBDefaultServerConfigurationRetrieverQuery_facebookRelayOperation: {
+      params: { id: '24229633186643574' }
+    },
+    useCometVideoUploaderConfigQuery_facebookRelayOperation: {
+      params: { id: '9734072893355148' }
+    },
+    ComposerStoryCreateMutation_facebookRelayOperation: {
+      params: { id: '25879074401770690' }
+    }
+  }, {
+    async fetchImpl(url, request) {
+      const requestUrl = String(url);
+      requests.push({ url: requestUrl, request });
+
+      for (const [headerName, headerValue] of Object.entries(request.headers || {})) {
+        if ([...String(headerValue)].some((character) => character.codePointAt(0) > 255)) {
+          throw new TypeError(
+            `Failed to read the '${headerName}' header: String contains non ISO-8859-1 code point`
+          );
+        }
+      }
+
+      if (requestUrl.includes('/ajax/react_composer/attachments/video/upload')) {
+        throw new TypeError('Failed to fetch');
+      }
+
+      let responseBody = '';
+      if (requestUrl === 'https://www.facebook.com/api/graphql/') {
+        const body = new URLSearchParams(request.body);
+        const operationName = body.get('fb_api_req_friendly_name');
+        if (operationName === 'MediaUploadFBDefaultServerConfigurationRetrieverQuery') {
+          responseBody = 'for (;;);{"data":{"media_upload_config":{"network_start":{"uri":"https://www.facebook.com/ajax/video/upload/requests/start/"},"network_receive":{"uri":"https://www.facebook.com/ajax/video/upload/requests/receive/"}}}}';
+        } else if (operationName === 'useCometVideoUploaderConfigQuery') {
+          responseBody = 'for (;;);{"data":{"comet_composer_video_uploader_config":{"resumable_service_name":"rupload","resumable_service_domain":"facebook.com"}}}';
+        } else {
+          responseBody = `for (;;);{"data":{"story_create":{"story":{"id":"${groupId}_112233445566"}}}}`;
+        }
+      } else if (requestUrl.includes('/ajax/video/upload/requests/start/')) {
+        responseBody = `for (;;);{"payload":{"video_id":"${videoId}","start_offset":0,"end_offset":12,"skip_upload":false}}`;
+      } else if (requestUrl.startsWith('https://rupload.facebook.com/fb_video/')) {
+        ruploadEntityName = request.headers['x-entity-name'];
+        responseBody = '{"h":"upload-handle"}';
+      } else if (requestUrl.includes('/ajax/video/upload/requests/receive/')) {
+        responseBody = 'for (;;);{"payload":{"success":true}}';
+      } else {
+        throw new Error(`URL kiểm thử chưa được xử lý: ${requestUrl}`);
+      }
+
+      return {
+        ok: true,
+        status: 200,
+        async text() {
+          return responseBody;
+        }
+      };
+    }
+  });
+  const file = new Blob(['video-binary'], { type: 'video/mp4' });
+  const reply = await engine.dispatchAndWait('POST', {
+    groupId,
+    message: 'Bài viết kèm video',
+    mediaId: 'media_video_unicode',
+    media: {
+      kind: 'video',
+      name: 'video tiếng Việt 🎬.mp4',
+      type: 'video/mp4',
+      size: file.size,
+      totalChunks: 1
+    },
+    file
+  }, 'test_video_unicode_rupload');
+
+  assert.equal(reply.response.success, true);
+  assert.equal(reply.response.code, 'POST_ACCEPTED');
+  assert.equal(reply.response.data.diagnostics.uploadMode, 'video-rupload');
+  assert.ok(requests.some(({ url }) => url.startsWith('https://rupload.facebook.com/fb_video/')));
+  assert.match(ruploadEntityName, /\.mp4$/i);
+  assert.doesNotMatch(ruploadEntityName, /[^\x20-\x7e]/);
+});

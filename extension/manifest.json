@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Trường Group Publisher",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Đăng văn bản và tùy chọn ảnh hoặc video vào nhóm Facebook tuần tự bằng request.",
   "permissions": [
     "alarms",
