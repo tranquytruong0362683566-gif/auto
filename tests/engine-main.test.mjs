@@ -48,8 +48,8 @@ function createEngine(modules = {}, options = {}) {
     }),
     location: { origin },
     performance: { getEntriesByType: () => [] },
-    setTimeout,
-    clearTimeout,
+    setTimeout: options.setTimeoutImpl || setTimeout,
+    clearTimeout: options.clearTimeoutImpl || clearTimeout,
     window: fakeWindow
   });
   vm.runInContext(engineSource, context, { filename: 'engine-main.js' });
@@ -209,6 +209,7 @@ for (const mediaCase of [{
 test('video dùng đúng chuỗi start → offset → Rupload → receive', async () => {
   const requests = [];
   let ruploadRequest = null;
+  let offsetAttempts = 0;
   const groupId = '3234611540008677';
   const videoId = '998877665544';
   const uploadSessionId = 'upload-session-123';
@@ -216,6 +217,7 @@ test('video dùng đúng chuỗi start → offset → Rupload → receive', asyn
     CurrentUserInitialData: { USER_ID: '123456789012345' },
     DTSGInitialData: { token: 'dtsg-token' },
     LSD: { token: 'lsd-token' },
+    RelayAPIConfig: { accessToken: 'relay-access-token' },
     SiteData: { client_revision: '101' },
     MediaUploadFBDefaultServerConfigurationRetrieverQuery_facebookRelayOperation: {
       params: { id: '24229633186643574' }
@@ -235,6 +237,8 @@ test('video dùng đúng chuỗi start → offset → Rupload → receive', asyn
       }
 
       let responseBody = '';
+      let responseOk = true;
+      let responseStatus = 200;
       if (requestUrl === 'https://www.facebook.com/api/graphql/') {
         const body = new URLSearchParams(request.body);
         const operationName = body.get('fb_api_req_friendly_name');
@@ -247,7 +251,14 @@ test('video dùng đúng chuỗi start → offset → Rupload → receive', asyn
         responseBody = `for (;;);{"payload":{"video_id":"${videoId}","upload_session_id":"${uploadSessionId}","start_offset":0,"end_offset":12,"skip_upload":false}}`;
       } else if (requestUrl.startsWith('https://rupload.facebook.com/fb_video/')) {
         if (request.method === 'GET') {
-          responseBody = '{"offset":4,"duplicate":false}';
+          offsetAttempts += 1;
+          if (offsetAttempts === 1) {
+            responseOk = false;
+            responseStatus = 412;
+            responseBody = '{"debug_info":{"retriable":true,"type":"AuthorizationFailedError","message":"A temporary failure has occurred. Please try again."}}';
+          } else {
+            responseBody = '{"offset":4,"duplicate":false}';
+          }
         } else {
           ruploadRequest = request;
           responseBody = '{"h":"upload-handle"}';
@@ -259,12 +270,15 @@ test('video dùng đúng chuỗi start → offset → Rupload → receive', asyn
       }
 
       return {
-        ok: true,
-        status: 200,
+        ok: responseOk,
+        status: responseStatus,
         async text() {
           return responseBody;
         }
       };
+    },
+    setTimeoutImpl(callback) {
+      return setTimeout(callback, 0);
     }
   });
   const file = new Blob(['video-binary'], { type: 'video/mp4' });
@@ -285,11 +299,21 @@ test('video dùng đúng chuỗi start → offset → Rupload → receive', asyn
   assert.equal(reply.response.success, true);
   assert.equal(reply.response.code, 'POST_ACCEPTED');
   assert.equal(reply.response.data.diagnostics.uploadMode, 'video-rupload');
-  assert.equal(requests.length, 6);
+  assert.equal(requests.length, 7);
   assert.ok(!requests.some(({ url }) => url.includes('/attachments/video/upload')));
-  assert.equal(requests[2].request.method, 'GET');
-  assert.equal(requests[3].request.method, 'POST');
+  const ruploadRequests = requests.filter(({ url }) => (
+    url.startsWith('https://rupload.facebook.com/fb_video/')
+  ));
+  const offsetRequests = ruploadRequests.filter(({ request }) => request.method === 'GET');
+  const binaryRequests = ruploadRequests.filter(({ request }) => request.method === 'POST');
+  assert.equal(offsetAttempts, 2);
+  assert.equal(offsetRequests.length, 2);
+  assert.equal(binaryRequests.length, 1);
+  assert.ok(offsetRequests.every(({ request }) => (
+    request.headers.Authorization === 'OAuth relay-access-token'
+  )));
   assert.ok(ruploadRequest);
+  assert.equal(ruploadRequest.headers.Authorization, 'OAuth relay-access-token');
   assert.equal(
     ruploadRequest.headers['x-entity-name'],
     encodeURIComponent('video tiếng Việt 🎬.mp4')
@@ -305,8 +329,14 @@ test('video dùng đúng chuỗi start → offset → Rupload → receive', asyn
   assert.ok(!Object.hasOwn(ruploadRequest.headers, 'product-media-id'));
   assert.ok(!Object.hasOwn(ruploadRequest.headers, 'x-total-asset-size'));
 
-  const startBody = new URLSearchParams(requests[1].request.body);
-  const receiveBody = new URLSearchParams(requests[4].request.body);
+  const startRequest = requests.find(({ url }) => (
+    url.includes('/ajax/video/upload/requests/start/')
+  ));
+  const receiveRequest = requests.find(({ url }) => (
+    url.includes('/ajax/video/upload/requests/receive/')
+  ));
+  const startBody = new URLSearchParams(startRequest.request.body);
+  const receiveBody = new URLSearchParams(receiveRequest.request.body);
   assert.equal(startBody.get('target_id'), groupId);
   assert.equal(receiveBody.get('target_id'), groupId);
   assert.equal(receiveBody.get('video_id'), videoId);

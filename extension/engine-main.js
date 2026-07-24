@@ -92,6 +92,7 @@
     const user = fbRequire('CurrentUserInitialData') || {};
     const dtsg = fbRequire('DTSGInitialData') || {};
     const lsdModule = fbRequire('LSD') || {};
+    const relayApi = fbRequire('RelayAPIConfig') || {};
     const site = fbRequire('SiteData') || {};
     const page = inlinePageData();
 
@@ -164,6 +165,7 @@
       hasteSession,
       spinT,
       spinS,
+      relayAccessToken: String(relayApi.accessToken || ''),
       spinB: String(site.__spin_b || 'trunk')
     };
   }
@@ -433,8 +435,48 @@
     return params;
   }
 
+  function requestTarget(url) {
+    try {
+      const parsedUrl = new URL(url, location.origin);
+      return `${parsedUrl.hostname}${parsedUrl.pathname}`;
+    } catch {
+      return String(url || '').slice(0, 180);
+    }
+  }
+
+  function isRetriableUploadError(error) {
+    const status = Number(error?.data?.status || 0);
+    return error?.data?.retriable === true
+      || status === 408
+      || status === 429
+      || status >= 500;
+  }
+
+  async function waitForRetry(delayMs, signal) {
+    await new Promise((resolve, reject) => {
+      let timer = null;
+      const onAbort = () => {
+        if (timer != null) clearTimeout(timer);
+        signal?.removeEventListener?.('abort', onAbort);
+        reject(Object.assign(new Error(
+          'Tiến trình đã được dừng bởi người dùng.'
+        ), { code: 'JOB_PAUSED' }));
+      };
+      timer = setTimeout(() => {
+        signal?.removeEventListener?.('abort', onAbort);
+        resolve();
+      }, delayMs);
+      if (signal?.aborted) {
+        onAbort();
+      } else {
+        signal?.addEventListener?.('abort', onAbort, { once: true });
+      }
+    });
+  }
+
   async function checkedFetch(url, options, signal, code) {
     let response;
+    const target = requestTarget(url);
     try {
       response = await fetch(url, {
         ...options,
@@ -446,13 +488,6 @@
       if (signal?.aborted) {
         throw Object.assign(new Error('Tiến trình đã được dừng bởi người dùng.'), { code: 'JOB_PAUSED' });
       }
-      let target = String(url || '').slice(0, 180);
-      try {
-        const parsedUrl = new URL(url, location.origin);
-        target = `${parsedUrl.hostname}${parsedUrl.pathname}`;
-      } catch {
-        // Giữ chuỗi URL đã rút gọn.
-      }
       throw Object.assign(
         new Error(`Lỗi mạng Facebook tại ${target}: ${error?.message || String(error)}`),
         {
@@ -462,18 +497,30 @@
       );
     }
     const text = await response.text();
+    const parsed = safeJson(text);
     if (!response.ok) {
       const detail = text.replace(/\s+/g, ' ').slice(0, 280);
+      const retriableValue = deepFind(parsed, ['retriable', 'is_transient', 'transient']);
+      const retriable = retriableValue === true
+        || retriableValue === 1
+        || String(retriableValue).toLowerCase() === 'true';
       throw Object.assign(new Error(
-        `Facebook trả HTTP ${response.status}${detail ? `: ${detail}` : ''}`
-      ), { code: code || 'FACEBOOK_HTTP_ERROR', data: { status: response.status } });
+        `Facebook trả HTTP ${response.status} tại ${target}${detail ? `: ${detail}` : ''}`
+      ), {
+        code: code || 'FACEBOOK_HTTP_ERROR',
+        data: {
+          status: response.status,
+          target,
+          retriable
+        }
+      });
     }
     if (/checkpoint|login_form|id="loginbutton"/i.test(text) && /<html|<!doctype/i.test(text)) {
       throw Object.assign(new Error(
         'Facebook yêu cầu đăng nhập hoặc xác minh tài khoản trong tab nền.'
       ), { code: 'FACEBOOK_CHECKPOINT' });
     }
-    return { response, text, parsed: safeJson(text) };
+    return { response, text, parsed };
   }
 
   async function uploadSimple(session, groupId, file, metadata, signal) {
@@ -661,53 +708,64 @@
         `https://${serviceName}.${serviceDomain}/${serviceConsumer}/${sessionKey}`
       );
       const commonUploadHeaders = {
+        Authorization: `OAuth ${session.relayAccessToken || 'null'}`,
         target_id: groupId,
         x_fb_video_waterfall_id: waterfallId
       };
-      const offsetResponse = await checkedFetch(
-        uploadUrl.toString(),
-        {
-          method: 'GET',
-          headers: commonUploadHeaders
-        },
-        signal,
-        'FACEBOOK_VIDEO_OFFSET_FAILED'
-      );
-      const offsetValue = Number(deepFind(offsetResponse.parsed, ['offset']) ?? 0);
-      const duplicate = Boolean(deepFind(offsetResponse.parsed, ['duplicate']));
-      if (!Number.isSafeInteger(offsetValue) || offsetValue < 0 || offsetValue > metadata.size) {
-        throw Object.assign(new Error(`Facebook trả offset video không hợp lệ: ${offsetValue}.`), {
-          code: 'FACEBOOK_VIDEO_OFFSET_INVALID'
-        });
-      }
-      const uploadBody = duplicate
-        ? ''
-        : file.slice(offsetValue, metadata.size, metadata.type || 'video/mp4');
-      const uploaded = await checkedFetch(
-        uploadUrl.toString(),
-        {
-          method: 'POST',
-          headers: {
-            ...commonUploadHeaders,
-            composer_session_id: waterfallId,
-            end_offset: endOffset,
-            id: uploadSessionId,
-            offset: String(offsetValue),
-            start_offset: startOffset,
-            'x-entity-length': String(metadata.size),
-            'x-entity-name': headerFilename,
-            'x-entity-type': metadata.type || 'video/mp4'
-          },
-          body: uploadBody
-        },
-        signal,
-        'FACEBOOK_VIDEO_BINARY_UPLOAD_FAILED'
-      );
-      const uploadHandle = deepFind(uploaded.parsed, ['h', 'upload_handle']);
-      if (!uploadHandle) {
-        throw Object.assign(new Error('Facebook không trả handle sau khi tải video.'), {
-          code: 'FACEBOOK_VIDEO_HANDLE_MISSING'
-        });
+      const retryDelays = [600, 1500];
+      let uploadHandle = '';
+      for (let attempt = 0; attempt <= retryDelays.length; attempt += 1) {
+        try {
+          const offsetResponse = await checkedFetch(
+            uploadUrl.toString(),
+            {
+              method: 'GET',
+              headers: commonUploadHeaders
+            },
+            signal,
+            'FACEBOOK_VIDEO_OFFSET_FAILED'
+          );
+          const offsetValue = Number(deepFind(offsetResponse.parsed, ['offset']) ?? 0);
+          const duplicate = Boolean(deepFind(offsetResponse.parsed, ['duplicate']));
+          if (!Number.isSafeInteger(offsetValue) || offsetValue < 0 || offsetValue > metadata.size) {
+            throw Object.assign(new Error(
+              `Facebook trả offset video không hợp lệ: ${offsetValue}.`
+            ), { code: 'FACEBOOK_VIDEO_OFFSET_INVALID' });
+          }
+          const uploadBody = duplicate
+            ? ''
+            : file.slice(offsetValue, metadata.size, metadata.type || 'video/mp4');
+          const uploaded = await checkedFetch(
+            uploadUrl.toString(),
+            {
+              method: 'POST',
+              headers: {
+                ...commonUploadHeaders,
+                composer_session_id: waterfallId,
+                end_offset: endOffset,
+                id: uploadSessionId,
+                offset: String(offsetValue),
+                start_offset: startOffset,
+                'x-entity-length': String(metadata.size),
+                'x-entity-name': headerFilename,
+                'x-entity-type': metadata.type || 'video/mp4'
+              },
+              body: uploadBody
+            },
+            signal,
+            'FACEBOOK_VIDEO_BINARY_UPLOAD_FAILED'
+          );
+          uploadHandle = String(deepFind(uploaded.parsed, ['h', 'upload_handle']) || '');
+          if (!uploadHandle) {
+            throw Object.assign(new Error('Facebook không trả handle sau khi tải video.'), {
+              code: 'FACEBOOK_VIDEO_HANDLE_MISSING'
+            });
+          }
+          break;
+        } catch (error) {
+          if (attempt >= retryDelays.length || !isRetriableUploadError(error)) throw error;
+          await waitForRetry(retryDelays[attempt], signal);
+        }
       }
 
       const receiveBody = new URLSearchParams({

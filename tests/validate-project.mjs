@@ -6,7 +6,7 @@ const webDirectory = new URL('../web/', import.meta.url);
 const manifest = JSON.parse(await readFile(new URL('manifest.json', extensionDirectory), 'utf8'));
 
 assert.equal(manifest.manifest_version, 3);
-assert.equal(manifest.version, '1.2.2');
+assert.equal(manifest.version, '1.2.3');
 assert.equal(manifest.background.type, 'module');
 assert.equal(manifest.background.service_worker, 'background.js');
 assert.ok(manifest.permissions.includes('storage'));
@@ -72,7 +72,7 @@ assert.match(webIndex, /id="resumeBtn"/);
 assert.doesNotMatch(webIndex, /recordImageBtn|recordVideoBtn|calibrationSession/);
 assert.doesNotMatch(webIndex, /name="mediaMode"/);
 assert.match(webIndex, /Không bắt buộc · mặc định chỉ văn bản/);
-assert.match(webIndex, /Truong-Group-Publisher-Extension-v1\.2\.2\.zip/);
+assert.match(webIndex, /Truong-Group-Publisher-Extension-v1\.2\.3\.zip/);
 
 const bridge = await readFile(new URL('bridge.js', extensionDirectory), 'utf8');
 assert.doesNotMatch(bridge, /CALIBRATION_START|CALIBRATION_STOP/);
@@ -86,6 +86,9 @@ assert.match(engineMain, /attachments: attachment \? \[attachment\] : \[\]/);
 assert.match(engineMain, /composer_session_id: waterfallId/);
 assert.match(engineMain, /id: uploadSessionId/);
 assert.match(engineMain, /method: 'GET'/);
+assert.match(engineMain, /Authorization: `OAuth \$\{session\.relayAccessToken \|\| 'null'\}`/);
+assert.match(engineMain, /isRetriableUploadError/);
+assert.match(engineMain, /Facebook trả HTTP \$\{response\.status\} tại \$\{target\}/);
 assert.doesNotMatch(engineMain, /id: 'undefined'/);
 assert.doesNotMatch(engineMain, /composer-session-id/);
 
