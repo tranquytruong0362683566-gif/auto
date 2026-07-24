@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "Trường Group Publisher",
+  "version": "1.0.0",
+  "description": "Nhận hàng đợi từ trang /auto/ và đăng bài Facebook tuần tự bằng request đã hiệu chuẩn.",
+  "permissions": [
+    "alarms",
+    "debugger",
+    "declarativeNetRequestWithHostAccess",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://www.facebook.com/*",
+    "https://web.facebook.com/*",
+    "https://upload.facebook.com/*",
+    "https://rupload.facebook.com/*",
+    "https://tranquytruong0362683566-gif.github.io/auto/*"
+  ],
+  "minimum_chrome_version": "116",
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Trường Group Publisher",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://tranquytruong0362683566-gif.github.io/auto/*"
+      ],
+      "js": [
+        "bridge.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}

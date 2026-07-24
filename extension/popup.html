@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Trường Group Publisher</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main>
+    <header>
+      <span class="logo">T</span>
+      <div>
+        <strong>Group Publisher</strong>
+        <small id="version">Đang tải...</small>
+      </div>
+    </header>
+
+    <section class="status-card">
+      <div><span>Facebook</span><strong id="account">Đang kiểm tra</strong></div>
+      <div><span>Mẫu ảnh</span><strong id="imageProfile">Chưa có</strong></div>
+      <div><span>Mẫu video</span><strong id="videoProfile">Chưa có</strong></div>
+      <div><span>Hàng đợi</span><strong id="jobStatus">Sẵn sàng</strong></div>
+    </section>
+
+    <p id="message" class="message">Mở bảng điều khiển để tạo bài đăng.</p>
+    <div class="actions">
+      <button id="openWeb" class="primary" type="button">Mở bảng điều khiển</button>
+      <button id="pauseJob" type="button" hidden>Dừng</button>
+      <button id="resumeJob" type="button" hidden>Tiếp tục</button>
+    </div>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
