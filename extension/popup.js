@@ -5,8 +5,7 @@
   const ui = {
     version: document.getElementById('version'),
     account: document.getElementById('account'),
-    imageProfile: document.getElementById('imageProfile'),
-    videoProfile: document.getElementById('videoProfile'),
+    engineMode: document.getElementById('engineMode'),
     jobStatus: document.getElementById('jobStatus'),
     message: document.getElementById('message'),
     openWeb: document.getElementById('openWeb'),
@@ -35,19 +34,14 @@
     return response.data;
   }
 
-  function profile(node, value) {
-    node.textContent = value?.ready ? 'Đã sẵn sàng' : 'Chưa có';
-    node.className = value?.ready ? 'ready' : 'error';
-  }
-
   async function refresh() {
     try {
       const state = await command('GET_STATE');
       ui.version.textContent = `Phiên bản ${state.extension?.version || '1.0.0'}`;
       ui.account.textContent = state.account?.uid ? `UID ${state.account.uid}` : 'Chưa đăng nhập';
       ui.account.className = state.account?.uid ? 'ready' : 'error';
-      profile(ui.imageProfile, state.calibration?.profiles?.image);
-      profile(ui.videoProfile, state.calibration?.profiles?.video);
+      ui.engineMode.textContent = state.engine?.automatic ? 'Tự động' : 'Chưa sẵn sàng';
+      ui.engineMode.className = state.engine?.automatic ? 'ready' : 'error';
       const status = state.job?.status || 'idle';
       ui.jobStatus.textContent = labels[status] || status;
       ui.jobStatus.className = status === 'completed' ? 'ready' : status === 'error' ? 'error' : '';

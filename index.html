@@ -25,7 +25,7 @@
     </a>
 
     <div class="connection-strip">
-      <a class="header-download" href="./downloads/Truong-Group-Publisher-Extension-v1.0.0.zip" download>
+      <a class="header-download" href="./downloads/Truong-Group-Publisher-Extension-v1.1.0.zip" download>
         Tải extension
       </a>
       <span class="status-pill pending" id="extensionStatus">
@@ -44,7 +44,7 @@
       <div>
         <p class="eyebrow">WEB GITHUB + EXTENSION MV3</p>
         <h1>Đăng một nội dung<br><span>đến nhiều nhóm.</span></h1>
-        <p class="hero-copy">Soạn văn bản, chọn một ảnh hoặc một video, nhập UID nhóm và theo dõi toàn bộ tiến trình trên một màn hình.</p>
+        <p class="hero-copy">Soạn văn bản, chọn một ảnh hoặc một video, nhập UID nhóm. Extension tự lấy phiên Facebook và gửi request tuần tự.</p>
       </div>
       <div class="hero-stats" aria-label="Tổng quan tiến trình">
         <article>
@@ -170,71 +170,14 @@
           </button>
           <button class="button ghost" id="clearQueueBtn" type="button">Xóa hàng đợi</button>
         </div>
+        <p class="field-note">Không cần ghi request mẫu. Extension dùng một tab Facebook nền duy nhất cho cả hàng đợi và không mở từng nhóm.</p>
       </article>
-    </section>
-
-    <section class="panel calibration-panel">
-      <div class="panel-heading">
-        <div>
-          <span class="section-number">03</span>
-          <div>
-            <p class="section-kicker">HIỆU CHUẨN MỘT LẦN</p>
-            <h2>Ghi mẫu request Facebook</h2>
-          </div>
-        </div>
-        <span class="soft-badge">Chỉ cần thực hiện khi request thay đổi</span>
-      </div>
-
-      <div class="calibration-layout">
-        <div class="field calibration-group">
-          <label for="calibrationGroupId">UID nhóm dùng để đăng thử</label>
-          <input id="calibrationGroupId" type="text" inputmode="numeric" spellcheck="false" placeholder="Nhập UID nhóm thử nghiệm">
-          <p class="field-note">Extension sẽ mở đúng nhóm này trong lúc ghi mẫu. Đây là hai lần duy nhất cần mở Facebook.</p>
-        </div>
-
-        <div class="calibration-cards">
-          <article class="calibration-card" data-mode="image">
-            <div class="calibration-icon image" aria-hidden="true">▧</div>
-            <div>
-              <span>Mẫu ảnh</span>
-              <strong id="imageCalibrationStatus">Chưa hiệu chuẩn</strong>
-              <small id="imageCalibrationMeta">Cần một bài ảnh + văn bản mẫu</small>
-            </div>
-            <button class="button secondary small" id="recordImageBtn" type="button">Ghi mẫu ảnh</button>
-          </article>
-
-          <article class="calibration-card" data-mode="video">
-            <div class="calibration-icon video" aria-hidden="true">▶</div>
-            <div>
-              <span>Mẫu video</span>
-              <strong id="videoCalibrationStatus">Chưa hiệu chuẩn</strong>
-              <small id="videoCalibrationMeta">Cần một bài video + văn bản mẫu</small>
-            </div>
-            <button class="button secondary small" id="recordVideoBtn" type="button">Ghi mẫu video</button>
-          </article>
-        </div>
-      </div>
-
-      <div class="calibration-session hidden" id="calibrationSession" aria-live="polite">
-        <div>
-          <span class="live-dot" aria-hidden="true"></span>
-          <div>
-            <strong id="calibrationSessionTitle">Đang ghi request</strong>
-            <p>Dán chính xác đoạn đánh dấu dưới đây vào bài mẫu, dùng tệp mẫu nhỏ (ảnh dưới 1 MB hoặc video ngắn), rồi đăng trên tab Facebook vừa mở.</p>
-          </div>
-        </div>
-        <div class="marker-box">
-          <code id="calibrationMarker">—</code>
-          <button class="button ghost small" id="copyMarkerBtn" type="button">Sao chép</button>
-        </div>
-        <button class="button primary" id="finishCalibrationBtn" type="button">Đã đăng xong — hoàn tất ghi</button>
-      </div>
     </section>
 
     <section class="panel progress-panel">
       <div class="panel-heading">
         <div>
-          <span class="section-number">04</span>
+          <span class="section-number">03</span>
           <div>
             <p class="section-kicker">TIẾN TRÌNH</p>
             <h2>Trạng thái đăng bài</h2>
@@ -266,7 +209,7 @@
     <section class="panel results-panel">
       <div class="panel-heading">
         <div>
-          <span class="section-number">05</span>
+          <span class="section-number">04</span>
           <div>
             <p class="section-kicker">KẾT QUẢ</p>
             <h2>Lịch sử từng nhóm</h2>

@@ -1,12 +1,10 @@
 {
   "manifest_version": 3,
   "name": "Trường Group Publisher",
-  "version": "1.0.0",
-  "description": "Nhận hàng đợi từ trang /auto/ và đăng bài Facebook tuần tự bằng request đã hiệu chuẩn.",
+  "version": "1.1.0",
+  "description": "Nhận hàng đợi từ trang /auto/ và tự động đăng bài Facebook tuần tự bằng request.",
   "permissions": [
     "alarms",
-    "debugger",
-    "declarativeNetRequestWithHostAccess",
     "storage",
     "tabs"
   ],
@@ -33,6 +31,27 @@
       ],
       "js": [
         "bridge.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://www.facebook.com/*",
+        "https://web.facebook.com/*"
+      ],
+      "js": [
+        "engine-main.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://www.facebook.com/*",
+        "https://web.facebook.com/*"
+      ],
+      "js": [
+        "engine-relay.js"
       ],
       "run_at": "document_start"
     }

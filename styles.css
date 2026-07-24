@@ -763,158 +763,6 @@ input[type="number"] {
   font-size: 11px;
 }
 
-.calibration-layout {
-  display: grid;
-  grid-template-columns: minmax(260px, 0.34fr) minmax(0, 0.66fr);
-  gap: 18px;
-}
-
-.calibration-group {
-  padding: 18px;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: rgba(3, 15, 12, 0.4);
-}
-
-.calibration-group input {
-  margin-top: 9px;
-}
-
-.calibration-cards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.calibration-card {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: rgba(3, 15, 12, 0.4);
-}
-
-.calibration-icon {
-  display: grid;
-  width: 43px;
-  height: 43px;
-  place-items: center;
-  border-radius: 13px;
-}
-
-.calibration-icon.image {
-  background: rgba(96, 240, 172, 0.1);
-  color: var(--accent);
-}
-
-.calibration-icon.video {
-  background: rgba(75, 180, 255, 0.1);
-  color: var(--blue);
-}
-
-.calibration-card span,
-.calibration-card strong,
-.calibration-card small {
-  display: block;
-}
-
-.calibration-card span {
-  color: var(--muted);
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.calibration-card strong {
-  margin-top: 3px;
-  font-size: 12px;
-}
-
-.calibration-card strong.ready {
-  color: var(--success);
-}
-
-.calibration-card strong.recording {
-  color: var(--warning);
-}
-
-.calibration-card strong.error {
-  color: var(--danger);
-}
-
-.calibration-card small {
-  overflow: hidden;
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: 10px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.calibration-session {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.72fr) auto;
-  align-items: center;
-  gap: 16px;
-  margin-top: 16px;
-  padding: 15px;
-  border: 1px solid rgba(255, 199, 90, 0.24);
-  border-radius: 16px;
-  background: rgba(90, 63, 16, 0.12);
-}
-
-.calibration-session > div:first-child {
-  display: flex;
-  min-width: 0;
-  align-items: flex-start;
-  gap: 11px;
-}
-
-.calibration-session strong {
-  font-size: 12px;
-}
-
-.calibration-session p {
-  margin: 5px 0 0;
-  color: #bba986;
-  font-size: 10px;
-  line-height: 1.55;
-}
-
-.live-dot {
-  flex: 0 0 auto;
-  width: 9px;
-  height: 9px;
-  margin-top: 3px;
-  border-radius: 999px;
-  background: var(--warning);
-  box-shadow: 0 0 0 0 rgba(255, 199, 90, 0.5);
-  animation: pulse 1.8s infinite;
-}
-
-.marker-box {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 8px 7px 12px;
-  border: 1px solid rgba(255, 199, 90, 0.2);
-  border-radius: 12px;
-  background: rgba(2, 11, 8, 0.62);
-}
-
-.marker-box code {
-  min-width: 0;
-  overflow: hidden;
-  color: #ffe2a4;
-  font-size: 10px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .progress-panel {
   background:
     linear-gradient(115deg, rgba(45, 146, 102, 0.11), transparent 48%),
@@ -1155,15 +1003,6 @@ tbody tr:hover:not(.empty-row) {
   display: none !important;
 }
 
-@keyframes pulse {
-  70% {
-    box-shadow: 0 0 0 10px rgba(255, 199, 90, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 199, 90, 0);
-  }
-}
-
 @keyframes toast-in {
   from {
     opacity: 0;
@@ -1179,11 +1018,6 @@ tbody tr:hover:not(.empty-row) {
 
   .hero-stats {
     max-width: 620px;
-  }
-
-  .calibration-layout,
-  .calibration-session {
-    grid-template-columns: 1fr;
   }
 }
 
@@ -1229,18 +1063,8 @@ tbody tr:hover:not(.empty-row) {
   }
 
   .media-mode,
-  .schedule-grid,
-  .calibration-cards {
+  .schedule-grid {
     grid-template-columns: 1fr;
-  }
-
-  .calibration-card {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .calibration-card .button {
-    grid-column: 1 / -1;
-    width: 100%;
   }
 
   .progress-summary {

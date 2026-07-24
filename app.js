@@ -31,18 +31,6 @@
     pauseBtn: $('pauseBtn'),
     resumeBtn: $('resumeBtn'),
     clearQueueBtn: $('clearQueueBtn'),
-    calibrationGroupId: $('calibrationGroupId'),
-    imageCalibrationStatus: $('imageCalibrationStatus'),
-    imageCalibrationMeta: $('imageCalibrationMeta'),
-    videoCalibrationStatus: $('videoCalibrationStatus'),
-    videoCalibrationMeta: $('videoCalibrationMeta'),
-    recordImageBtn: $('recordImageBtn'),
-    recordVideoBtn: $('recordVideoBtn'),
-    calibrationSession: $('calibrationSession'),
-    calibrationSessionTitle: $('calibrationSessionTitle'),
-    calibrationMarker: $('calibrationMarker'),
-    copyMarkerBtn: $('copyMarkerBtn'),
-    finishCalibrationBtn: $('finishCalibrationBtn'),
     processedStat: $('processedStat'),
     successStat: $('successStat'),
     failedStat: $('failedStat'),
@@ -66,8 +54,7 @@
     content: 'group_publisher_content_v1',
     groups: 'group_publisher_groups_v1',
     delay: 'group_publisher_delay_v1',
-    mode: 'group_publisher_mode_v1',
-    calibrationGroup: 'group_publisher_calibration_group_v1'
+    mode: 'group_publisher_mode_v1'
   });
 
   const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
@@ -328,10 +315,6 @@
     }
   }
 
-  function calibrationForMode(calibration, mode) {
-    return calibration?.profiles?.[mode] || null;
-  }
-
   async function startJob() {
     if (uploading) return;
     const content = ui.postContent.value.trim();
@@ -353,13 +336,6 @@
       ui.groupIds.focus();
       return;
     }
-    const profile = calibrationForMode(lastSnapshot?.calibration, mode);
-    if (!profile?.ready) {
-      toast(`Chưa hiệu chuẩn request ${mode === 'image' ? 'ảnh' : 'video'}.`, 'error');
-      document.querySelector('.calibration-panel')?.scrollIntoView({ behavior: 'smooth' });
-      return;
-    }
-
     try {
       const mediaId = await uploadMedia(selectedFile);
       await callExtension('START_JOB', {
@@ -412,93 +388,6 @@
     } catch (error) {
       toast(error.message || String(error), 'error');
     }
-  }
-
-  async function startCalibration(mode) {
-    const group = normalizeGroupIds(ui.calibrationGroupId.value);
-    if (group.valid.length !== 1 || group.invalid.length) {
-      toast('Hãy nhập đúng một UID nhóm để đăng bài mẫu.', 'error');
-      ui.calibrationGroupId.focus();
-      return;
-    }
-
-    try {
-      const response = await callExtension('CALIBRATION_START', {
-        mode,
-        groupId: group.valid[0]
-      }, { timeoutMs: 120000 });
-      const active = response.data.active;
-      renderActiveCalibration(active);
-      addLog(`Đã bắt đầu ghi mẫu ${mode === 'image' ? 'ảnh' : 'video'}.`, 'warn');
-      toast('Tab Facebook đã mở. Hãy đăng bài mẫu đúng theo hướng dẫn.', 'ok');
-    } catch (error) {
-      addLog(error.message || String(error), 'error');
-      toast(error.message || String(error), 'error');
-    }
-  }
-
-  async function finishCalibration() {
-    const active = lastSnapshot?.calibration?.active;
-    if (!active) return;
-    ui.finishCalibrationBtn.disabled = true;
-    ui.finishCalibrationBtn.textContent = 'Đang phân tích request...';
-    try {
-      const response = await callExtension('CALIBRATION_STOP', {}, { timeoutMs: 180000 });
-      const profile = response.data.profile;
-      if (profile?.ready) {
-        addLog(`Hiệu chuẩn ${profile.mode === 'image' ? 'ảnh' : 'video'} thành công với ${profile.stepCount} bước request.`, 'ok');
-        toast('Hiệu chuẩn request thành công.', 'ok');
-      } else {
-        addLog(response.message || 'Mẫu request chưa đủ dữ liệu.', 'error');
-        toast(response.message || 'Mẫu request chưa đủ dữ liệu.', 'error');
-      }
-      await refreshState();
-    } catch (error) {
-      addLog(error.message || String(error), 'error');
-      toast(error.message || String(error), 'error');
-    } finally {
-      ui.finishCalibrationBtn.disabled = false;
-      ui.finishCalibrationBtn.textContent = 'Đã đăng xong — hoàn tất ghi';
-    }
-  }
-
-  function renderCalibrationProfile(mode, profile) {
-    const status = mode === 'image' ? ui.imageCalibrationStatus : ui.videoCalibrationStatus;
-    const meta = mode === 'image' ? ui.imageCalibrationMeta : ui.videoCalibrationMeta;
-    const button = mode === 'image' ? ui.recordImageBtn : ui.recordVideoBtn;
-
-    status.className = '';
-    if (profile?.ready) {
-      status.textContent = 'Đã sẵn sàng';
-      status.classList.add('ready');
-      meta.textContent = `${profile.stepCount || 0} bước · ${new Date(profile.createdAt).toLocaleString('vi-VN')}`;
-      button.textContent = 'Ghi lại';
-    } else if (profile) {
-      status.textContent = 'Cần ghi lại';
-      status.classList.add('error');
-      meta.textContent = profile.message || 'Mẫu chưa đủ dữ liệu để phát lại';
-      button.textContent = 'Ghi lại';
-    } else {
-      status.textContent = 'Chưa hiệu chuẩn';
-      meta.textContent = `Cần một bài ${mode === 'image' ? 'ảnh' : 'video'} + văn bản mẫu`;
-      button.textContent = mode === 'image' ? 'Ghi mẫu ảnh' : 'Ghi mẫu video';
-    }
-  }
-
-  function renderActiveCalibration(active) {
-    const hasActive = Boolean(active);
-    ui.calibrationSession.classList.toggle('hidden', !hasActive);
-    ui.recordImageBtn.disabled = hasActive;
-    ui.recordVideoBtn.disabled = hasActive;
-    if (!hasActive) return;
-    ui.calibrationSessionTitle.textContent = `Đang ghi mẫu ${active.mode === 'image' ? 'ẢNH' : 'VIDEO'}`;
-    ui.calibrationMarker.textContent = active.marker || '—';
-  }
-
-  function renderCalibration(calibration) {
-    renderCalibrationProfile('image', calibrationForMode(calibration, 'image'));
-    renderCalibrationProfile('video', calibrationForMode(calibration, 'video'));
-    renderActiveCalibration(calibration?.active || null);
   }
 
   function humanJobState(status) {
@@ -635,7 +524,6 @@
       ui.facebookAccount.textContent = account?.uid
         ? `UID: ${account.uid}`
         : 'Chưa đăng nhập Facebook';
-      renderCalibration(lastSnapshot.calibration || {});
       renderJob(lastSnapshot.job || null);
     } catch (error) {
       if (!/not connected|receiving end|message port|không phản hồi/i.test(error.message || '')) {
@@ -722,7 +610,6 @@
     ui.postContent.value = loadLocal(STORE.content);
     ui.groupIds.value = loadLocal(STORE.groups);
     ui.delaySeconds.value = loadLocal(STORE.delay, '60');
-    ui.calibrationGroupId.value = loadLocal(STORE.calibrationGroup);
     setMediaMode(loadLocal(STORE.mode, 'image'), { preserveFile: true });
 
     const updateContentCounter = () => {
@@ -742,8 +629,6 @@
       ui.delaySeconds.value = String(value);
       saveLocal(STORE.delay, value);
     });
-    ui.calibrationGroupId.addEventListener('input', () => saveLocal(STORE.calibrationGroup, ui.calibrationGroupId.value));
-
     document.querySelectorAll('input[name="mediaMode"]').forEach((radio) => {
       radio.addEventListener('change', () => setMediaMode(radio.value));
     });
@@ -782,23 +667,6 @@
     ui.pauseBtn.addEventListener('click', pauseJob);
     ui.resumeBtn.addEventListener('click', resumeJob);
     ui.clearQueueBtn.addEventListener('click', clearQueue);
-    ui.recordImageBtn.addEventListener('click', () => startCalibration('image'));
-    ui.recordVideoBtn.addEventListener('click', () => startCalibration('video'));
-    ui.finishCalibrationBtn.addEventListener('click', finishCalibration);
-    ui.copyMarkerBtn.addEventListener('click', async () => {
-      const marker = ui.calibrationMarker.textContent;
-      try {
-        await navigator.clipboard.writeText(marker);
-        toast('Đã sao chép đoạn đánh dấu.', 'ok');
-      } catch {
-        const range = document.createRange();
-        range.selectNodeContents(ui.calibrationMarker);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-        toast('Hãy nhấn Ctrl+C để sao chép.', '');
-      }
-    });
     ui.exportCsvBtn.addEventListener('click', () => exportResults('csv'));
     ui.exportJsonBtn.addEventListener('click', () => exportResults('json'));
     ui.clearResultsBtn.addEventListener('click', clearResults);
@@ -879,7 +747,6 @@
     wireActions();
     initGrid();
     renderJob(null);
-    renderCalibration({});
     Bridge?.onStatus((status) => {
       setConnectionStatus(status);
       if (status.connected) refreshState();

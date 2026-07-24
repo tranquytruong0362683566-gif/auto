@@ -21,9 +21,7 @@
     'PAUSE_JOB',
     'RESUME_JOB',
     'CLEAR_JOB',
-    'CLEAR_RESULTS',
-    'CALIBRATION_START',
-    'CALIBRATION_STOP'
+    'CLEAR_RESULTS'
   ]);
 
   function onAllowedPage() {

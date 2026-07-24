@@ -7,11 +7,13 @@ import {
   deleteMedia,
   getMediaMetadata,
   purgeExpiredMedia,
-  readCalibration,
   readJob,
   writeJob
 } from './storage.js';
-import { replayPost } from './replay.js';
+import {
+  closeFacebookEngine,
+  postToFacebook
+} from './facebook.js';
 
 export const QUEUE_ALARM = 'gp.queue.next.v1';
 const ACTIVE_STATUSES = new Set(['queued', 'running', 'waiting']);
@@ -68,6 +70,7 @@ async function finishJob(job) {
   await clearSchedule();
   notifier();
   await deleteMedia(job.mediaId).catch(() => {});
+  await closeFacebookEngine().catch(() => {});
 }
 
 async function persistFailure(job, groupId, error) {
@@ -117,13 +120,7 @@ async function processLoop() {
     let outcome = null;
     let failure = null;
     try {
-      const calibration = await readCalibration();
-      const profile = calibration?.profiles?.[job.media?.kind];
-      if (!profile?.ready) {
-        throw new AppError('PROFILE_NOT_READY', `Mẫu request ${job.media?.kind === 'video' ? 'video' : 'ảnh'} không còn sẵn sàng.`);
-      }
-      outcome = await replayPost({
-        profile,
+      outcome = await postToFacebook({
         groupId,
         message: job.content,
         mediaId: job.mediaId,
@@ -266,16 +263,12 @@ export async function startJob(input) {
   if (metadata.kind !== media.kind || metadata.size !== media.size) {
     throw new AppError('MEDIA_METADATA_MISMATCH', 'Thông tin media không khớp.');
   }
-  const calibration = await readCalibration();
-  if (!calibration?.profiles?.[media.kind]?.ready) {
-    throw new AppError('PROFILE_NOT_READY', `Chưa hiệu chuẩn request ${media.kind === 'video' ? 'video' : 'ảnh'}.`);
-  }
 
   if (previous?.mediaId && previous.mediaId !== metadata.id) {
     await deleteMedia(previous.mediaId).catch(() => {});
   }
   const job = {
-    version: 1,
+    version: 2,
     id: makeId('job'),
     status: 'queued',
     content,
@@ -359,6 +352,7 @@ export async function clearJob() {
   activity(job, 'Đã xóa các nhóm còn chờ.', 'warn', 'JOB_CLEARED');
   await writeJob(job);
   await deleteMedia(mediaId).catch(() => {});
+  await closeFacebookEngine().catch(() => {});
   notifier();
   return cleanPublicJob(job);
 }
@@ -377,7 +371,10 @@ export async function clearResults() {
 export async function recoverQueue() {
   const job = await readJob();
   await purgeExpiredMedia(7 * 24 * 60 * 60 * 1000, [job?.mediaId]).catch(() => {});
-  if (!job) return null;
+  if (!job) {
+    await closeFacebookEngine().catch(() => {});
+    return null;
+  }
   if (job.status === 'running') {
     job.status = 'queued';
     job.lease = null;
@@ -390,6 +387,9 @@ export async function recoverQueue() {
   if (job.status === 'queued') {
     await schedule(Date.now() + 100);
     void processQueue();
+  }
+  if (!ACTIVE_STATUSES.has(job.status) && !['paused', 'stopped', 'error'].includes(job.status)) {
+    await closeFacebookEngine().catch(() => {});
   }
   return cleanPublicJob(job);
 }

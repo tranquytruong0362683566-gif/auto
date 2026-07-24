@@ -5,40 +5,39 @@ Web GitHub Pages và Chrome Extension phối hợp để đăng cùng một bài
 ## Chức năng
 
 - Chọn **một ảnh + văn bản** hoặc **một video + văn bản**.
-- Nhập danh sách UID nhóm dạng số, tự lọc trùng.
-- Đăng tuần tự và đặt thời gian nghỉ giữa hai nhóm.
+- Nhập danh sách UID nhóm dạng số và tự lọc trùng.
+- Đăng tuần tự, đặt thời gian nghỉ giữa hai nhóm.
 - Dừng, tiếp tục, bỏ qua nhóm lỗi và lưu kết quả thành công/thất bại.
 - Xuất kết quả CSV hoặc JSON.
-- Khi vận hành bình thường, extension chỉ gửi request và không mở từng tab nhóm.
-- Hiệu chuẩn riêng một lần cho ảnh và một lần cho video bằng tab Facebook do extension mở.
+- Tự đọc token phiên và mã GraphQL đang dùng từ Facebook khi chạy.
+- Chỉ dùng một tab Facebook nền cho cả hàng đợi; không mở từng nhóm.
+- Không dùng quyền `debugger`, không đọc cookie bằng API extension và không cần request mẫu.
 - Giới hạn tệp: ảnh 20 MB, video 200 MB.
 
 ## Cài extension
 
-1. Tải và giải nén `Truong-Group-Publisher-Extension-v1.0.0.zip`.
+1. Tải và giải nén `Truong-Group-Publisher-Extension-v1.1.0.zip`.
 2. Mở `chrome://extensions`.
 3. Bật **Chế độ dành cho nhà phát triển**.
 4. Chọn **Tải tiện ích đã giải nén**, sau đó chọn thư mục vừa giải nén.
-5. Đăng nhập Facebook trong cùng hồ sơ Chrome và mở trang:
-   `https://tranquytruong0362683566-gif.github.io/auto/`
+5. Đăng nhập Facebook trong cùng hồ sơ Chrome.
+6. Mở `https://tranquytruong0362683566-gif.github.io/auto/`.
 
-## Hiệu chuẩn ban đầu
+Khi bắt đầu hàng đợi, extension tạo một tab Facebook không được chọn, dùng JavaScript trong ngữ cảnh Facebook để gửi request có phiên đăng nhập hợp lệ. Tab này được dùng lại cho mọi UID và tự đóng khi hàng đợi hoàn tất hoặc bị xóa.
 
-1. Nhập UID của một nhóm thử nghiệm mà tài khoản có quyền đăng.
-2. Nhấn **Ghi mẫu ảnh**. Extension mở tab nhóm và hiển thị đoạn đánh dấu trên web.
-3. Trên tab Facebook, tạo bài gồm đúng đoạn đánh dấu và một ảnh dưới 1 MB, đăng bài, rồi quay lại web nhấn **Đã đăng xong — hoàn tất ghi**.
-4. Lặp lại bằng **Ghi mẫu video** với một video ngắn, dung lượng nhỏ.
+## Cơ chế request
 
-Profile chỉ lưu cấu trúc request và các vị trí dữ liệu động. Extension không xin quyền đọc cookie; website không nhận cookie hay token Facebook. Khi chạy, service worker lấy token mới bằng request trong phiên đăng nhập hiện tại.
+- Ảnh: upload multipart đến endpoint React Composer, nhận `photoID`, sau đó gọi `ComposerStoryCreateMutation`.
+- Video: thử endpoint upload video của React Composer; nếu endpoint này không trả `videoID`, chuyển sang chuỗi start → upload binary qua `rupload` → receive, rồi gọi mutation tạo bài.
+- Mã `doc_id` của mutation được tìm từ Relay module hoặc tài nguyên JavaScript Facebook đang tải. Extension chỉ dùng danh sách dự phòng khi Facebook không công bố mã đó trong trang.
+- Bài được Facebook tiếp nhận nhưng đang chờ quản trị viên duyệt vẫn được tính là thành công.
+- Nếu một nhóm lỗi mạng hoặc bị Facebook từ chối, hàng đợi ghi nhận thất bại và tiếp tục nhóm kế tiếp.
 
-Quyền `debugger` chỉ được gắn vào tab Facebook do extension tạo trong lúc ghi mẫu. Khi bấm hoàn tất, extension tắt Network debugging, tháo debugger và đóng tab đó.
+## Lưu ý
 
-## Lưu ý vận hành
+Đây là request nội bộ của Facebook, không phải Graph API chính thức. Facebook có thể đổi endpoint, schema hoặc quy trình upload mà không báo trước. Kết quả lỗi hiển thị mã và thông điệp cụ thể để phân biệt lỗi đăng nhập, quyền nhóm, upload media, `doc_id` và GraphQL.
 
-- Facebook có thể thay đổi request nội bộ. Khi profile báo lỗi hoặc Facebook thay giao diện, hãy dùng nút **Ghi lại**.
-- Bài được Facebook tiếp nhận nhưng chờ quản trị viên duyệt vẫn được tính là thành công.
-- Nếu một nhóm lỗi mạng hoặc bị từ chối, hàng đợi ghi nhận thất bại và tiếp tục nhóm sau.
-- Chỉ đăng ở các nhóm nơi bạn có quyền và tuân thủ quy định của nhóm cũng như Facebook.
+Chỉ đăng ở các nhóm nơi tài khoản có quyền và tuân thủ quy định của nhóm cũng như Facebook.
 
 ## Kiểm thử
 

@@ -1,4 +1,11 @@
-import { AppError, STATE_KEYS, base64ToBytes, makeId, sanitizeFilename } from './core.js';
+import {
+  AppError,
+  STATE_KEYS,
+  base64ToBytes,
+  bytesToBase64,
+  makeId,
+  sanitizeFilename
+} from './core.js';
 
 const DATABASE_NAME = 'truong-group-publisher-media';
 const DATABASE_VERSION = 1;
@@ -61,14 +68,6 @@ export async function readJob() {
 
 export async function writeJob(job) {
   return localSet(STATE_KEYS.job, job);
-}
-
-export async function readCalibration() {
-  return localGet(STATE_KEYS.calibration, { profiles: {}, active: null });
-}
-
-export async function writeCalibration(calibration) {
-  return localSet(STATE_KEYS.calibration, calibration);
 }
 
 export async function beginMedia(input) {
@@ -196,6 +195,29 @@ export async function getMediaBlob(mediaId) {
   return {
     metadata,
     blob: new Blob(parts, { type: metadata.type })
+  };
+}
+
+export async function getMediaChunkBase64(mediaId, index) {
+  const metadata = await getMediaMetadata(mediaId);
+  if (!metadata?.committed) throw new AppError('MEDIA_NOT_READY', 'Media chưa sẵn sàng để đăng.');
+  const chunkIndex = Number(index);
+  if (!Number.isInteger(chunkIndex) || chunkIndex < 0 || chunkIndex >= metadata.totalChunks) {
+    throw new AppError('INVALID_CHUNK_INDEX', 'Chỉ số phần media không hợp lệ.');
+  }
+  const database = await openDatabase();
+  const transaction = database.transaction(CHUNK_STORE, 'readonly');
+  const done = transactionDone(transaction);
+  const chunk = await requestResult(
+    transaction.objectStore(CHUNK_STORE).get([metadata.id, chunkIndex])
+  );
+  await done;
+  if (!chunk?.data) throw new AppError('MEDIA_CORRUPTED', `Thiếu phần media số ${chunkIndex + 1}.`);
+  return {
+    mediaId: metadata.id,
+    index: chunkIndex,
+    totalChunks: metadata.totalChunks,
+    data: bytesToBase64(chunk.data)
   };
 }
 
