@@ -446,9 +446,20 @@
       if (signal?.aborted) {
         throw Object.assign(new Error('Tiến trình đã được dừng bởi người dùng.'), { code: 'JOB_PAUSED' });
       }
-      throw Object.assign(new Error(`Lỗi mạng Facebook: ${error?.message || String(error)}`), {
-        code: 'FACEBOOK_NETWORK_ERROR'
-      });
+      let target = String(url || '').slice(0, 180);
+      try {
+        const parsedUrl = new URL(url, location.origin);
+        target = `${parsedUrl.hostname}${parsedUrl.pathname}`;
+      } catch {
+        // Giữ chuỗi URL đã rút gọn.
+      }
+      throw Object.assign(
+        new Error(`Lỗi mạng Facebook tại ${target}: ${error?.message || String(error)}`),
+        {
+          code: 'FACEBOOK_NETWORK_ERROR',
+          data: { target }
+        }
+      );
     }
     const text = await response.text();
     if (!response.ok) {
@@ -563,19 +574,9 @@
     }
   }
 
-  function asciiHeaderFilename(name, fallback = 'video.mp4') {
-    const normalized = String(name || '')
-      .replaceAll('đ', 'd')
-      .replaceAll('Đ', 'D')
-      .normalize('NFKD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^\x20-\x7e]/g, '_')
-      .replace(/["\\]/g, '_')
-      .replace(/\s+/g, ' ')
-      .replace(/_+/g, '_')
-      .trim()
-      .slice(0, 180);
-    return normalized || fallback;
+  function encodedHeaderFilename(name, fallback = 'video.mp4') {
+    const filename = String(name || '').trim() || fallback;
+    return encodeURIComponent(filename);
   }
 
   async function uploadVideoRupload(session, groupId, file, metadata, signal) {
@@ -585,34 +586,21 @@
       { source_type: 'newsfeed_composer' },
       signal
     );
-    const uploaderConfigResponse = await graphqlOperation(
-      session,
-      'useCometVideoUploaderConfigQuery',
-      {
-        actorID: session.userId,
-        entryPoint: 'group',
-        targetID: groupId
-      },
-      signal
-    );
     const mediaConfig = parseMaybeJson(deepFind(
       mediaConfigResponse.parsed,
       ['media_upload_config']
     ));
-    const uploaderConfig = parseMaybeJson(deepFind(
-      uploaderConfigResponse.parsed,
-      ['comet_composer_video_uploader_config', 'video_uploader_config']
-    ));
+    const uploadService = parseMaybeJson(mediaConfig?.network_upload_service?.default);
     const startUri = mediaConfig?.network_start?.uri
-      || `${location.origin}/ajax/video/upload/requests/start/`;
+      || 'https://vupload-edge.facebook.com/ajax/video/upload/requests/start/';
     const receiveUri = mediaConfig?.network_receive?.uri
-      || `${location.origin}/ajax/video/upload/requests/receive/`;
+      || 'https://vupload-edge.facebook.com/ajax/video/upload/requests/receive/';
     const waterfallId = crypto.randomUUID().replaceAll('-', '');
     const extension = String(metadata.name || '').split('.').pop()?.toLowerCase() || 'mp4';
-    const headerFilename = asciiHeaderFilename(metadata.name, `video.${extension}`);
+    const headerFilename = encodedHeaderFilename(metadata.name, `video.${extension}`);
     const startBody = new URLSearchParams({
       waterfall_id: waterfallId,
-      target_id: session.userId,
+      target_id: groupId,
       source: 'newsfeed_composer',
       composer_entry_point_ref: 'group',
       supports_chunking: 'true',
@@ -633,8 +621,7 @@
         method: 'POST',
         headers: {
           'content-type': 'application/x-www-form-urlencoded;charset=UTF-8',
-          'x-fb-lsd': session.lsd,
-          'x-fb-video-waterfall-id': waterfallId
+          x_fb_video_waterfall_id: waterfallId
         },
         body: startBody.toString()
       },
@@ -643,6 +630,12 @@
     );
     const payload = deepFind(start.parsed, ['payload']) || {};
     const videoId = String(payload.video_id || payload.videoID || '');
+    const uploadSessionId = String(
+      payload.upload_session_id
+      || payload.uploadSessionID
+      || payload.uploadSessionId
+      || ''
+    );
     if (!videoId) {
       throw Object.assign(new Error('Facebook không tạo phiên tải video.'), {
         code: 'FACEBOOK_VIDEO_SESSION_MISSING'
@@ -651,31 +644,61 @@
     if (!payload.skip_upload) {
       const startOffset = String(payload.start_offset ?? 0);
       const endOffset = String(payload.end_offset ?? metadata.size);
-      const serviceName = uploaderConfig.resumable_service_name || 'rupload';
-      const serviceDomain = uploaderConfig.resumable_service_domain || 'facebook.com';
-      const uploadUuid = crypto.randomUUID().replaceAll('-', '');
+      if (!uploadSessionId) {
+        throw Object.assign(new Error('Facebook không trả upload_session_id cho video.'), {
+          code: 'FACEBOOK_VIDEO_UPLOAD_SESSION_MISSING'
+        });
+      }
+      const serviceName = uploadService.service_name || 'rupload';
+      const serviceDomain = uploadService.service_domain || 'facebook.com';
+      const serviceConsumer = uploadService.service_consumer || 'fb_video';
+      const sessionKey = [
+        crypto.randomUUID().replaceAll('-', ''),
+        startOffset,
+        endOffset
+      ].join('-');
       const uploadUrl = new URL(
-        `https://${serviceName}.${serviceDomain}/fb_video/${uploadUuid}-${startOffset}-${endOffset}`
+        `https://${serviceName}.${serviceDomain}/${serviceConsumer}/${sessionKey}`
       );
-      uploadUrl.searchParams.set('lsd', session.lsd);
-      uploadUrl.searchParams.set('__aaid', '0');
+      const commonUploadHeaders = {
+        target_id: groupId,
+        x_fb_video_waterfall_id: waterfallId
+      };
+      const offsetResponse = await checkedFetch(
+        uploadUrl.toString(),
+        {
+          method: 'GET',
+          headers: commonUploadHeaders
+        },
+        signal,
+        'FACEBOOK_VIDEO_OFFSET_FAILED'
+      );
+      const offsetValue = Number(deepFind(offsetResponse.parsed, ['offset']) ?? 0);
+      const duplicate = Boolean(deepFind(offsetResponse.parsed, ['duplicate']));
+      if (!Number.isSafeInteger(offsetValue) || offsetValue < 0 || offsetValue > metadata.size) {
+        throw Object.assign(new Error(`Facebook trả offset video không hợp lệ: ${offsetValue}.`), {
+          code: 'FACEBOOK_VIDEO_OFFSET_INVALID'
+        });
+      }
+      const uploadBody = duplicate
+        ? ''
+        : file.slice(offsetValue, metadata.size, metadata.type || 'video/mp4');
       const uploaded = await checkedFetch(
         uploadUrl.toString(),
         {
           method: 'POST',
           headers: {
-            'composer-session-id': waterfallId,
-            'product-media-id': videoId,
-            'end-offset': endOffset,
-            offset: startOffset,
-            'start-offset': startOffset,
-            id: 'undefined',
+            ...commonUploadHeaders,
+            composer_session_id: waterfallId,
+            end_offset: endOffset,
+            id: uploadSessionId,
+            offset: String(offsetValue),
+            start_offset: startOffset,
             'x-entity-length': String(metadata.size),
             'x-entity-name': headerFilename,
-            'x-entity-type': metadata.type || 'video/mp4',
-            'x-total-asset-size': String(metadata.size)
+            'x-entity-type': metadata.type || 'video/mp4'
           },
-          body: file
+          body: uploadBody
         },
         signal,
         'FACEBOOK_VIDEO_BINARY_UPLOAD_FAILED'
@@ -689,16 +712,16 @@
 
       const receiveBody = new URLSearchParams({
         waterfall_id: waterfallId,
-        target_id: session.userId,
+        target_id: groupId,
         video_id: videoId,
         source: 'newsfeed_composer',
         composer_entry_point_ref: 'group',
         supports_chunking: 'true',
         supports_upload_service: 'true',
-        partition_start_offset: startOffset,
-        partition_end_offset: endOffset,
-        start_offset: startOffset,
-        end_offset: endOffset,
+        partition_start_offset: '0',
+        partition_end_offset: String(metadata.size),
+        start_offset: '0',
+        end_offset: String(metadata.size),
         upload_speed: String(Math.max(1, Math.round(metadata.size / 2))),
         fbuploader_video_file_chunk: String(uploadHandle),
         composer_dialog_version: 'V2',
@@ -712,8 +735,7 @@
           method: 'POST',
           headers: {
             'content-type': 'application/x-www-form-urlencoded;charset=UTF-8',
-            'x-fb-lsd': session.lsd,
-            'x-fb-video-waterfall-id': waterfallId
+            x_fb_video_waterfall_id: waterfallId
           },
           body: receiveBody.toString()
         },
@@ -728,19 +750,7 @@
     if (metadata.kind === 'image') {
       return uploadSimple(session, groupId, file, metadata, signal);
     }
-    try {
-      return await uploadSimple(session, groupId, file, metadata, signal);
-    } catch (simpleError) {
-      try {
-        return await uploadVideoRupload(session, groupId, file, metadata, signal);
-      } catch (ruploadError) {
-        throw Object.assign(new Error(
-          `Upload video thường lỗi: ${simpleError.message} · Rupload lỗi: ${ruploadError.message}`
-        ), {
-          code: ruploadError.code || simpleError.code || 'FACEBOOK_VIDEO_UPLOAD_FAILED'
-        });
-      }
-    }
+    return uploadVideoRupload(session, groupId, file, metadata, signal);
   }
 
   function relayProviders() {

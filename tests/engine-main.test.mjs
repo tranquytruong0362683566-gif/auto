@@ -148,25 +148,15 @@ test('đăng văn bản thuần không tải media và gửi attachments rỗng'
   assert.equal(variables.input.message.text, 'Bài viết chỉ có văn bản');
 });
 
-for (const mediaCase of [
-  {
-    kind: 'image',
-    type: 'image/jpeg',
-    name: 'anh.jpg',
-    uploadPath: '/ajax/react_composer/attachments/photo/upload',
-    uploadResponse: 'for (;;);{"payload":{"photoID":"778899001122"}}',
-    expectedAttachment: { photo: { id: '778899001122' } }
-  },
-  {
-    kind: 'video',
-    type: 'video/mp4',
-    name: 'video.mp4',
-    uploadPath: '/ajax/react_composer/attachments/video/upload',
-    uploadResponse: 'for (;;);{"payload":{"videoID":"998877665544"}}',
-    expectedAttachment: { video: { id: '998877665544' } }
-  }
-]) {
-  test(`đăng văn bản kèm ${mediaCase.kind === 'image' ? 'ảnh' : 'video'} tự nhận loại tệp`, async () => {
+for (const mediaCase of [{
+  kind: 'image',
+  type: 'image/jpeg',
+  name: 'anh.jpg',
+  uploadPath: '/ajax/react_composer/attachments/photo/upload',
+  uploadResponse: 'for (;;);{"payload":{"photoID":"778899001122"}}',
+  expectedAttachment: { photo: { id: '778899001122' } }
+}]) {
+  test('đăng văn bản kèm ảnh tự nhận loại tệp', async () => {
     const requests = [];
     const engine = createEngine({
       CurrentUserInitialData: { USER_ID: '123456789012345' },
@@ -216,11 +206,12 @@ for (const mediaCase of [
   });
 }
 
-test('Rupload chuẩn hóa tên video tiếng Việt thành header ASCII', async () => {
+test('video dùng đúng chuỗi start → offset → Rupload → receive', async () => {
   const requests = [];
-  let ruploadEntityName = '';
+  let ruploadRequest = null;
   const groupId = '3234611540008677';
   const videoId = '998877665544';
+  const uploadSessionId = 'upload-session-123';
   const engine = createEngine({
     CurrentUserInitialData: { USER_ID: '123456789012345' },
     DTSGInitialData: { token: 'dtsg-token' },
@@ -228,9 +219,6 @@ test('Rupload chuẩn hóa tên video tiếng Việt thành header ASCII', async
     SiteData: { client_revision: '101' },
     MediaUploadFBDefaultServerConfigurationRetrieverQuery_facebookRelayOperation: {
       params: { id: '24229633186643574' }
-    },
-    useCometVideoUploaderConfigQuery_facebookRelayOperation: {
-      params: { id: '9734072893355148' }
     },
     ComposerStoryCreateMutation_facebookRelayOperation: {
       params: { id: '25879074401770690' }
@@ -240,16 +228,10 @@ test('Rupload chuẩn hóa tên video tiếng Việt thành header ASCII', async
       const requestUrl = String(url);
       requests.push({ url: requestUrl, request });
 
-      for (const [headerName, headerValue] of Object.entries(request.headers || {})) {
+      for (const headerValue of Object.values(request.headers || {})) {
         if ([...String(headerValue)].some((character) => character.codePointAt(0) > 255)) {
-          throw new TypeError(
-            `Failed to read the '${headerName}' header: String contains non ISO-8859-1 code point`
-          );
+          throw new TypeError('String contains non ISO-8859-1 code point');
         }
-      }
-
-      if (requestUrl.includes('/ajax/react_composer/attachments/video/upload')) {
-        throw new TypeError('Failed to fetch');
       }
 
       let responseBody = '';
@@ -257,17 +239,19 @@ test('Rupload chuẩn hóa tên video tiếng Việt thành header ASCII', async
         const body = new URLSearchParams(request.body);
         const operationName = body.get('fb_api_req_friendly_name');
         if (operationName === 'MediaUploadFBDefaultServerConfigurationRetrieverQuery') {
-          responseBody = 'for (;;);{"data":{"media_upload_config":{"network_start":{"uri":"https://www.facebook.com/ajax/video/upload/requests/start/"},"network_receive":{"uri":"https://www.facebook.com/ajax/video/upload/requests/receive/"}}}}';
-        } else if (operationName === 'useCometVideoUploaderConfigQuery') {
-          responseBody = 'for (;;);{"data":{"comet_composer_video_uploader_config":{"resumable_service_name":"rupload","resumable_service_domain":"facebook.com"}}}';
+          responseBody = 'for (;;);{"data":{"media_upload_config":{"network_start":{"uri":"https://vupload-edge.facebook.com/ajax/video/upload/requests/start/"},"network_receive":{"uri":"https://vupload-edge.facebook.com/ajax/video/upload/requests/receive/"},"network_upload_service":{"default":{"service_name":"rupload","service_domain":"facebook.com"}}}}}';
         } else {
           responseBody = `for (;;);{"data":{"story_create":{"story":{"id":"${groupId}_112233445566"}}}}`;
         }
       } else if (requestUrl.includes('/ajax/video/upload/requests/start/')) {
-        responseBody = `for (;;);{"payload":{"video_id":"${videoId}","start_offset":0,"end_offset":12,"skip_upload":false}}`;
+        responseBody = `for (;;);{"payload":{"video_id":"${videoId}","upload_session_id":"${uploadSessionId}","start_offset":0,"end_offset":12,"skip_upload":false}}`;
       } else if (requestUrl.startsWith('https://rupload.facebook.com/fb_video/')) {
-        ruploadEntityName = request.headers['x-entity-name'];
-        responseBody = '{"h":"upload-handle"}';
+        if (request.method === 'GET') {
+          responseBody = '{"offset":4,"duplicate":false}';
+        } else {
+          ruploadRequest = request;
+          responseBody = '{"h":"upload-handle"}';
+        }
       } else if (requestUrl.includes('/ajax/video/upload/requests/receive/')) {
         responseBody = 'for (;;);{"payload":{"success":true}}';
       } else {
@@ -301,7 +285,29 @@ test('Rupload chuẩn hóa tên video tiếng Việt thành header ASCII', async
   assert.equal(reply.response.success, true);
   assert.equal(reply.response.code, 'POST_ACCEPTED');
   assert.equal(reply.response.data.diagnostics.uploadMode, 'video-rupload');
-  assert.ok(requests.some(({ url }) => url.startsWith('https://rupload.facebook.com/fb_video/')));
-  assert.match(ruploadEntityName, /\.mp4$/i);
-  assert.doesNotMatch(ruploadEntityName, /[^\x20-\x7e]/);
+  assert.equal(requests.length, 6);
+  assert.ok(!requests.some(({ url }) => url.includes('/attachments/video/upload')));
+  assert.equal(requests[2].request.method, 'GET');
+  assert.equal(requests[3].request.method, 'POST');
+  assert.ok(ruploadRequest);
+  assert.equal(
+    ruploadRequest.headers['x-entity-name'],
+    encodeURIComponent('video tiếng Việt 🎬.mp4')
+  );
+  assert.doesNotMatch(ruploadRequest.headers['x-entity-name'], /[^\x20-\x7e]/);
+  assert.equal(ruploadRequest.headers.id, uploadSessionId);
+  assert.equal(ruploadRequest.headers.composer_session_id, '11111111222243338444555555555555');
+  assert.equal(ruploadRequest.headers.target_id, groupId);
+  assert.equal(ruploadRequest.headers.x_fb_video_waterfall_id, '11111111222243338444555555555555');
+  assert.equal(ruploadRequest.headers.offset, '4');
+  assert.equal(ruploadRequest.body.size, file.size - 4);
+  assert.ok(!Object.hasOwn(ruploadRequest.headers, 'composer-session-id'));
+  assert.ok(!Object.hasOwn(ruploadRequest.headers, 'product-media-id'));
+  assert.ok(!Object.hasOwn(ruploadRequest.headers, 'x-total-asset-size'));
+
+  const startBody = new URLSearchParams(requests[1].request.body);
+  const receiveBody = new URLSearchParams(requests[4].request.body);
+  assert.equal(startBody.get('target_id'), groupId);
+  assert.equal(receiveBody.get('target_id'), groupId);
+  assert.equal(receiveBody.get('video_id'), videoId);
 });

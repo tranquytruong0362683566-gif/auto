@@ -17,7 +17,7 @@ Web GitHub Pages và Chrome Extension phối hợp để đăng cùng một bài
 
 ## Cài extension
 
-1. Tải và giải nén `Truong-Group-Publisher-Extension-v1.2.1.zip`.
+1. Tải và giải nén `Truong-Group-Publisher-Extension-v1.2.2.zip`.
 2. Mở `chrome://extensions`.
 3. Bật **Chế độ dành cho nhà phát triển**.
 4. Chọn **Tải tiện ích đã giải nén**, sau đó chọn thư mục vừa giải nén.
@@ -30,8 +30,8 @@ Khi bắt đầu hàng đợi, extension tạo một tab Facebook không đượ
 
 - Văn bản: gọi trực tiếp `ComposerStoryCreateMutation` với danh sách tệp đính kèm rỗng.
 - Ảnh: upload multipart đến endpoint React Composer, nhận `photoID`, sau đó gọi `ComposerStoryCreateMutation`.
-- Video: thử endpoint upload video của React Composer; nếu endpoint này không trả `videoID`, chuyển sang chuỗi start → upload binary qua `rupload` → receive, rồi gọi mutation tạo bài.
-- Với Rupload, chỉ tên tệp đặt trong HTTP header được chuẩn hóa về ASCII để tên tiếng Việt hoặc emoji không làm Fetch API từ chối request; tên tệp gốc trên web không bị thay đổi.
+- Video: dùng chuỗi start → lấy offset Rupload → upload phần binary còn lại → receive, rồi gọi mutation tạo bài. Header và `upload_session_id` bám theo giao thức uploader của Facebook.
+- Với Rupload, tên tệp trong HTTP header được mã hóa bằng `encodeURIComponent`, nên tên tiếng Việt hoặc emoji không làm Fetch API từ chối request; tên tệp gốc trên web không bị thay đổi.
 - Mã `doc_id` của mutation được tìm từ Relay module hoặc tài nguyên JavaScript Facebook đang tải. Extension chỉ dùng danh sách dự phòng khi Facebook không công bố mã đó trong trang.
 - Bài được Facebook tiếp nhận nhưng đang chờ quản trị viên duyệt vẫn được tính là thành công.
 - Nếu một nhóm lỗi mạng hoặc bị Facebook từ chối, hàng đợi ghi nhận thất bại và tiếp tục nhóm kế tiếp.
