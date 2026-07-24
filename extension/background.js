@@ -196,10 +196,7 @@ chrome.runtime.onInstalled.addListener(() => {
 let bootstrapPromise = null;
 function bootstrap() {
   if (bootstrapPromise) return bootstrapPromise;
-  bootstrapPromise = Promise.all([
-    chrome.storage.local.remove(['gp.calibration.v1', 'gp.calibration.capture.v1']),
-    recoverQueue()
-  ]).catch((error) => {
+  bootstrapPromise = recoverQueue().catch((error) => {
     console.error('[GroupPublisher] Khởi tạo extension thất bại:', error);
   }).finally(() => {
     bootstrapPromise = null;

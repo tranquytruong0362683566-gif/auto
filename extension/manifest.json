@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Trường Group Publisher",
-  "version": "1.1.0",
-  "description": "Nhận hàng đợi từ trang /auto/ và tự động đăng bài Facebook tuần tự bằng request.",
+  "version": "1.2.0",
+  "description": "Đăng văn bản và tùy chọn ảnh hoặc video vào nhóm Facebook tuần tự bằng request.",
   "permissions": [
     "alarms",
     "storage",

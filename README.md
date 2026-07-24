@@ -4,7 +4,8 @@ Web GitHub Pages và Chrome Extension phối hợp để đăng cùng một bài
 
 ## Chức năng
 
-- Chọn **một ảnh + văn bản** hoặc **một video + văn bản**.
+- Mặc định đăng **chỉ văn bản**.
+- Có thể đính kèm tùy chọn **một ảnh** hoặc **một video**; web tự nhận loại tệp.
 - Nhập danh sách UID nhóm dạng số và tự lọc trùng.
 - Đăng tuần tự, đặt thời gian nghỉ giữa hai nhóm.
 - Dừng, tiếp tục, bỏ qua nhóm lỗi và lưu kết quả thành công/thất bại.
@@ -16,7 +17,7 @@ Web GitHub Pages và Chrome Extension phối hợp để đăng cùng một bài
 
 ## Cài extension
 
-1. Tải và giải nén `Truong-Group-Publisher-Extension-v1.1.0.zip`.
+1. Tải và giải nén `Truong-Group-Publisher-Extension-v1.2.0.zip`.
 2. Mở `chrome://extensions`.
 3. Bật **Chế độ dành cho nhà phát triển**.
 4. Chọn **Tải tiện ích đã giải nén**, sau đó chọn thư mục vừa giải nén.
@@ -27,6 +28,7 @@ Khi bắt đầu hàng đợi, extension tạo một tab Facebook không đượ
 
 ## Cơ chế request
 
+- Văn bản: gọi trực tiếp `ComposerStoryCreateMutation` với danh sách tệp đính kèm rỗng.
 - Ảnh: upload multipart đến endpoint React Composer, nhận `photoID`, sau đó gọi `ComposerStoryCreateMutation`.
 - Video: thử endpoint upload video của React Composer; nếu endpoint này không trả `videoID`, chuyển sang chuỗi start → upload binary qua `rupload` → receive, rồi gọi mutation tạo bài.
 - Mã `doc_id` của mutation được tìm từ Relay module hoặc tài nguyên JavaScript Facebook đang tải. Extension chỉ dùng danh sách dự phòng khi Facebook không công bố mã đó trong trang.

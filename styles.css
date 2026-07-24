@@ -383,15 +383,12 @@ button {
 }
 
 .field + .field,
-.media-mode,
-.media-picker,
 .schedule-grid,
 .action-bar {
   margin-top: 18px;
 }
 
-label,
-.media-mode legend {
+label {
   color: #d9eee3;
   font-size: 12px;
   font-weight: 650;
@@ -468,69 +465,8 @@ input[type="number"] {
   color: var(--success);
 }
 
-.media-mode {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  padding: 0;
-  border: 0;
-}
-
-.media-mode legend {
-  margin-bottom: 9px;
-}
-
-.mode-card {
-  display: flex;
-  min-height: 74px;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: rgba(4, 17, 13, 0.48);
-  cursor: pointer;
-  transition: 160ms ease;
-}
-
-.mode-card:hover,
-.mode-card.active {
-  border-color: var(--line-strong);
-  background: rgba(63, 198, 132, 0.09);
-}
-
-.mode-card input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.mode-icon {
-  display: grid;
-  flex: 0 0 auto;
-  width: 42px;
-  height: 42px;
-  place-items: center;
-  border-radius: 12px;
-  background: rgba(99, 242, 173, 0.1);
-  color: var(--accent);
-  font-size: 18px;
-}
-
-.mode-card strong,
-.mode-card small {
-  display: block;
-}
-
-.mode-card strong {
-  font-size: 12px;
-}
-
-.mode-card small {
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 450;
+.optional-media {
+  margin-top: 18px;
 }
 
 .media-picker {
@@ -1062,7 +998,6 @@ tbody tr:hover:not(.empty-row) {
     align-items: flex-start;
   }
 
-  .media-mode,
   .schedule-grid {
     grid-template-columns: 1fr;
   }

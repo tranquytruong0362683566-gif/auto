@@ -25,7 +25,7 @@
     </a>
 
     <div class="connection-strip">
-      <a class="header-download" href="./downloads/Truong-Group-Publisher-Extension-v1.1.0.zip" download>
+      <a class="header-download" href="./downloads/Truong-Group-Publisher-Extension-v1.2.0.zip" download>
         Tải extension
       </a>
       <span class="status-pill pending" id="extensionStatus">
@@ -44,7 +44,7 @@
       <div>
         <p class="eyebrow">WEB GITHUB + EXTENSION MV3</p>
         <h1>Đăng một nội dung<br><span>đến nhiều nhóm.</span></h1>
-        <p class="hero-copy">Soạn văn bản, chọn một ảnh hoặc một video, nhập UID nhóm. Extension tự lấy phiên Facebook và gửi request tuần tự.</p>
+        <p class="hero-copy">Soạn văn bản, tùy chọn đính kèm một ảnh hoặc video, nhập UID nhóm. Extension tự lấy phiên Facebook và gửi request tuần tự.</p>
       </div>
       <div class="hero-stats" aria-label="Tổng quan tiến trình">
         <article>
@@ -83,35 +83,27 @@
           <textarea id="postContent" maxlength="20000" placeholder="Nhập nội dung sẽ dùng chung cho toàn bộ nhóm..."></textarea>
         </div>
 
-        <fieldset class="media-mode">
-          <legend>Loại nội dung</legend>
-          <label class="mode-card active" id="imageModeCard">
-            <input type="radio" name="mediaMode" value="image" checked>
-            <span class="mode-icon" aria-hidden="true">▧</span>
-            <span><strong>Ảnh + văn bản</strong><small>Chọn đúng một ảnh</small></span>
-          </label>
-          <label class="mode-card" id="videoModeCard">
-            <input type="radio" name="mediaMode" value="video">
-            <span class="mode-icon" aria-hidden="true">▶</span>
-            <span><strong>Video + văn bản</strong><small>Chọn đúng một video</small></span>
-          </label>
-        </fieldset>
-
-        <div class="media-picker" id="mediaDropZone">
-          <input id="mediaInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
-          <div class="media-empty" id="mediaEmpty">
-            <span class="upload-symbol" aria-hidden="true">⇧</span>
-            <strong>Chọn hoặc kéo tệp vào đây</strong>
-            <small id="mediaHint">JPG, PNG, WEBP hoặc GIF</small>
+        <div class="field optional-media">
+          <div class="label-row">
+            <label for="mediaInput">Tệp đính kèm</label>
+            <span>Không bắt buộc · mặc định chỉ văn bản</span>
           </div>
-          <div class="media-preview hidden" id="mediaPreview">
-            <div class="preview-stage" id="previewStage"></div>
-            <div class="preview-meta">
-              <div>
-                <strong id="mediaName">—</strong>
-                <span id="mediaSize">—</span>
+          <div class="media-picker" id="mediaDropZone">
+            <input id="mediaInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime">
+            <div class="media-empty" id="mediaEmpty">
+              <span class="upload-symbol" aria-hidden="true">⇧</span>
+              <strong>Thêm một ảnh hoặc video</strong>
+              <small id="mediaHint">Có thể bỏ trống để đăng chỉ văn bản</small>
+            </div>
+            <div class="media-preview hidden" id="mediaPreview">
+              <div class="preview-stage" id="previewStage"></div>
+              <div class="preview-meta">
+                <div>
+                  <strong id="mediaName">—</strong>
+                  <span id="mediaSize">—</span>
+                </div>
+                <button class="button ghost small" id="removeMediaBtn" type="button">Xóa tệp</button>
               </div>
-              <button class="button ghost small" id="removeMediaBtn" type="button">Xóa tệp</button>
             </div>
           </div>
         </div>
@@ -170,7 +162,7 @@
           </button>
           <button class="button ghost" id="clearQueueBtn" type="button">Xóa hàng đợi</button>
         </div>
-        <p class="field-note">Không cần ghi request mẫu. Extension dùng một tab Facebook nền duy nhất cho cả hàng đợi và không mở từng nhóm.</p>
+        <p class="field-note">Mặc định đăng văn bản; ảnh hoặc video chỉ được tải lên khi bạn chọn tệp đính kèm.</p>
       </article>
     </section>
 

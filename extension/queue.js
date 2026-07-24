@@ -69,7 +69,7 @@ async function finishJob(job) {
   await writeJob(job);
   await clearSchedule();
   notifier();
-  await deleteMedia(job.mediaId).catch(() => {});
+  if (job.mediaId) await deleteMedia(job.mediaId).catch(() => {});
   await closeFacebookEngine().catch(() => {});
 }
 
@@ -123,7 +123,7 @@ async function processLoop() {
       outcome = await postToFacebook({
         groupId,
         message: job.content,
-        mediaId: job.mediaId,
+        mediaId: job.mediaId || '',
         signal: currentAbortController.signal,
         onStep(step) {
           void readJob().then(async (latest) => {
@@ -250,31 +250,47 @@ export async function startJob(input) {
     throw new AppError('TOO_MANY_GROUPS', `Tối đa ${MAX_GROUPS} UID trong một hàng đợi.`);
   }
   const delaySeconds = Math.max(0, Math.min(86400, Math.round(Number(input?.delaySeconds) || 0)));
-  const media = {
-    kind: input?.media?.kind === 'video' ? 'video' : input?.media?.kind === 'image' ? 'image' : '',
-    name: String(input?.media?.name || ''),
-    type: String(input?.media?.type || ''),
-    size: Number(input?.media?.size || 0)
-  };
-  if (!media.kind) throw new AppError('INVALID_MEDIA_KIND', 'Loại media không hợp lệ.');
-
-  const metadata = await getMediaMetadata(input?.mediaId);
-  if (!metadata?.committed) throw new AppError('MEDIA_NOT_READY', 'Media chưa được chuyển đầy đủ sang extension.');
-  if (metadata.kind !== media.kind || metadata.size !== media.size) {
-    throw new AppError('MEDIA_METADATA_MISMATCH', 'Thông tin media không khớp.');
+  const requestedMediaId = String(input?.mediaId || '');
+  const requestedMediaKind = ['image', 'video'].includes(input?.media?.kind)
+    ? input.media.kind
+    : '';
+  const hasMedia = Boolean(requestedMediaId || requestedMediaKind);
+  if (hasMedia && (!requestedMediaId || !requestedMediaKind)) {
+    throw new AppError(
+      'MEDIA_METADATA_INCOMPLETE',
+      'Thông tin tệp đính kèm chưa đầy đủ.'
+    );
   }
 
-  if (previous?.mediaId && previous.mediaId !== metadata.id) {
+  let metadata = null;
+  let media = null;
+  if (hasMedia) {
+    media = {
+      kind: requestedMediaKind,
+      name: String(input?.media?.name || ''),
+      type: String(input?.media?.type || ''),
+      size: Number(input?.media?.size || 0)
+    };
+    metadata = await getMediaMetadata(requestedMediaId);
+    if (!metadata?.committed) {
+      throw new AppError('MEDIA_NOT_READY', 'Media chưa được chuyển đầy đủ sang extension.');
+    }
+    if (metadata.kind !== media.kind || metadata.size !== media.size) {
+      throw new AppError('MEDIA_METADATA_MISMATCH', 'Thông tin media không khớp.');
+    }
+  }
+
+  if (previous?.mediaId && previous.mediaId !== metadata?.id) {
     await deleteMedia(previous.mediaId).catch(() => {});
   }
   const job = {
-    version: 2,
+    version: 3,
     id: makeId('job'),
     status: 'queued',
     content,
     groups,
     delaySeconds,
-    mediaId: metadata.id,
+    mediaId: metadata?.id || '',
     media,
     currentIndex: 0,
     activeGroupId: '',
@@ -318,9 +334,11 @@ export async function resumeJob() {
   if (job.currentIndex >= job.groups.length) {
     throw new AppError('JOB_HAS_NO_REMAINING_GROUPS', 'Hàng đợi không còn nhóm nào chưa xử lý.');
   }
-  const metadata = await getMediaMetadata(job.mediaId);
-  if (!metadata?.committed) {
-    throw new AppError('MEDIA_NOT_READY', 'Media của hàng đợi không còn trong extension.');
+  if (job.mediaId) {
+    const metadata = await getMediaMetadata(job.mediaId);
+    if (!metadata?.committed) {
+      throw new AppError('MEDIA_NOT_READY', 'Media của hàng đợi không còn trong extension.');
+    }
   }
   job.status = 'queued';
   job.nextRunAt = null;
@@ -351,7 +369,7 @@ export async function clearJob() {
   job.updatedAt = Date.now();
   activity(job, 'Đã xóa các nhóm còn chờ.', 'warn', 'JOB_CLEARED');
   await writeJob(job);
-  await deleteMedia(mediaId).catch(() => {});
+  if (mediaId) await deleteMedia(mediaId).catch(() => {});
   await closeFacebookEngine().catch(() => {});
   notifier();
   return cleanPublicJob(job);
@@ -370,7 +388,10 @@ export async function clearResults() {
 
 export async function recoverQueue() {
   const job = await readJob();
-  await purgeExpiredMedia(7 * 24 * 60 * 60 * 1000, [job?.mediaId]).catch(() => {});
+  await purgeExpiredMedia(
+    7 * 24 * 60 * 60 * 1000,
+    job?.mediaId ? [job.mediaId] : []
+  ).catch(() => {});
   if (!job) {
     await closeFacebookEngine().catch(() => {});
     return null;

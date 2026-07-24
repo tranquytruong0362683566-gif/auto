@@ -101,13 +101,17 @@
   async function executePost(message) {
     const requestId = String(message.requestId || '');
     try {
-      report(requestId, 1, 4, 'Đang chuyển media vào máy request');
-      const file = await loadMedia(requestId, message.payload);
+      const payload = message.payload || {};
+      let mainPayload = payload;
+      if (payload.media && payload.mediaId) {
+        report(requestId, 1, 4, 'Đang chuyển media vào máy request');
+        const file = await loadMedia(requestId, payload);
+        mainPayload = { ...payload, file };
+      } else {
+        report(requestId, 1, 4, 'Đang chuẩn bị bài viết văn bản');
+      }
       if (aborted.has(requestId)) throw new Error('JOB_PAUSED');
-      const result = await callMain(requestId, 'POST', {
-        ...message.payload,
-        file
-      });
+      const result = await callMain(requestId, 'POST', mainPayload);
       return result || response(false, 'EMPTY_ENGINE_RESPONSE', 'Máy request Facebook không trả kết quả.');
     } catch (error) {
       if (aborted.has(requestId) || error?.message === 'JOB_PAUSED') {

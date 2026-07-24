@@ -260,9 +260,12 @@ export async function postToFacebook({
   signal,
   onStep
 }) {
-  const metadata = await getMediaMetadata(mediaId);
-  if (!metadata?.committed) {
-    throw new AppError('MEDIA_NOT_READY', 'Media chưa sẵn sàng để đăng.');
+  let metadata = null;
+  if (mediaId) {
+    metadata = await getMediaMetadata(mediaId);
+    if (!metadata?.committed) {
+      throw new AppError('MEDIA_NOT_READY', 'Media chưa sẵn sàng để đăng.');
+    }
   }
 
   onStep?.({ index: 0, total: 4, label: 'Khởi động máy request Facebook' });
@@ -290,14 +293,16 @@ export async function postToFacebook({
         payload: {
           groupId: String(groupId),
           message: String(message),
-          mediaId: metadata.id,
-          media: {
-            kind: metadata.kind,
-            name: metadata.name,
-            type: metadata.type,
-            size: metadata.size,
-            totalChunks: metadata.totalChunks
-          }
+          mediaId: metadata?.id || '',
+          media: metadata
+            ? {
+                kind: metadata.kind,
+                name: metadata.name,
+                type: metadata.type,
+                size: metadata.size,
+                totalChunks: metadata.totalChunks
+              }
+            : null
         }
       }),
       ENGINE_REQUEST_TIMEOUT_MS,

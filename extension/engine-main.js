@@ -748,7 +748,7 @@
   function composerVariables(style, session, groupId, message, attachment, composerSessionId) {
     const commonInput = {
       message: { ranges: [], text: message },
-      attachments: [attachment],
+      attachments: attachment ? [attachment] : [],
       actor_id: session.userId,
       client_mutation_id: '1'
     };
@@ -821,7 +821,9 @@
   async function createPost(session, groupId, message, mediaKind, mediaId, signal) {
     const attachment = mediaKind === 'video'
       ? { video: { id: mediaId } }
-      : { photo: { id: mediaId } };
+      : mediaKind === 'image'
+        ? { photo: { id: mediaId } }
+        : null;
     const resolved = await resolveDocId(COMPOSER_NAME);
     const docIds = [
       resolved?.id,
@@ -880,7 +882,9 @@
   async function executePost(requestId, payload, signal) {
     const groupId = String(payload?.groupId || '');
     const message = String(payload?.message || '').trim();
-    const metadata = payload?.media || {};
+    const metadata = payload?.media || null;
+    const mediaKind = String(metadata?.kind || '');
+    const hasMedia = mediaKind === 'image' || mediaKind === 'video';
     const file = payload?.file;
     if (!/^\d{5,30}$/.test(groupId)) {
       throw Object.assign(new Error('UID nhóm không hợp lệ.'), { code: 'INVALID_GROUP_ID' });
@@ -888,24 +892,29 @@
     if (!message) {
       throw Object.assign(new Error('Nội dung bài viết đang trống.'), { code: 'EMPTY_CONTENT' });
     }
-    if (!(file instanceof Blob) || Number(file.size) !== Number(metadata.size)) {
+    if (mediaKind && !hasMedia) {
+      throw Object.assign(new Error('Loại media không hợp lệ.'), { code: 'INVALID_MEDIA_KIND' });
+    }
+    if (hasMedia && (!(file instanceof Blob) || Number(file.size) !== Number(metadata.size))) {
       throw Object.assign(new Error('Media chuyển sang tab Facebook bị thiếu hoặc sai kích thước.'), {
         code: 'ENGINE_MEDIA_INVALID'
       });
     }
-    if (!['image', 'video'].includes(metadata.kind)) {
-      throw Object.assign(new Error('Loại media không hợp lệ.'), { code: 'INVALID_MEDIA_KIND' });
-    }
 
-    progress(requestId, 2, 4, `Đang tải ${metadata.kind === 'video' ? 'video' : 'ảnh'} lên Facebook`);
     const session = requireSession();
-    const uploaded = await uploadMedia(session, groupId, file, metadata, signal);
+    let uploaded = { mediaId: '', mode: 'none' };
+    if (hasMedia) {
+      progress(requestId, 2, 4, `Đang tải ${mediaKind === 'video' ? 'video' : 'ảnh'} lên Facebook`);
+      uploaded = await uploadMedia(session, groupId, file, metadata, signal);
+    } else {
+      progress(requestId, 2, 4, 'Đã chuẩn bị phiên đăng bài văn bản');
+    }
     progress(requestId, 3, 4, 'Đang gửi request tạo bài viết');
     const created = await createPost(
       session,
       groupId,
       message,
-      metadata.kind,
+      hasMedia ? mediaKind : 'text',
       uploaded.mediaId,
       signal
     );

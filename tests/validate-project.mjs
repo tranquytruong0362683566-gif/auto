@@ -6,7 +6,7 @@ const webDirectory = new URL('../web/', import.meta.url);
 const manifest = JSON.parse(await readFile(new URL('manifest.json', extensionDirectory), 'utf8'));
 
 assert.equal(manifest.manifest_version, 3);
-assert.equal(manifest.version, '1.1.0');
+assert.equal(manifest.version, '1.2.0');
 assert.equal(manifest.background.type, 'module');
 assert.equal(manifest.background.service_worker, 'background.js');
 assert.ok(manifest.permissions.includes('storage'));
@@ -70,10 +70,30 @@ assert.match(webIndex, /id="groupIds"/);
 assert.match(webIndex, /id="pauseBtn"/);
 assert.match(webIndex, /id="resumeBtn"/);
 assert.doesNotMatch(webIndex, /recordImageBtn|recordVideoBtn|calibrationSession/);
-assert.match(webIndex, /Truong-Group-Publisher-Extension-v1\.1\.0\.zip/);
+assert.doesNotMatch(webIndex, /name="mediaMode"/);
+assert.match(webIndex, /Không bắt buộc · mặc định chỉ văn bản/);
+assert.match(webIndex, /Truong-Group-Publisher-Extension-v1\.2\.0\.zip/);
 
 const bridge = await readFile(new URL('bridge.js', extensionDirectory), 'utf8');
 assert.doesNotMatch(bridge, /CALIBRATION_START|CALIBRATION_STOP/);
+const webApp = await readFile(new URL('app.js', webDirectory), 'utf8');
+assert.doesNotMatch(webApp, /Hãy chọn một \$\{mode/);
+assert.match(webApp, /if \(selectedFile\)/);
+const queue = await readFile(new URL('queue.js', extensionDirectory), 'utf8');
+assert.match(queue, /mediaId: metadata\?\.id \|\| ''/);
+const engineMain = await readFile(new URL('engine-main.js', extensionDirectory), 'utf8');
+assert.match(engineMain, /attachments: attachment \? \[attachment\] : \[\]/);
+
+const runtimeSource = [
+  webIndex,
+  webApp,
+  ...(await Promise.all(
+    extensionFiles
+      .filter((file) => file.endsWith('.js'))
+      .map((file) => readFile(new URL(file, extensionDirectory), 'utf8'))
+  ))
+].join('\n');
+assert.doesNotMatch(runtimeSource, /chưa hiệu chuẩn request|calibration/i);
 
 const scripts = [
   ...extensionFiles.filter((file) => file.endsWith('.js')),

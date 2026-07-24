@@ -11,8 +11,6 @@
     facebookAccount: $('facebookAccount'),
     postContent: $('postContent'),
     contentCounter: $('contentCounter'),
-    imageModeCard: $('imageModeCard'),
-    videoModeCard: $('videoModeCard'),
     mediaInput: $('mediaInput'),
     mediaDropZone: $('mediaDropZone'),
     mediaEmpty: $('mediaEmpty'),
@@ -53,8 +51,7 @@
   const STORE = Object.freeze({
     content: 'group_publisher_content_v1',
     groups: 'group_publisher_groups_v1',
-    delay: 'group_publisher_delay_v1',
-    mode: 'group_publisher_mode_v1'
+    delay: 'group_publisher_delay_v1'
   });
 
   const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
@@ -100,10 +97,11 @@
     return `${(value / 1024 ** 3).toFixed(2)} GB`;
   }
 
-  function mediaMode() {
-    return document.querySelector('input[name="mediaMode"]:checked')?.value === 'video'
-      ? 'video'
-      : 'image';
+  function mediaKind(file = selectedFile) {
+    if (!file) return '';
+    if (String(file.type || '').startsWith('image/')) return 'image';
+    if (String(file.type || '').startsWith('video/')) return 'video';
+    return '';
   }
 
   function normalizeGroupIds(raw) {
@@ -154,28 +152,6 @@
     return groups;
   }
 
-  function setMediaMode(mode, { preserveFile = false } = {}) {
-    const nextMode = mode === 'video' ? 'video' : 'image';
-    const radio = document.querySelector(`input[name="mediaMode"][value="${nextMode}"]`);
-    if (radio) radio.checked = true;
-    ui.imageModeCard.classList.toggle('active', nextMode === 'image');
-    ui.videoModeCard.classList.toggle('active', nextMode === 'video');
-    ui.mediaInput.accept = nextMode === 'image'
-      ? 'image/jpeg,image/png,image/webp,image/gif'
-      : 'video/mp4,video/webm,video/quicktime';
-    ui.mediaHint.textContent = nextMode === 'image'
-      ? 'JPG, PNG, WEBP hoặc GIF — tối đa 20 MB'
-      : 'MP4, WEBM hoặc MOV — tối đa 200 MB';
-    saveLocal(STORE.mode, nextMode);
-
-    if (!preserveFile && selectedFile) {
-      const compatible = nextMode === 'image'
-        ? selectedFile.type.startsWith('image/')
-        : selectedFile.type.startsWith('video/');
-      if (!compatible) clearSelectedFile();
-    }
-  }
-
   function clearSelectedFile() {
     selectedFile = null;
     ui.mediaInput.value = '';
@@ -187,17 +163,16 @@
   }
 
   function setSelectedFile(file) {
-    const mode = mediaMode();
     if (!(file instanceof File)) return;
 
-    const validType = mode === 'image' ? file.type.startsWith('image/') : file.type.startsWith('video/');
-    const maxBytes = mode === 'image' ? MAX_IMAGE_BYTES : MAX_VIDEO_BYTES;
-    if (!validType) {
-      toast(`Tệp đã chọn không phải ${mode === 'image' ? 'ảnh' : 'video'}.`, 'error');
+    const kind = mediaKind(file);
+    if (!kind) {
+      toast('Chỉ hỗ trợ một tệp ảnh hoặc video.', 'error');
       return;
     }
+    const maxBytes = kind === 'image' ? MAX_IMAGE_BYTES : MAX_VIDEO_BYTES;
     if (file.size <= 0 || file.size > maxBytes) {
-      toast(`Kích thước ${mode === 'image' ? 'ảnh' : 'video'} không hợp lệ hoặc vượt giới hạn.`, 'error');
+      toast(`Kích thước ${kind === 'image' ? 'ảnh' : 'video'} không hợp lệ hoặc vượt giới hạn.`, 'error');
       return;
     }
 
@@ -205,10 +180,10 @@
     selectedFile = file;
     previewUrl = URL.createObjectURL(file);
 
-    const preview = document.createElement(mode === 'image' ? 'img' : 'video');
+    const preview = document.createElement(kind === 'image' ? 'img' : 'video');
     preview.src = previewUrl;
-    preview.alt = mode === 'image' ? 'Xem trước ảnh bài đăng' : '';
-    if (mode === 'video') {
+    preview.alt = kind === 'image' ? 'Xem trước ảnh bài đăng' : '';
+    if (kind === 'video') {
       preview.controls = true;
       preview.preload = 'metadata';
     }
@@ -270,6 +245,12 @@
   }
 
   async function uploadMedia(file) {
+    const kind = mediaKind(file);
+    if (!kind) {
+      const error = new Error('Tệp đính kèm không phải ảnh hoặc video.');
+      error.code = 'INVALID_MEDIA_TYPE';
+      throw error;
+    }
     uploading = true;
     renderButtons(lastSnapshot?.job);
     addLog(`Đang chuyển ${file.name} sang extension...`, 'warn');
@@ -280,7 +261,7 @@
         name: file.name,
         type: file.type,
         size: file.size,
-        kind: mediaMode(),
+        kind,
         chunkSize: CHUNK_BYTES
       });
       mediaId = begin.data.mediaId;
@@ -319,7 +300,7 @@
     if (uploading) return;
     const content = ui.postContent.value.trim();
     const groups = renderGroupValidation();
-    const mode = mediaMode();
+    const kind = mediaKind();
     const delaySeconds = Math.max(0, Math.min(86400, Math.round(Number(ui.delaySeconds.value) || 0)));
 
     if (!content) {
@@ -327,33 +308,42 @@
       ui.postContent.focus();
       return;
     }
-    if (!selectedFile) {
-      toast(`Hãy chọn một ${mode === 'image' ? 'ảnh' : 'video'}.`, 'error');
-      return;
-    }
     if (!groups.valid.length || groups.invalid.length) {
       toast('Danh sách UID nhóm chưa hợp lệ.', 'error');
       ui.groupIds.focus();
       return;
     }
+    let pendingMediaId = '';
     try {
-      const mediaId = await uploadMedia(selectedFile);
-      await callExtension('START_JOB', {
+      const payload = {
         content,
         groups: groups.valid,
-        delaySeconds,
-        mediaId,
-        media: {
-          kind: mode,
+        delaySeconds
+      };
+      if (selectedFile) {
+        pendingMediaId = await uploadMedia(selectedFile);
+        payload.mediaId = pendingMediaId;
+        payload.media = {
+          kind,
           name: selectedFile.name,
           type: selectedFile.type,
           size: selectedFile.size
-        }
-      }, { timeoutMs: 120000 });
+        };
+      }
+      await callExtension('START_JOB', payload, { timeoutMs: 120000 });
+      pendingMediaId = '';
       addLog(`Đã tạo hàng đợi ${groups.valid.length} nhóm.`, 'ok');
-      toast('Đã bắt đầu đăng lần lượt từng nhóm.', 'ok');
+      toast(
+        selectedFile
+          ? `Đã bắt đầu đăng văn bản kèm ${kind === 'image' ? 'ảnh' : 'video'}.`
+          : 'Đã bắt đầu đăng bài chỉ có văn bản.',
+        'ok'
+      );
       await refreshState();
     } catch (error) {
+      if (pendingMediaId) {
+        await callExtension('MEDIA_DELETE', { mediaId: pendingMediaId }).catch(() => {});
+      }
       addLog(error.message || String(error), 'error');
       toast(error.message || String(error), 'error');
     }
@@ -610,7 +600,6 @@
     ui.postContent.value = loadLocal(STORE.content);
     ui.groupIds.value = loadLocal(STORE.groups);
     ui.delaySeconds.value = loadLocal(STORE.delay, '60');
-    setMediaMode(loadLocal(STORE.mode, 'image'), { preserveFile: true });
 
     const updateContentCounter = () => {
       ui.contentCounter.textContent = `${ui.postContent.value.length.toLocaleString('vi-VN')} ký tự`;
@@ -629,10 +618,6 @@
       ui.delaySeconds.value = String(value);
       saveLocal(STORE.delay, value);
     });
-    document.querySelectorAll('input[name="mediaMode"]').forEach((radio) => {
-      radio.addEventListener('change', () => setMediaMode(radio.value));
-    });
-
     ui.mediaInput.addEventListener('change', () => setSelectedFile(ui.mediaInput.files?.[0]));
     ui.removeMediaBtn.addEventListener('click', (event) => {
       event.preventDefault();
