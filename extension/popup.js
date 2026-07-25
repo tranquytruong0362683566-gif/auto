@@ -1,77 +1,34 @@
-(function () {
-  'use strict';
+'use strict';
 
-  const WEB_URL = 'https://tranquytruong0362683566-gif.github.io/auto/';
-  const ui = {
-    version: document.getElementById('version'),
-    account: document.getElementById('account'),
-    engineMode: document.getElementById('engineMode'),
-    jobStatus: document.getElementById('jobStatus'),
-    message: document.getElementById('message'),
-    openWeb: document.getElementById('openWeb'),
-    pauseJob: document.getElementById('pauseJob'),
-    resumeJob: document.getElementById('resumeJob')
-  };
+document.addEventListener('DOMContentLoaded', async () => {
+  document.getElementById('version').textContent = `v${chrome.runtime.getManifest().version}`;
+  const fbDot = document.getElementById('fbDot');
+  const fbStatus = document.getElementById('fbStatus');
 
-  const labels = {
-    idle: 'Sẵn sàng',
-    queued: 'Đang xếp hàng',
-    running: 'Đang đăng',
-    waiting: 'Đang chờ',
-    paused: 'Đã dừng',
-    stopped: 'Đã dừng',
-    completed: 'Hoàn thành',
-    error: 'Có lỗi'
-  };
-
-  async function command(action, payload = {}) {
+  try {
     const response = await chrome.runtime.sendMessage({
-      type: 'POPUP_COMMAND',
-      action,
-      payload
+      type: 'WEB_REQUEST',
+      requestId: `popup_${Date.now()}`,
+      action: 'GET_FB_SESSION',
+      payload: {}
     });
-    if (!response?.success) throw new Error(response?.message || 'Extension không phản hồi.');
-    return response.data;
+    if (!response?.success) throw new Error(response?.message || 'Không đọc được phiên Facebook');
+    const data = response.data || {};
+    const cUser = (data.cookies || []).find((cookie) => cookie.name === 'c_user')?.value;
+    document.getElementById('uid').textContent = cUser || 'Chưa đăng nhập';
+    document.getElementById('machineId').textContent = data.machineId || 'Không có';
+    fbStatus.textContent = cUser ? 'Đã đăng nhập' : 'Chưa đăng nhập';
+    fbDot.className = `dot ${cUser ? 'online' : 'offline'}`;
+  } catch (error) {
+    fbStatus.textContent = 'Lỗi kết nối';
+    fbDot.className = 'dot offline';
+    document.getElementById('uid').textContent = error.message;
   }
 
-  async function refresh() {
-    try {
-      const state = await command('GET_STATE');
-      ui.version.textContent = `Phiên bản ${state.extension?.version || '1.0.0'}`;
-      ui.account.textContent = state.account?.uid ? `UID ${state.account.uid}` : 'Chưa đăng nhập';
-      ui.account.className = state.account?.uid ? 'ready' : 'error';
-      ui.engineMode.textContent = state.engine?.automatic ? 'Tự động' : 'Chưa sẵn sàng';
-      ui.engineMode.className = state.engine?.automatic ? 'ready' : 'error';
-      const status = state.job?.status || 'idle';
-      ui.jobStatus.textContent = labels[status] || status;
-      ui.jobStatus.className = status === 'completed' ? 'ready' : status === 'error' ? 'error' : '';
-      ui.message.textContent = state.job?.message || 'Mở bảng điều khiển để tạo bài đăng.';
-      ui.pauseJob.hidden = !['queued', 'running', 'waiting'].includes(status);
-      ui.resumeJob.hidden = !['paused', 'stopped', 'error'].includes(status)
-        || Number(state.job?.currentIndex || 0) >= Number(state.job?.groups?.length || 0);
-    } catch (error) {
-      ui.message.textContent = error?.message || String(error);
-      ui.message.className = 'message error';
-    }
-  }
-
-  ui.openWeb.addEventListener('click', () => chrome.tabs.create({ url: WEB_URL }));
-  ui.pauseJob.addEventListener('click', async () => {
-    try {
-      await command('PAUSE_JOB');
-      await refresh();
-    } catch (error) {
-      ui.message.textContent = error.message;
-    }
+  document.getElementById('openWeb').addEventListener('click', () => {
+    chrome.tabs.create({ url: 'https://tranquytruong0362683566-gif.github.io/auto/' });
   });
-  ui.resumeJob.addEventListener('click', async () => {
-    try {
-      await command('RESUME_JOB');
-      await refresh();
-    } catch (error) {
-      ui.message.textContent = error.message;
-    }
+  document.getElementById('openFacebook').addEventListener('click', () => {
+    chrome.tabs.create({ url: 'https://www.facebook.com/' });
   });
-
-  void refresh();
-}());
+});

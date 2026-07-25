@@ -3,241 +3,320 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#071411">
   <meta name="color-scheme" content="dark">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src blob:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'">
-  <title>Đăng Bài Nhóm Facebook</title>
-  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./styles.css">
+  <meta name="description" content="Đăng Reels lên Facebook Page và quét link bài viết nhóm bằng Chrome Extension MV3.">
+  <title>FB Page Reels & Group Scanner</title>
+  <link rel="stylesheet" href="./assets/style.css?v=20260725-1">
 </head>
 <body>
-  <canvas id="gridCanvas" aria-hidden="true"></canvas>
-  <div class="ambient ambient-one" aria-hidden="true"></div>
-  <div class="ambient ambient-two" aria-hidden="true"></div>
-
+  <div class="background-grid" aria-hidden="true"></div>
   <header class="topbar">
-    <a class="brand" href="./" aria-label="Trang chủ Đăng Bài Nhóm Facebook">
-      <span class="brand-mark" aria-hidden="true">T</span>
-      <span>
-        <strong>TRẦN QUÝ TRƯỜNG</strong>
-        <small>GROUP PUBLISHER</small>
-      </span>
-    </a>
-
-    <div class="connection-strip">
-      <a class="header-download" href="./downloads/Truong-Group-Publisher-Extension-v1.2.3.zip" download>
-        Tải extension
-      </a>
-      <span class="status-pill pending" id="extensionStatus">
-        <i aria-hidden="true"></i>
-        Đang dò extension
-      </span>
-      <span class="account-pill">
-        <span class="facebook-mark" aria-hidden="true">f</span>
-        <span id="facebookAccount">Chưa xác định UID</span>
-      </span>
+    <div class="brand">
+      <div class="brand-mark">TQT</div>
+      <div>
+        <h1>FB Page Automation</h1>
+        <p>Reels Page · Quét Link Nhóm</p>
+      </div>
+    </div>
+    <div class="connection-panel">
+      <span id="extensionDot" class="status-dot"></span>
+      <div>
+        <strong id="extensionStatus">Đang kiểm tra Extension...</strong>
+        <small id="facebookStatus">Facebook: chưa kiểm tra</small>
+      </div>
+      <a class="button ghost small" href="./extension/manifest.json" target="_blank" rel="noopener">Mở Manifest</a>
+      <button id="btnReconnect" class="button ghost small" type="button">Kết nối lại</button>
     </div>
   </header>
 
   <main class="app-shell">
-    <section class="hero">
-      <div>
-        <p class="eyebrow">WEB GITHUB + EXTENSION MV3</p>
-        <h1>Đăng một nội dung<br><span>đến nhiều nhóm.</span></h1>
-        <p class="hero-copy">Soạn văn bản, tùy chọn đính kèm một ảnh hoặc video, nhập UID nhóm. Extension tự lấy phiên Facebook và gửi request tuần tự.</p>
-      </div>
-      <div class="hero-stats" aria-label="Tổng quan tiến trình">
-        <article>
-          <span>Đã xử lý</span>
-          <strong id="processedStat">0</strong>
-        </article>
-        <article>
-          <span>Thành công</span>
-          <strong id="successStat">0</strong>
-        </article>
-        <article>
-          <span>Thất bại</span>
-          <strong id="failedStat">0</strong>
-        </article>
-      </div>
-    </section>
+    <aside class="sidebar">
+      <button class="nav-item active" data-panel="dashboardPanel" type="button">
+        <span>⌂</span><span>Tổng Quan</span>
+      </button>
+      <button class="nav-item" data-panel="reelsPanel" type="button">
+        <span>▶</span><span>Đăng Reels Page</span>
+      </button>
+      <button class="nav-item" data-panel="scannerPanel" type="button">
+        <span>⌕</span><span>Quét Link Nhóm</span>
+      </button>
+      <button class="nav-item" data-panel="logsPanel" type="button">
+        <span>≡</span><span>Nhật Ký</span>
+      </button>
 
-    <section class="workspace-grid">
-      <article class="panel compose-panel">
-        <div class="panel-heading">
+      <div class="sidebar-card">
+        <span>Tài khoản Facebook</span>
+        <strong id="sidebarUid">Chưa kết nối</strong>
+        <small id="sidebarCookieCount">0 cookie</small>
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <section id="dashboardPanel" class="panel-page active">
+        <div class="page-heading">
           <div>
-            <span class="section-number">01</span>
-            <div>
-              <p class="section-kicker">NỘI DUNG</p>
-              <h2>Soạn bài đăng</h2>
-            </div>
+            <span class="eyebrow">BẢNG ĐIỀU KHIỂN</span>
+            <h2>Trạng thái hệ thống</h2>
           </div>
-          <span class="soft-badge" id="draftState">Tự động lưu</span>
+          <button id="btnLoadPagesTop" class="button primary" type="button">Tải danh sách Page</button>
         </div>
 
-        <div class="field">
-          <div class="label-row">
-            <label for="postContent">Văn bản bài viết</label>
-            <span id="contentCounter">0 ký tự</span>
-          </div>
-          <textarea id="postContent" maxlength="20000" placeholder="Nhập nội dung sẽ dùng chung cho toàn bộ nhóm..."></textarea>
+        <div class="metric-grid">
+          <article class="metric-card">
+            <span>Page đã tải</span>
+            <strong id="metricPages">0</strong>
+            <small>Page có thể lựa chọn</small>
+          </article>
+          <article class="metric-card">
+            <span>Reels thành công</span>
+            <strong id="metricReelsSuccess">0</strong>
+            <small>Trong phiên hiện tại</small>
+          </article>
+          <article class="metric-card">
+            <span>Link đã quét</span>
+            <strong id="metricLinks">0</strong>
+            <small>Không trùng lặp</small>
+          </article>
+          <article class="metric-card">
+            <span>Tiến trình</span>
+            <strong id="metricRunning">Rảnh</strong>
+            <small id="metricRunningDetail">Chưa có tác vụ</small>
+          </article>
         </div>
 
-        <div class="field optional-media">
-          <div class="label-row">
-            <label for="mediaInput">Tệp đính kèm</label>
-            <span>Không bắt buộc · mặc định chỉ văn bản</span>
-          </div>
-          <div class="media-picker" id="mediaDropZone">
-            <input id="mediaInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime">
-            <div class="media-empty" id="mediaEmpty">
-              <span class="upload-symbol" aria-hidden="true">⇧</span>
-              <strong>Thêm một ảnh hoặc video</strong>
-              <small id="mediaHint">Có thể bỏ trống để đăng chỉ văn bản</small>
+        <div class="dashboard-grid">
+          <article class="card">
+            <div class="card-heading">
+              <div>
+                <h3>Luồng đăng Reels</h3>
+                <p>Web tạo hàng đợi, Extension gửi request bằng phiên Facebook đang đăng nhập.</p>
+              </div>
+              <span class="badge">START → CHUNK → RECEIVE → PUBLISH</span>
             </div>
-            <div class="media-preview hidden" id="mediaPreview">
-              <div class="preview-stage" id="previewStage"></div>
-              <div class="preview-meta">
-                <div>
-                  <strong id="mediaName">—</strong>
-                  <span id="mediaSize">—</span>
-                </div>
-                <button class="button ghost small" id="removeMediaBtn" type="button">Xóa tệp</button>
+            <div class="flow-steps">
+              <div><b>01</b><span>Lấy cookie và fb_dtsg</span></div>
+              <div><b>02</b><span>Tạo phiên upload video</span></div>
+              <div><b>03</b><span>Gửi từng chunk 4 MB</span></div>
+              <div><b>04</b><span>Publish Reel theo Page</span></div>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-heading">
+              <div>
+                <h3>Luồng quét nhóm</h3>
+                <p>Extension mở tab nhóm, content script cuộn feed và chuẩn hóa permalink.</p>
+              </div>
+              <span class="badge">DOM SCANNER</span>
+            </div>
+            <div class="flow-steps compact">
+              <div><b>01</b><span>Mở nhóm theo bài mới</span></div>
+              <div><b>02</b><span>Chờ feed tải ổn định</span></div>
+              <div><b>03</b><span>Thu thập link bài viết</span></div>
+              <div><b>04</b><span>Loại trùng và xuất CSV</span></div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="reelsPanel" class="panel-page">
+        <div class="page-heading">
+          <div>
+            <span class="eyebrow">PAGE REELS</span>
+            <h2>Đăng video lên nhiều Page</h2>
+          </div>
+          <div class="heading-actions">
+            <button id="btnSelectAllPages" class="button ghost" type="button">Chọn tất cả</button>
+            <button id="btnLoadPages" class="button primary" type="button">Tải lại Page</button>
+          </div>
+        </div>
+
+        <div class="two-column-layout">
+          <article class="card page-list-card">
+            <div class="card-heading">
+              <div>
+                <h3>Danh sách Page</h3>
+                <p>Chọn Page cần đăng. Có thể nhập ID thủ công khi truy vấn danh sách bị thay đổi.</p>
+              </div>
+              <span id="selectedPagesCount" class="badge">0 đã chọn</span>
+            </div>
+
+            <div class="toolbar-row">
+              <input id="pageSearch" class="input" type="search" placeholder="Tìm theo tên hoặc Page ID">
+              <input id="manualPageIds" class="input" type="text" placeholder="Page ID thủ công, phân cách dấu phẩy">
+              <button id="btnAddManualPages" class="button secondary" type="button">Thêm ID</button>
+            </div>
+
+            <div id="pagesTableWrap" class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="check-cell"><input id="pageMasterCheckbox" type="checkbox" aria-label="Chọn tất cả Page"></th>
+                    <th>Page</th>
+                    <th>ID</th>
+                    <th>Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody id="pagesTableBody">
+                  <tr><td colspan="4" class="empty-cell">Chưa tải danh sách Page</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="card form-card">
+            <div class="card-heading">
+              <div>
+                <h3>Cấu hình Reels</h3>
+                <p>Video được phân phối vòng tròn cho các Page đã chọn.</p>
               </div>
             </div>
-          </div>
-        </div>
-      </article>
 
-      <article class="panel target-panel">
-        <div class="panel-heading">
-          <div>
-            <span class="section-number">02</span>
-            <div>
-              <p class="section-kicker">ĐÍCH ĐẾN</p>
-              <h2>Danh sách nhóm</h2>
+            <label class="field">
+              <span>Video MP4</span>
+              <input id="reelsFiles" class="file-input" type="file" accept="video/mp4,video/*" multiple>
+              <small id="reelsFileLabel">Chưa chọn video</small>
+            </label>
+
+            <label class="field">
+              <span>Nội dung Reel</span>
+              <textarea id="reelsCaption" class="textarea" rows="6" placeholder="Nội dung bài viết. Hỗ trợ {filename} và spin {mẫu 1|mẫu 2}."></textarea>
+            </label>
+
+            <div class="check-grid">
+              <label class="check-line"><input id="useFilename" type="checkbox"><span>Thêm tên file vào nội dung</span></label>
+              <label class="check-line"><input id="enableSchedule" type="checkbox"><span>Đăng theo lịch</span></label>
             </div>
-          </div>
-          <span class="count-badge"><strong id="groupCount">0</strong> nhóm</span>
-        </div>
 
-        <div class="field">
-          <div class="label-row">
-            <label for="groupIds">UID nhóm Facebook</label>
-            <button class="text-button" id="cleanGroupBtn" type="button">Lọc trùng</button>
-          </div>
-          <textarea id="groupIds" class="group-input" spellcheck="false" placeholder="123456789012345&#10;987654321098765&#10;Mỗi dòng một UID nhóm"></textarea>
-          <p class="field-note" id="groupValidation">Chỉ nhận UID nhóm dạng số, mỗi UID một dòng.</p>
-        </div>
-
-        <div class="schedule-grid">
-          <div class="field">
-            <label for="delaySeconds">Nghỉ giữa hai nhóm</label>
-            <div class="number-field">
-              <input id="delaySeconds" type="number" min="0" max="86400" step="1" value="60">
-              <span>giây</span>
+            <div class="form-grid three">
+              <label class="field">
+                <span>Số Reel mỗi Page</span>
+                <input id="postsPerPage" class="input" type="number" min="1" max="100" value="1">
+              </label>
+              <label class="field">
+                <span>Chờ tối thiểu (giây)</span>
+                <input id="reelsDelayMin" class="input" type="number" min="0" max="3600" value="5">
+              </label>
+              <label class="field">
+                <span>Chờ tối đa (giây)</span>
+                <input id="reelsDelayMax" class="input" type="number" min="0" max="3600" value="10">
+              </label>
             </div>
-          </div>
-          <div class="field">
-            <label>Thứ tự đăng</label>
-            <div class="static-field">
-              <span aria-hidden="true">⇣</span>
-              Lần lượt từ trên xuống
+
+            <label id="scheduleField" class="field hidden">
+              <span>Thời gian đăng Reel đầu tiên</span>
+              <input id="scheduleDateTime" class="input" type="datetime-local">
+              <small>Mỗi Reel tiếp theo tự cộng thêm khoảng chờ tối đa.</small>
+            </label>
+
+            <div class="action-row">
+              <button id="btnStartReels" class="button success wide" type="button">Bắt đầu đăng Reels</button>
+              <button id="btnStopReels" class="button danger" type="button" disabled>Dừng</button>
             </div>
-          </div>
-        </div>
 
-        <div class="action-bar">
-          <button class="button primary" id="startBtn" type="button">
-            <span aria-hidden="true">▶</span>
-            Đăng bài
-          </button>
-          <button class="button danger hidden" id="pauseBtn" type="button">
-            <span aria-hidden="true">■</span>
-            Dừng
-          </button>
-          <button class="button secondary hidden" id="resumeBtn" type="button">
-            <span aria-hidden="true">▷</span>
-            Tiếp tục
-          </button>
-          <button class="button ghost" id="clearQueueBtn" type="button">Xóa hàng đợi</button>
+            <div class="progress-box">
+              <div class="progress-top"><span id="reelsProgressText">Sẵn sàng</span><span id="reelsProgressPercent">0%</span></div>
+              <div class="progress-track"><div id="reelsProgressBar" class="progress-bar"></div></div>
+            </div>
+          </article>
         </div>
-        <p class="field-note">Mặc định đăng văn bản; ảnh hoặc video chỉ được tải lên khi bạn chọn tệp đính kèm.</p>
-      </article>
-    </section>
+      </section>
 
-    <section class="panel progress-panel">
-      <div class="panel-heading">
-        <div>
-          <span class="section-number">03</span>
+      <section id="scannerPanel" class="panel-page">
+        <div class="page-heading">
           <div>
-            <p class="section-kicker">TIẾN TRÌNH</p>
-            <h2>Trạng thái đăng bài</h2>
+            <span class="eyebrow">GROUP SCANNER</span>
+            <h2>Quét link bài viết trong nhóm</h2>
+          </div>
+          <div class="heading-actions">
+            <button id="btnCopyLinks" class="button ghost" type="button">Sao chép link</button>
+            <button id="btnExportLinks" class="button secondary" type="button">Xuất CSV</button>
           </div>
         </div>
-        <span class="job-state idle" id="jobState">Sẵn sàng</span>
-      </div>
 
-      <div class="progress-summary">
-        <div class="progress-copy">
-          <span id="progressHeadline">Chưa có hàng đợi</span>
-          <strong id="currentGroup">—</strong>
-          <small id="nextRunText">Nhập dữ liệu và nhấn Đăng bài để bắt đầu.</small>
+        <div class="scanner-layout">
+          <article class="card form-card">
+            <label class="field">
+              <span>ID hoặc link nhóm</span>
+              <textarea id="groupInputs" class="textarea" rows="7" placeholder="Mỗi dòng một ID hoặc link nhóm Facebook"></textarea>
+            </label>
+
+            <div class="form-grid two">
+              <label class="field">
+                <span>Số link mỗi nhóm</span>
+                <input id="scanTargetCount" class="input" type="number" min="1" max="1000" value="20">
+              </label>
+              <label class="field">
+                <span>Số lần cuộn tối đa</span>
+                <input id="scanMaxScrolls" class="input" type="number" min="1" max="200" value="35">
+              </label>
+              <label class="field">
+                <span>Chờ sau mỗi cuộn (ms)</span>
+                <input id="scanDelayMs" class="input" type="number" min="500" max="10000" step="100" value="1800">
+              </label>
+              <label class="field">
+                <span>Dừng khi không có link mới</span>
+                <input id="scanStaleRounds" class="input" type="number" min="2" max="20" value="5">
+              </label>
+            </div>
+
+            <div class="check-grid">
+              <label class="check-line"><input id="scanExcludePinned" type="checkbox" checked><span>Bỏ qua bài ghim</span></label>
+              <label class="check-line"><input id="scanCloseTab" type="checkbox" checked><span>Đóng tab sau khi quét</span></label>
+              <label class="check-line"><input id="scanNewest" type="checkbox" checked><span>Mở chế độ bài viết mới</span></label>
+            </div>
+
+            <div class="action-row">
+              <button id="btnStartScan" class="button success wide" type="button">Bắt đầu quét nhóm</button>
+              <button id="btnStopScan" class="button danger" type="button" disabled>Dừng</button>
+            </div>
+
+            <div class="progress-box">
+              <div class="progress-top"><span id="scanProgressText">Sẵn sàng</span><span id="scanProgressCount">0 link</span></div>
+              <div class="progress-track"><div id="scanProgressBar" class="progress-bar"></div></div>
+            </div>
+          </article>
+
+          <article class="card result-card">
+            <div class="card-heading">
+              <div>
+                <h3>Kết quả quét</h3>
+                <p>Link được chuẩn hóa và loại trùng theo Group ID + Post ID.</p>
+              </div>
+              <button id="btnClearLinks" class="button ghost small" type="button">Xóa kết quả</button>
+            </div>
+            <div class="table-wrap result-table-wrap">
+              <table>
+                <thead><tr><th>STT</th><th>Group ID</th><th>Post ID</th><th>Link bài viết</th></tr></thead>
+                <tbody id="linksTableBody">
+                  <tr><td colspan="4" class="empty-cell">Chưa có kết quả</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
         </div>
-        <div class="progress-ring" id="progressRing" style="--progress: 0">
-          <span id="progressPercent">0%</span>
-        </div>
-      </div>
+      </section>
 
-      <div class="progress-track" aria-hidden="true">
-        <span id="progressBar"></span>
-      </div>
-
-      <div class="console" id="activityLog" aria-live="polite">
-        <p><time>--:--:--</time><span>Hệ thống đang chờ lệnh.</span></p>
-      </div>
-    </section>
-
-    <section class="panel results-panel">
-      <div class="panel-heading">
-        <div>
-          <span class="section-number">04</span>
+      <section id="logsPanel" class="panel-page">
+        <div class="page-heading">
           <div>
-            <p class="section-kicker">KẾT QUẢ</p>
-            <h2>Lịch sử từng nhóm</h2>
+            <span class="eyebrow">SYSTEM LOG</span>
+            <h2>Nhật ký hoạt động</h2>
           </div>
+          <button id="btnClearLogs" class="button ghost" type="button">Xóa nhật ký</button>
         </div>
-        <div class="result-actions">
-          <button class="button ghost small" id="exportCsvBtn" type="button">Xuất CSV</button>
-          <button class="button ghost small" id="exportJsonBtn" type="button">Xuất JSON</button>
-          <button class="button ghost small" id="clearResultsBtn" type="button">Xóa kết quả</button>
-        </div>
-      </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>UID nhóm</th>
-              <th>Trạng thái</th>
-              <th>Kết quả</th>
-              <th>Thời gian</th>
-            </tr>
-          </thead>
-          <tbody id="resultsBody">
-            <tr class="empty-row">
-              <td colspan="5">Chưa có kết quả đăng bài.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+        <article class="card log-card">
+          <div id="logConsole" class="log-console" aria-live="polite"></div>
+        </article>
+      </section>
     </section>
   </main>
 
-  <div class="toast-host" id="toastHost" aria-live="polite"></div>
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
-  <script src="./bridge-client.js"></script>
-  <script src="./app.js"></script>
+  <script src="./js/extension-client.js?v=20260725-1"></script>
+  <script src="./js/facebook-api.js?v=20260725-1"></script>
+  <script src="./js/reels.js?v=20260725-1"></script>
+  <script src="./js/app.js?v=20260725-1"></script>
 </body>
 </html>

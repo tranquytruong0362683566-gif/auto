@@ -1,33 +1,36 @@
 {
   "manifest_version": 3,
-  "name": "Trường Group Publisher",
-  "version": "1.2.3",
-  "description": "Đăng văn bản và tùy chọn ảnh hoặc video vào nhóm Facebook tuần tự bằng request.",
+  "name": "TQT Page Reels & Group Scanner",
+  "version": "1.0.0",
+  "description": "Kết nối GitHub Pages với phiên Facebook để đăng Reels Page và quét link bài viết nhóm.",
   "permissions": [
-    "alarms",
     "storage",
-    "tabs"
+    "cookies",
+    "tabs",
+    "scripting",
+    "declarativeNetRequest"
   ],
   "host_permissions": [
     "https://www.facebook.com/*",
-    "https://web.facebook.com/*",
-    "https://upload.facebook.com/*",
+    "https://business.facebook.com/*",
+    "https://graph.facebook.com/*",
     "https://rupload.facebook.com/*",
-    "https://tranquytruong0362683566-gif.github.io/auto/*"
+    "https://upload.facebook.com/*",
+    "https://upload-business.facebook.com/*"
   ],
-  "minimum_chrome_version": "116",
   "background": {
-    "service_worker": "background.js",
-    "type": "module"
+    "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Trường Group Publisher",
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_title": "TQT Page Automation"
   },
   "content_scripts": [
     {
       "matches": [
-        "https://tranquytruong0362683566-gif.github.io/auto/*"
+        "https://tranquytruong0362683566-gif.github.io/auto/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*"
       ],
       "js": [
         "bridge.js"
@@ -36,27 +39,12 @@
     },
     {
       "matches": [
-        "https://www.facebook.com/*",
-        "https://web.facebook.com/*"
+        "https://www.facebook.com/groups/*"
       ],
       "js": [
-        "engine-main.js"
+        "facebook-scanner.js"
       ],
-      "run_at": "document_start",
-      "world": "MAIN"
-    },
-    {
-      "matches": [
-        "https://www.facebook.com/*",
-        "https://web.facebook.com/*"
-      ],
-      "js": [
-        "engine-relay.js"
-      ],
-      "run_at": "document_start"
+      "run_at": "document_idle"
     }
-  ],
-  "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
-  }
+  ]
 }

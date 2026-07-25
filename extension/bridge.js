@@ -1,108 +1,69 @@
-(function () {
-  'use strict';
+'use strict';
 
-  if (window.__groupPublisherExtensionBridge) return;
-  window.__groupPublisherExtensionBridge = true;
+(() => {
+  const WEB_SOURCE = 'TQT_FB_AUTOMATION_WEB';
+  const BRIDGE_SOURCE = 'TQT_FB_AUTOMATION_EXTENSION';
 
-  const WEB_SOURCE = 'GROUP_PUBLISHER_WEB';
-  const EXTENSION_SOURCE = 'GROUP_PUBLISHER_EXTENSION';
-  const REQUEST_TYPE = 'GROUP_PUBLISHER_REQUEST';
-  const RESPONSE_TYPE = 'GROUP_PUBLISHER_RESPONSE';
-  const STATUS_TYPE = 'GROUP_PUBLISHER_STATUS';
-  const DISCOVER_TYPE = 'GROUP_PUBLISHER_DISCOVER';
-  const EXPECTED_ORIGIN = 'https://tranquytruong0362683566-gif.github.io';
-  const ALLOWED_ACTIONS = new Set([
-    'GET_STATE',
-    'MEDIA_BEGIN',
-    'MEDIA_CHUNK',
-    'MEDIA_COMMIT',
-    'MEDIA_DELETE',
-    'START_JOB',
-    'PAUSE_JOB',
-    'RESUME_JOB',
-    'CLEAR_JOB',
-    'CLEAR_RESULTS'
-  ]);
-
-  function onAllowedPage() {
-    return location.origin === EXPECTED_ORIGIN
-      && (location.pathname === '/auto' || location.pathname.startsWith('/auto/'));
+  function isAllowedPage() {
+    const host = window.location.hostname;
+    return host === 'localhost'
+      || host === '127.0.0.1'
+      || host === 'tranquytruong0362683566-gif.github.io';
   }
 
-  function post(type, payload = {}) {
+  if (!isAllowedPage()) return;
+
+  function postResponse(requestId, response) {
     window.postMessage({
-      source: EXTENSION_SOURCE,
-      type,
-      ...payload
-    }, EXPECTED_ORIGIN);
-  }
-
-  function postStatus(connected = true, message = '') {
-    post(STATUS_TYPE, {
-      connected,
-      message: message || (connected ? 'Extension đã kết nối.' : 'Extension đã ngắt kết nối.')
-    });
-  }
-
-  async function sendToBackground(data) {
-    try {
-      const response = await chrome.runtime.sendMessage({
-        type: 'WEB_COMMAND',
-        requestId: String(data.requestId || ''),
-        action: data.action,
-        payload: data.payload
-      });
-      return response || {
-        success: false,
-        code: 'EMPTY_BACKGROUND_RESPONSE',
-        message: 'Service worker không trả dữ liệu.',
-        data: null
-      };
-    } catch (error) {
-      postStatus(false, error?.message || 'Không kết nối được service worker.');
-      return {
-        success: false,
-        code: 'BACKGROUND_UNAVAILABLE',
-        message: error?.message || 'Không kết nối được service worker.',
-        data: null
-      };
-    }
+      source: BRIDGE_SOURCE,
+      type: 'RESPONSE',
+      requestId,
+      success: Boolean(response?.success),
+      code: response?.code || (response?.success ? 'OK' : 'EMPTY_RESPONSE'),
+      message: response?.message || (response?.success ? 'OK' : 'Extension không trả dữ liệu'),
+      data: response?.data ?? null
+    }, window.location.origin);
   }
 
   window.addEventListener('message', (event) => {
-    if (!onAllowedPage() || event.source !== window || event.origin !== EXPECTED_ORIGIN) return;
-    const data = event.data;
-    if (!data || data.source !== WEB_SOURCE) return;
+    if (event.source !== window || event.origin !== window.location.origin) return;
+    const message = event.data;
+    if (!message || message.source !== WEB_SOURCE || message.type !== 'REQUEST') return;
+    if (!message.requestId || !message.action) return;
 
-    if (data.type === DISCOVER_TYPE) {
-      postStatus(true);
-      return;
-    }
-    if (data.type !== REQUEST_TYPE) return;
-
-    const requestId = String(data.requestId || '');
-    const action = String(data.action || '');
-    if (!requestId || !ALLOWED_ACTIONS.has(action) || !data.payload || typeof data.payload !== 'object') {
-      post(RESPONSE_TYPE, {
-        requestId,
-        response: {
+    chrome.runtime.sendMessage({
+      type: 'WEB_REQUEST',
+      requestId: message.requestId,
+      action: message.action,
+      payload: message.payload || {}
+    }, (response) => {
+      if (chrome.runtime.lastError) {
+        postResponse(message.requestId, {
           success: false,
-          code: 'INVALID_WEB_MESSAGE',
-          message: 'Thông điệp từ website không hợp lệ.',
-          data: null
-        }
-      });
-      return;
-    }
-
-    void sendToBackground(data).then((response) => {
-      post(RESPONSE_TYPE, { requestId, response });
+          code: 'RUNTIME_ERROR',
+          message: chrome.runtime.lastError.message
+        });
+        return;
+      }
+      postResponse(message.requestId, response);
     });
   });
 
   chrome.runtime.onMessage.addListener((message) => {
-    if (message?.type === 'GROUP_PUBLISHER_STATE_CHANGED') postStatus(true, 'Trạng thái vừa được cập nhật.');
+    if (message?.type !== 'WEB_EVENT' || !message.event) return false;
+    window.postMessage({
+      source: BRIDGE_SOURCE,
+      type: 'EVENT',
+      event: message.event,
+      data: message.data ?? null
+    }, window.location.origin);
+    return false;
   });
 
-  postStatus(true);
-}());
+  window.postMessage({
+    source: BRIDGE_SOURCE,
+    type: 'EVENT',
+    event: 'EXTENSION_BRIDGE_READY',
+    data: { version: chrome.runtime.getManifest().version }
+  }, window.location.origin);
+})();

@@ -2,33 +2,42 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Trường Group Publisher</title>
-  <link rel="stylesheet" href="popup.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TQT Page Automation</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { width: 340px; margin: 0; padding: 16px; color: #eaf4ff; background: #07111f; }
+    .header { display:flex; align-items:center; gap:11px; margin-bottom:14px; }
+    .logo { display:grid; place-items:center; width:43px; height:43px; border-radius:12px; color:#03131f; font-weight:900; background:linear-gradient(135deg,#77d4ff,#39d98a); }
+    h1 { margin:0; font-size:15px; }
+    p { margin:3px 0 0; color:#8fa7bf; font-size:11px; }
+    .card { padding:12px; border:1px solid rgba(154,184,220,.18); border-radius:13px; background:#0c1c30; }
+    .row { display:flex; justify-content:space-between; gap:10px; padding:7px 0; border-bottom:1px solid rgba(154,184,220,.1); font-size:12px; }
+    .row:last-child { border:0; }
+    .row span { color:#8fa7bf; }
+    .row strong { max-width:190px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    button { width:100%; min-height:41px; margin-top:10px; border:0; border-radius:11px; font-weight:800; cursor:pointer; color:#03131f; background:linear-gradient(135deg,#77d4ff,#39a7ff); }
+    button.secondary { color:#dcecff; border:1px solid rgba(154,184,220,.18); background:#10243b; }
+    .status { display:flex; align-items:center; gap:7px; }
+    .dot { width:8px; height:8px; border-radius:50%; background:#ffc95c; }
+    .dot.online { background:#39d98a; }
+    .dot.offline { background:#ff647c; }
+  </style>
 </head>
 <body>
-  <main>
-    <header>
-      <span class="logo">T</span>
-      <div>
-        <strong>Group Publisher</strong>
-        <small id="version">Đang tải...</small>
-      </div>
-    </header>
-
-    <section class="status-card">
-      <div><span>Facebook</span><strong id="account">Đang kiểm tra</strong></div>
-      <div><span>Máy request</span><strong id="engineMode">Tự động</strong></div>
-      <div><span>Hàng đợi</span><strong id="jobStatus">Sẵn sàng</strong></div>
-    </section>
-
-    <p id="message" class="message">Mở bảng điều khiển để tạo bài đăng.</p>
-    <div class="actions">
-      <button id="openWeb" class="primary" type="button">Mở bảng điều khiển</button>
-      <button id="pauseJob" type="button" hidden>Dừng</button>
-      <button id="resumeJob" type="button" hidden>Tiếp tục</button>
-    </div>
-  </main>
+  <div class="header">
+    <div class="logo">TQT</div>
+    <div><h1>Page Reels & Group Scanner</h1><p>Chrome Extension Manifest V3</p></div>
+  </div>
+  <div class="card">
+    <div class="row"><span>Extension</span><strong id="version">...</strong></div>
+    <div class="row"><span>Facebook</span><strong class="status"><i id="fbDot" class="dot"></i><b id="fbStatus">Đang kiểm tra</b></strong></div>
+    <div class="row"><span>UID</span><strong id="uid">...</strong></div>
+    <div class="row"><span>Mã máy</span><strong id="machineId">...</strong></div>
+  </div>
+  <button id="openWeb" type="button">Mở Web Điều Khiển</button>
+  <button id="openFacebook" class="secondary" type="button">Mở Facebook</button>
   <script src="popup.js"></script>
 </body>
 </html>

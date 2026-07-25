@@ -1,51 +1,122 @@
-# Trường Group Publisher
+# TQT Page Reels & Group Scanner
 
-Web GitHub Pages và Chrome Extension phối hợp để đăng cùng một bài viết vào danh sách nhóm Facebook theo thứ tự.
+Bộ mã nguồn gồm hai phần:
 
-## Chức năng
+- **GitHub Pages**: giao diện chọn Page, tạo hàng đợi đăng Reels, cấu hình quét nhóm, hiển thị tiến trình và xuất CSV.
+- **Chrome Extension Manifest V3**: đọc cookie Facebook, gửi request tới Facebook/Business Suite, upload video theo chunk và mở tab nhóm để quét DOM.
 
-- Mặc định đăng **chỉ văn bản**.
-- Có thể đính kèm tùy chọn **một ảnh** hoặc **một video**; web tự nhận loại tệp.
-- Nhập danh sách UID nhóm dạng số và tự lọc trùng.
-- Đăng tuần tự, đặt thời gian nghỉ giữa hai nhóm.
-- Dừng, tiếp tục, bỏ qua nhóm lỗi và lưu kết quả thành công/thất bại.
-- Xuất kết quả CSV hoặc JSON.
-- Tự đọc token phiên và mã GraphQL đang dùng từ Facebook khi chạy.
-- Chỉ dùng một tab Facebook nền cho cả hàng đợi; không mở từng nhóm.
-- Không dùng quyền `debugger`, không đọc cookie bằng API extension và không cần request mẫu.
-- Giới hạn tệp: ảnh 20 MB, video 200 MB.
+## Cấu trúc
 
-## Cài extension
-
-1. Tải và giải nén `Truong-Group-Publisher-Extension-v1.2.3.zip`.
-2. Mở `chrome://extensions`.
-3. Bật **Chế độ dành cho nhà phát triển**.
-4. Chọn **Tải tiện ích đã giải nén**, sau đó chọn thư mục vừa giải nén.
-5. Đăng nhập Facebook trong cùng hồ sơ Chrome.
-6. Mở `https://tranquytruong0362683566-gif.github.io/auto/`.
-
-Khi bắt đầu hàng đợi, extension tạo một tab Facebook không được chọn, dùng JavaScript trong ngữ cảnh Facebook để gửi request có phiên đăng nhập hợp lệ. Tab này được dùng lại cho mọi UID và tự đóng khi hàng đợi hoàn tất hoặc bị xóa.
-
-## Cơ chế request
-
-- Văn bản: gọi trực tiếp `ComposerStoryCreateMutation` với danh sách tệp đính kèm rỗng.
-- Ảnh: upload multipart đến endpoint React Composer, nhận `photoID`, sau đó gọi `ComposerStoryCreateMutation`.
-- Video: dùng chuỗi start → lấy offset Rupload → upload phần binary còn lại → receive, rồi gọi mutation tạo bài. Header, `Authorization` và `upload_session_id` bám theo giao thức uploader của Facebook.
-- Với Rupload, tên tệp trong HTTP header được mã hóa bằng `encodeURIComponent`, nên tên tiếng Việt hoặc emoji không làm Fetch API từ chối request; tên tệp gốc trên web không bị thay đổi.
-- Khi Facebook trả lỗi upload có `retriable: true`, extension thử lại tối đa hai lần; mỗi lần đều lấy offset mới trước khi gửi tiếp để không tải trùng phần video đã nhận.
-- Mã `doc_id` của mutation được tìm từ Relay module hoặc tài nguyên JavaScript Facebook đang tải. Extension chỉ dùng danh sách dự phòng khi Facebook không công bố mã đó trong trang.
-- Bài được Facebook tiếp nhận nhưng đang chờ quản trị viên duyệt vẫn được tính là thành công.
-- Nếu một nhóm lỗi mạng hoặc bị Facebook từ chối, hàng đợi ghi nhận thất bại và tiếp tục nhóm kế tiếp.
-
-## Lưu ý
-
-Đây là request nội bộ của Facebook, không phải Graph API chính thức. Facebook có thể đổi endpoint, schema hoặc quy trình upload mà không báo trước. Kết quả lỗi hiển thị mã và thông điệp cụ thể để phân biệt lỗi đăng nhập, quyền nhóm, upload media, `doc_id` và GraphQL.
-
-Chỉ đăng ở các nhóm nơi tài khoản có quyền và tuân thủ quy định của nhóm cũng như Facebook.
-
-## Kiểm thử
-
-```bash
-npm test
-npm run check
+```text
+fb-page-reels-group-scanner/
+├── index.html
+├── assets/
+│   └── style.css
+├── js/
+│   ├── extension-client.js
+│   ├── facebook-api.js
+│   ├── reels.js
+│   └── app.js
+└── extension/
+    ├── manifest.json
+    ├── background.js
+    ├── bridge.js
+    ├── facebook-scanner.js
+    ├── popup.html
+    ├── popup.js
+    └── icons/
 ```
+
+## Logic đăng Reels Page
+
+1. Web gửi lệnh lấy phiên Facebook qua `bridge.js`.
+2. `background.js` đọc cookie bằng `chrome.cookies`.
+3. Web lấy `fb_dtsg`, `jazoest`, danh sách Page và `i_user`.
+4. Video được upload theo luồng:
+   - `ajax/video/upload/requests/start`
+   - `rupload.facebook.com` theo chunk 4 MB
+   - `ajax/video/upload/requests/receive`
+   - GraphQL `ReelComposerReelPublishMutation`
+5. Mỗi request được service worker đưa vào hàng đợi tuần tự để rule sửa `cookie/origin/referer` không ghi đè lẫn nhau.
+6. Có khóa chống chạy hai tiến trình Reels, `AbortController`, timeout và retry publish giới hạn.
+
+## Logic quét link bài viết nhóm
+
+1. Web chuẩn hóa Group ID và gửi `START_GROUP_SCAN`.
+2. Service worker chỉ cho chạy một tab quét tại một thời điểm.
+3. Tab được mở với `sorting_setting=CHRONOLOGICAL` khi chọn chế độ bài mới.
+4. `facebook-scanner.js` chờ feed, quét từng `role=article`, bỏ bài ghim nếu bật tùy chọn.
+5. Link được nhận từ các dạng `/posts/`, `/permalink/` hoặc `story_fbid`, sau đó chuẩn hóa và loại trùng.
+6. Tiến trình dừng khi đủ số link, hết số lần cuộn hoặc không xuất hiện link mới qua nhiều vòng.
+7. MutationObserver được tạo theo từng lần chờ và luôn `disconnect` khi hoàn thành/timeout.
+
+## Đưa Web lên GitHub Pages
+
+### Cách 1: Dùng repository `auto`
+
+1. Tạo hoặc mở repository `auto` trong tài khoản GitHub `tranquytruong0362683566-gif`.
+2. Upload toàn bộ file và thư mục ở cấp gốc của gói này, ngoại trừ có thể giữ nguyên thư mục `extension`.
+3. Vào **Settings → Pages**.
+4. Chọn **Deploy from a branch**.
+5. Chọn branch `main`, thư mục `/ (root)` rồi lưu.
+6. Web mặc định:
+
+```text
+https://tranquytruong0362683566-gif.github.io/auto/
+```
+
+### Cách 2: Dùng repository tên khác
+
+`manifest.json`, `bridge.js` và `background.js` hiện chỉ cho phép hostname `tranquytruong0362683566-gif.github.io` cùng localhost. Nếu đổi sang tài khoản GitHub khác hoặc tên miền riêng, hãy cập nhật hostname đồng bộ trong ba file này; nếu chỉ đổi tên repository trong cùng tài khoản thì không cần đổi hostname.
+
+## Cài Extension
+
+1. Mở Chrome và truy cập `chrome://extensions`.
+2. Bật **Chế độ dành cho nhà phát triển**.
+3. Chọn **Tải tiện ích đã giải nén**.
+4. Chọn đúng thư mục `extension`.
+5. Đăng nhập Facebook ở `https://www.facebook.com/` bằng tư cách tài khoản cá nhân.
+6. Mở web GitHub Pages và bấm **Kết nối lại**.
+
+## Cách sử dụng
+
+### Đăng Reels
+
+1. Bấm **Tải danh sách Page**.
+2. Chọn Page cần đăng.
+3. Chọn một hoặc nhiều video MP4.
+4. Nhập nội dung. Có thể dùng:
+   - `{filename}` để chèn tên file.
+   - `{mẫu một|mẫu hai|mẫu ba}` để chọn ngẫu nhiên một nội dung.
+5. Chọn số Reel mỗi Page và thời gian chờ.
+6. Bấm **Bắt đầu đăng Reels**.
+
+### Quét nhóm
+
+1. Nhập mỗi dòng một Group ID hoặc link nhóm.
+2. Chọn số link mỗi nhóm, số lần cuộn và thời gian chờ.
+3. Bấm **Bắt đầu quét nhóm**.
+4. Dùng **Sao chép link** hoặc **Xuất CSV**.
+
+## Các điểm đã kiểm soát
+
+- Không tạo listener, timer hoặc MutationObserver lặp vô hạn.
+- Request có timeout và retry giới hạn.
+- Chỉ cho request tới các hostname Facebook đã khai báo.
+- Chỉ website GitHub Pages/localhost mới được gọi service worker.
+- Tab không tồn tại, bị đóng hoặc tải quá lâu đều trả mã lỗi riêng.
+- Quét nhóm và đăng Reels đều có khóa chống chạy trùng.
+- Kết quả link và cấu hình giao diện được lưu trong `localStorage`.
+- Trạng thái tab quét được lưu trong `chrome.storage.session` để service worker có thể khôi phục thông tin khi thức lại.
+
+## File tham chiếu từ mã nguồn gốc
+
+Luồng mới được tái cấu trúc từ các phần đã phân tích:
+
+- `EX/background.js`: proxy request, cookie và DNR header.
+- `EX/bridge.js`: cầu nối web với extension.
+- `client_upload_api_v=1779615998.js`: upload video Business Facebook theo start/chunk/receive.
+- `reels_ver3_v=1779615998.js`: publish Reel bằng GraphQL.
+- `script_v=1779615998.js`: lấy token, danh sách Page và `i_user`.
+
+Phần quét link bài viết nhóm là module mới, vì `scan_group_members` trong mã gốc quét thành viên chứ không quét bài viết.
