@@ -1,6 +1,7 @@
 (function () {
   'use strict';
-  const ORIGIN = 'https://tranquytruong0362683566-gif.github.io';
+  if (!globalThis.TQT_DASHBOARD_POLICY?.isDashboardUrl(location.href)) return;
+  const ORIGIN = location.origin;
   const CHANNEL = 'TQT_DASHBOARD_BRIDGE_V1';
   const pending = new Map();
   const waiters = new Set();
