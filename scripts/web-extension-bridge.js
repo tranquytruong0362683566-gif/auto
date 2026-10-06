@@ -71,7 +71,7 @@
     if (data.type === 'OFFER' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.session || '') && /^[a-p]{32}$/.test(data.extensionId || '')) {
       if (session && session !== data.session) return;
       session = data.session;
-      setStatus({connected: true, message: 'Đã kết nối tiện ích.', extensionId: data.extensionId, version: data.version});
+      setStatus({connected: true, message: 'Đã kết nối tiện ích.', extensionId: data.extensionId, version: data.version, session});
     } else if (data.session === session && data.type === 'STATUS' && data.connected === false) {
       disconnect(data.message || 'Tiện ích đã ngắt kết nối.');
     } else if (data.session === session && data.type === 'RESPONSE') {
