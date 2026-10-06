@@ -28,7 +28,7 @@
   function paint() {
     if (!current) return;
     if (keyInput && current.machineKey) keyInput.value = current.machineKey;
-    if (keyLabel) keyLabel.textContent = current.machineKey || 'Đang tạo KEY...';
+    if (keyLabel) keyLabel.textContent = current.machineKey || 'Chờ nhận diện máy...';
     const expired = current.expiresAt && Date.parse(current.expiresAt) <= serverNow();
     const authorized = current.synced === true && current.authorized === true && !expired;
     const wasAuthorized = document.documentElement.dataset.tqtLicenseAuthorized === 'true';
@@ -132,7 +132,10 @@
     : checkLicense({reconnect: current?.code === 'TQT_AUTH_RESET_REQUIRED'}));
   window.addEventListener('tqt:bridge-status', event => {
     boundSession = '';
-    if (event.detail?.connected) attachVerification();
+    if (event.detail?.connected) {
+      if (!current?.synced) checkLicense();
+      else attachVerification();
+    }
     else verificationStatus('Chưa kết nối tiện ích để bổ sung xác minh KEY');
   });
   document.addEventListener('visibilitychange', () => {if (!document.hidden) checkLicense();});

@@ -6,6 +6,7 @@
   <title>Trần Quý Trường</title>
   <link rel="stylesheet" href="styles/dashboard.css?v=4.0.0">
   <link rel="stylesheet" href="styles/dashboard-taste.css?v=web-key-12-1">
+  <script src="scripts/source-view-guard.js?v=machine-key-13-1"></script>
 </head>
 <body>
   <div class="web-connection-bar" role="status" aria-live="polite">
@@ -17,13 +18,13 @@
       <div class="license-mark" aria-hidden="true">KEY</div>
       <p class="eyebrow">Xác thực bản quyền</p>
       <h1 id="licenseGateTitle">Xác minh KEY với ADMIN</h1>
-      <p class="license-instruction">Web tự tạo KEY cố định và kiểm tra thời hạn với ADMIN. KEY mới được dùng thử <strong>12 giờ</strong>.</p>
-      <label for="tqtMachineKeyInput">KEY của web</label>
+      <p class="license-instruction">Web tạo và kiểm tra KEY theo máy với ADMIN. Cài tiện ích trên mỗi trình duyệt để nhận cùng KEY. Máy mới được dùng thử <strong>12 giờ</strong>.</p>
+      <label for="tqtMachineKeyInput">KEY theo máy</label>
       <div class="license-key-row">
-        <input id="tqtMachineKeyInput" type="text" value="Đang tạo KEY..." readonly spellcheck="false" aria-label="KEY cố định của web">
+        <input id="tqtMachineKeyInput" type="text" value="Đang nhận diện máy..." readonly spellcheck="false" aria-label="KEY cố định theo máy">
         <button class="primary-button" id="copyTqtMachineKeyBtn" type="button">Copy KEY</button>
       </div>
-      <p class="license-status" id="tqtLicenseStatus" data-state="checking" aria-live="polite">Đang tạo và xác minh KEY với ADMIN...</p>
+      <p class="license-status" id="tqtLicenseStatus" data-state="checking" aria-live="polite">Đang nhận diện máy và xác minh KEY với ADMIN...</p>
       <div id="tqtLicenseCaptcha" hidden></div>
       <button class="secondary-button license-retry-button" id="retryTqtLicenseBtn" type="button">Kiểm tra lại</button>
     </section>
@@ -52,8 +53,8 @@
         <button class="nav-button workspace-trigger" type="button" data-workspace-target="records" aria-controls="workspaceModal" aria-expanded="false"><span>Kết quả</span></button>
       </nav>
       <div class="sidebar-meta web-key-meta" aria-label="KEY và thời hạn sử dụng">
-        <div class="web-key-heading"><span>KEY của web</span><button id="copyTqtSidebarKeyBtn" type="button" title="Sao chép KEY">Copy</button></div>
-        <strong id="tqtWebKeyValue">Đang tạo KEY...</strong>
+        <div class="web-key-heading"><span>KEY theo máy</span><button id="copyTqtSidebarKeyBtn" type="button" title="Sao chép KEY">Copy</button></div>
+        <strong id="tqtWebKeyValue">Đang nhận diện máy...</strong>
         <span id="tqtWebKeyRemaining" class="web-key-remaining">Đang xác minh KEY...</span>
         <span id="tqtWebVerificationStatus" class="web-key-verification">Đang kết nối tiện ích...</span>
       </div>
@@ -520,8 +521,8 @@
   <script src="scripts/web-connection-policy.js?v=4.0.1"></script>
   <script src="scripts/web-extension-bridge.js?v=web-key-12-1"></script>
   <script src="config.js?v=web-key-12-1"></script>
-  <script src="scripts/web-key-client.js?v=web-key-12-1"></script>
-  <script src="scripts/license-access-controller.js?v=web-key-12-1"></script>
+  <script src="scripts/web-key-client.js?v=machine-key-13-1"></script>
+  <script src="scripts/license-access-controller.js?v=machine-key-13-1"></script>
   <script src="scripts/manual-comment-content.js?v=4.0.0"></script>
   <script src="scripts/ai-comment-composer.js?v=4.0.0"></script>
   <script src="scripts/dashboard-state.js?v=4.0.0"></script>
