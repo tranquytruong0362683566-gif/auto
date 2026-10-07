@@ -15,8 +15,9 @@
     TQT_LICENSE_BLOCKED: 'KEY đang bị khóa.',
     TQT_LICENSE_EXPIRED: 'KEY đã hết hạn. Chờ ADMIN duyệt hoặc gia hạn.',
     TQT_PRODUCT_DISABLED: 'Sản phẩm đang tạm tắt trên trang quản lý.',
-    TQT_BACKEND_SETUP_REQUIRED: 'ADMIN cần chạy SQL 11 sau SQL 10 trong gói web trước khi sử dụng.',
-    TQT_DEVICE_EXTENSION_REQUIRED: 'Cài tiện ích 4.0.7 và kết nối với web để nhận diện máy và tạo KEY.',
+    TQT_BACKEND_SETUP_REQUIRED: 'ADMIN cần chạy SQL 12 sau SQL 11 trong gói web trước khi sử dụng.',
+    TQT_DEVICE_EXTENSION_REQUIRED: 'Cài tiện ích 4.0.7 trở lên và kết nối với web để nhận diện máy và tạo KEY.',
+    TQT_DEVICE_CONFIG_CONFLICT: 'Cấu hình máy đang trùng nhiều KEY. Liên hệ ADMIN để kiểm tra; các KEY đã đăng ký được giữ nguyên.',
     TQT_DEVICE_UNAVAILABLE: 'Chưa đọc được cấu hình máy. Kiểm tra quyền CPU/RAM/ổ đĩa của tiện ích rồi thử lại.',
     TQT_DEVICE_CHANGED: 'Cấu hình máy đã thay đổi. Liên hệ ADMIN để kiểm tra KEY; không tự cấp thêm dùng thử.',
     TQT_AUTH_RESET_REQUIRED: 'Phiên kết nối hết hiệu lực. Bấm Khôi phục kết nối; KEY và hạn dùng được giữ nguyên.',
@@ -124,6 +125,7 @@
       else if (message === 'DEVICE_ID_REQUIRED') localCode = 'TQT_DEVICE_EXTENSION_REQUIRED';
       else if (message === 'DEVICE_ID_INVALID') localCode = 'TQT_DEVICE_UNAVAILABLE';
       else if (message === 'DEVICE_CHANGED') localCode = 'TQT_DEVICE_CHANGED';
+      else if (message === 'DEVICE_CONFIG_CONFLICT') localCode = 'TQT_DEVICE_CONFIG_CONFLICT';
       else if (message === 'PRODUCT_UNAVAILABLE') localCode = 'TQT_PRODUCT_DISABLED';
       else if (message === 'PAIR_CODE_INVALID') localCode = 'TQT_PAIR_CODE_INVALID';
       else if (message === 'PAIR_KEY_UNAVAILABLE') localCode = 'TQT_PAIR_KEY_UNAVAILABLE';
@@ -204,6 +206,12 @@
         && ['TQT_LICENSE_PENDING', 'TQT_LICENSE_EXPIRED'].includes(data.code);
       const relinked = registering && data?.relinkedFromKey === identity.machineKey
         && data.bindingVerified === true && KEY_PATTERN.test(data.machineKey || '');
+      const previouslyRegistered = Boolean(identity.deviceFingerprint);
+      const restored = relinked && data.restoresOriginalKey === true && data.keyPolicy === 'immutable-v1'
+        && data.originalMachineKey === data.machineKey;
+      if (registering && previouslyRegistered && data?.machineKey !== identity.machineKey && !restored) {
+        throw failure('TQT_WEB_KEY_LINK_MISMATCH');
+      }
       if (data?.schemaVersion !== 12 || !KEY_PATTERN.test(data.machineKey || '')
           || (data.machineKey !== identity.machineKey && !replacement && !relinked)
           || (registering && (data.deviceFingerprint !== device?.fingerprint || data.deviceMethod !== 'ex-hardware-v2'
@@ -212,7 +220,8 @@
           || !Number.isFinite(Date.parse(data.serverTime))
           || (data.expiresAt !== null && !Number.isFinite(Date.parse(data.expiresAt)))
           || (data.authorized && data.expiresAt && Date.parse(data.expiresAt) <= Date.parse(data.serverTime))) throw failure('TQT_LICENSE_RESPONSE_INVALID');
-      return {...data, synced: true, message: MESSAGES[data.code]};
+      return {...data, synced: true, message: MESSAGES[data.code]
+        + (data.deviceConflict === true ? ' ' + MESSAGES.TQT_DEVICE_CONFIG_CONFLICT : '')};
     }
     function saveRegistration(data) {
       identity = {...identity, machineKey: data.machineKey,
