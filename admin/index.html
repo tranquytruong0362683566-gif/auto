@@ -9,7 +9,7 @@
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="admin.css?v=admin-sources-15-1">
   <script src="../config.js?v=admin-simple-12h-1" defer></script>
-  <script src="admin.js?v=admin-sources-15-1" type="module"></script>
+  <script src="admin.js?v=extension-key-17-1" type="module"></script>
   <script src="../scripts/source-view-guard.js?v=machine-key-13-1"></script>
 </head>
 <body>
@@ -35,7 +35,7 @@
       <div class="account"><span id="admin-email"></span><a href="../">Bảng điều khiển</a><button id="logout" class="quiet" type="button">Đăng xuất</button></div>
     </header>
     <main>
-      <div class="page-title"><div><h1>Danh sách KEY</h1><p class="muted">Một KEY chung · nhiều nguồn xác minh theo trình duyệt. KEY mới dùng thử 12 giờ.</p></div><button id="new-key" class="primary" type="button">+ Thêm KEY</button></div>
+      <div class="page-title"><div><h1>Danh sách KEY</h1><p class="muted">Extension tạo và giữ KEY · ADMIN duyệt và quản lý hạn dùng. KEY mới dùng thử 12 giờ.</p></div><button id="new-key" class="primary" type="button" hidden>+ Thêm KEY</button></div>
       <div id="error-banner" class="error-banner" role="alert" hidden></div>
       <section class="list-panel" aria-label="Quản lý danh sách KEY">
         <div class="toolbar">
@@ -63,7 +63,7 @@
         </div>
         <div id="loading" class="loading" role="status" hidden>Đang tải danh sách KEY…</div>
         <div id="key-list" class="key-list"></div>
-        <div id="empty" class="empty" hidden><strong>Chưa có KEY phù hợp</strong><p class="muted">KEY mới sẽ xuất hiện khi web đăng ký thành công.</p><button id="clear-filters" class="secondary" type="button">Xóa bộ lọc</button></div>
+        <div id="empty" class="empty" hidden><strong>Chưa có KEY phù hợp</strong><p class="muted">KEY mới sẽ xuất hiện khi extension gửi xác minh thành công.</p><button id="clear-filters" class="secondary" type="button">Xóa bộ lọc</button></div>
         <footer class="pagination"><span id="page-info" class="muted"></span><div><button id="previous" class="secondary small" type="button">Trước</button><span id="page-number"></span><button id="next" class="secondary small" type="button">Sau</button></div></footer>
       </section>
       <p id="last-updated" class="last-updated" role="status"></p>

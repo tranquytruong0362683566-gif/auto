@@ -19,13 +19,13 @@
       <div class="license-mark" aria-hidden="true">KEY</div>
       <p class="eyebrow">Xác thực bản quyền</p>
       <h1 id="licenseGateTitle">Xác minh KEY với ADMIN</h1>
-      <p class="license-instruction">Kết nối tiện ích để web nhận diện CPU, RAM và ổ đĩa, tạo KEY theo máy rồi xác minh với ADMIN. Các trình duyệt có cùng cấu hình nhận cùng KEY. KEY mới được dùng thử <strong>12 giờ</strong>.</p>
-      <label for="tqtMachineKeyInput">KEY của web</label>
+      <p class="license-instruction">Extension tạo và giữ KEY của bản cài, gửi bằng chứng xác minh đến ADMIN. Web đọc đúng KEY từ extension và kiểm tra quyền trên máy chủ. KEY mới được dùng thử <strong>12 giờ</strong>.</p>
+      <label for="tqtMachineKeyInput">KEY của extension</label>
       <div class="license-key-row">
-        <input id="tqtMachineKeyInput" type="text" value="Chờ nhận diện máy qua tiện ích" readonly spellcheck="false" aria-label="KEY do web tạo">
+        <input id="tqtMachineKeyInput" type="text" value="Chờ KEY từ extension" readonly spellcheck="false" aria-label="KEY do extension giữ">
         <button class="primary-button" id="copyTqtMachineKeyBtn" type="button">Copy KEY</button>
       </div>
-      <p class="license-status" id="tqtLicenseStatus" data-state="checking" aria-live="polite">Đang tạo và xác minh KEY với ADMIN...</p>
+      <p class="license-status" id="tqtLicenseStatus" data-state="checking" aria-live="polite">Đang nhận KEY từ extension và xác minh với ADMIN...</p>
       <div id="tqtLicenseCaptcha" hidden></div>
       <button class="secondary-button license-retry-button" id="retryTqtLicenseBtn" type="button">Kiểm tra lại</button>
     </section>
@@ -54,7 +54,7 @@
         <button class="nav-button workspace-trigger" type="button" data-workspace-target="records" aria-controls="workspaceModal" aria-expanded="false"><span>Kết quả</span></button>
       </nav>
       <div class="sidebar-meta web-key-meta" aria-label="KEY và thời hạn sử dụng">
-        <div class="web-key-heading"><span>KEY của web</span><button id="copyTqtSidebarKeyBtn" type="button" title="Sao chép KEY">Copy</button></div>
+        <div class="web-key-heading"><span>KEY của extension</span><button id="copyTqtSidebarKeyBtn" type="button" title="Sao chép KEY">Copy</button></div>
         <strong id="tqtWebKeyValue">Chờ nhận diện máy</strong>
         <span id="tqtWebKeyRemaining" class="web-key-remaining">Đang xác minh KEY...</span>
         <span id="tqtWebVerificationStatus" class="web-key-verification">Đang kết nối tiện ích...</span>
@@ -515,8 +515,8 @@
   <script src="scripts/web-connection-policy.js?v=4.0.1"></script>
   <script src="scripts/web-extension-bridge.js?v=4.0.6"></script>
   <script src="config.js?v=web-key-12-1"></script>
-  <script src="scripts/web-key-client.js?v=4.0.8"></script>
-  <script src="scripts/license-access-controller.js?v=4.0.7"></script>
+  <script src="scripts/web-key-client.js?v=4.0.9"></script>
+  <script src="scripts/license-access-controller.js?v=4.0.9"></script>
   <script src="scripts/manual-comment-content.js?v=4.0.0"></script>
   <script src="scripts/manual-comment-images.js?v=4.0.6"></script>
   <script src="scripts/ai-comment-composer.js?v=4.0.0"></script>

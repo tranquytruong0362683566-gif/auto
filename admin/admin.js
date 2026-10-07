@@ -6,7 +6,7 @@ import { browserName, sourceLabel } from './verification-sources.js?v=admin-sour
   'use strict';
   const $ = id => document.getElementById(id);
   const PAGE_SIZE = 25;
-  const UPGRADE_MESSAGE = 'Cần chạy SQL 08 rồi 09-ADMIN-TACH-TRINH-DUYET.sql trong Supabase SQL Editor, rồi tải lại ADMIN.';
+  const UPGRADE_MESSAGE = 'Cần hoàn tất SQL WEB/ADMIN hiện có rồi chạy 13-EXTENSION-TAO-KEY.sql của bản 4.0.9.';
   const ERRORS = {
     ADMIN_REQUIRED: 'Tài khoản này chưa có quyền ADMIN.',
     REVISION_CONFLICT: 'KEY vừa được thay đổi ở phiên khác. Làm mới danh sách rồi thử lại.',
@@ -181,11 +181,11 @@ import { browserName, sourceLabel } from './verification-sources.js?v=admin-sour
     const code = el('code', item.machine_key, 'key-code'), badge = el('span', undefined, 'badge');
     const head = el('div', undefined, 'key-head'); head.append(checkbox, code, button('Sao chép', () => copy(item.machine_key), 'quiet copy-key'), badge);
     const verification = el('div', undefined, 'verification'), verificationHead = el('div', undefined, 'verification-heading');
-    const sourceCount = Number(item.verification_source_count) || (storedVerificationText(item) ? 1 : 0), browserCount = Number(item.browser_count) || 0;
+    const sourceCount = Number(item.verification_source_count) || (storedVerificationText(item) ? 1 : 0), browserCount = Number(item.browser_count) || sourceCount;
     verificationHead.append(el('strong', 'Xác minh KEY gửi đến ADMIN'),
       button('Xem từng nguồn (' + sourceCount + ')', () => openSources(item), 'secondary small'));
     verification.append(verificationHead, el('p', browserCount + ' hồ sơ trình duyệt · ' + sourceCount + ' bản xác minh', 'source-summary'),
-      el('p', 'UID | cookie | User-Agent của mỗi nguồn được lưu riêng.', 'source-hint'));
+      el('p', 'Mở từng nguồn để xem KEY, thông tin bản cài và bằng chứng xác minh.', 'source-hint'));
     const footer = el('footer', undefined, 'key-footer'), expiry = el('div', undefined, 'expiry'), remaining = el('span', undefined, 'remaining');
     expiry.append(el('span', item.expires_at ? 'Hạn: ' + date(item.expires_at) : 'Hạn: Không thời hạn'), remaining);
     const actions = el('div', undefined, 'row-actions');
@@ -240,7 +240,8 @@ import { browserName, sourceLabel } from './verification-sources.js?v=admin-sour
     metadata.append(el('span', 'UID: ' + (source.account_uid || 'Chưa gửi')),
       el('span', 'Extension: ' + (source.extension_version || 'Chưa gửi')),
       el('span', 'Cập nhật: ' + date(source.updated_at)));
-    const label = el('label', 'UID | cookie | User-Agent'); label.htmlFor = field.id;
+    const label = el('label', source.verification_text?.startsWith('{') && source.verification_text.includes('KEY-V17')
+      ? 'KEY · ID bản cài · UID · User-Agent · bằng chứng đã xác minh' : 'UID | cookie | User-Agent'); label.htmlFor = field.id;
     card.append(heading, metadata, label, field);
     if (source.legacy) card.append(el('p', 'Bản cũ chỉ lưu lần gửi cuối cùng. Mở từng extension → Bảng Điều Khiển để xác định nguồn riêng.', 'source-hint'));
     if (source.installation_id) card.title = 'ID hồ sơ: ' + source.installation_id;
