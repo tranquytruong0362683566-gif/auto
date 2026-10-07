@@ -7,9 +7,9 @@
   <meta name="color-scheme" content="light">
   <title>ADMIN · Quản lý KEY TQT</title>
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="admin.css?v=admin-simple-12h-1">
+  <link rel="stylesheet" href="admin.css?v=admin-sources-15-1">
   <script src="../config.js?v=admin-simple-12h-1" defer></script>
-  <script src="admin.js?v=admin-simple-12h-1" type="module"></script>
+  <script src="admin.js?v=admin-sources-15-1" type="module"></script>
   <script src="../scripts/source-view-guard.js?v=machine-key-13-1"></script>
 </head>
 <body>
@@ -35,7 +35,7 @@
       <div class="account"><span id="admin-email"></span><a href="../">Bảng điều khiển</a><button id="logout" class="quiet" type="button">Đăng xuất</button></div>
     </header>
     <main>
-      <div class="page-title"><div><h1>Danh sách KEY</h1><p class="muted">KEY mới tự động dùng thử 12 giờ. Hết hạn cần được duyệt hoặc gia hạn.</p></div><button id="new-key" class="primary" type="button">+ Thêm KEY</button></div>
+      <div class="page-title"><div><h1>Danh sách KEY</h1><p class="muted">Một KEY chung · nhiều nguồn xác minh theo trình duyệt. KEY mới dùng thử 12 giờ.</p></div><button id="new-key" class="primary" type="button">+ Thêm KEY</button></div>
       <div id="error-banner" class="error-banner" role="alert" hidden></div>
       <section class="list-panel" aria-label="Quản lý danh sách KEY">
         <div class="toolbar">
@@ -63,12 +63,23 @@
         </div>
         <div id="loading" class="loading" role="status" hidden>Đang tải danh sách KEY…</div>
         <div id="key-list" class="key-list"></div>
-        <div id="empty" class="empty" hidden><strong>Chưa có KEY phù hợp</strong><p class="muted">KEY mới sẽ xuất hiện khi tiện ích đăng ký thành công.</p><button id="clear-filters" class="secondary" type="button">Xóa bộ lọc</button></div>
+        <div id="empty" class="empty" hidden><strong>Chưa có KEY phù hợp</strong><p class="muted">KEY mới sẽ xuất hiện khi web đăng ký thành công.</p><button id="clear-filters" class="secondary" type="button">Xóa bộ lọc</button></div>
         <footer class="pagination"><span id="page-info" class="muted"></span><div><button id="previous" class="secondary small" type="button">Trước</button><span id="page-number"></span><button id="next" class="secondary small" type="button">Sau</button></div></footer>
       </section>
       <p id="last-updated" class="last-updated" role="status"></p>
     </main>
   </div>
+
+  <dialog id="sources-dialog" class="modal sources-modal" aria-labelledby="sources-title">
+    <div class="sources-heading"><div><h2 id="sources-title">Xác minh KEY gửi đến ADMIN</h2><code id="sources-key" class="key-code"></code></div><button id="sources-close" class="quiet" type="button">Đóng</button></div>
+    <p class="muted sources-description">Mỗi hồ sơ trình duyệt / extension có dữ liệu riêng. Duyệt, khóa và gia hạn áp dụng cho KEY chung.</p>
+    <div class="sources-toolbar"><span id="sources-count" class="muted"></span><button id="sources-refresh" class="secondary small" type="button">Làm mới nguồn</button></div>
+    <p id="sources-error" class="error-text" role="alert"></p>
+    <p id="sources-loading" class="loading" role="status" hidden>Đang tải các nguồn xác minh…</p>
+    <div id="sources-list" class="sources-list"></div>
+    <p id="sources-empty" class="empty" hidden>KEY này chưa có hồ sơ trình duyệt hoặc dữ liệu xác minh.</p>
+    <div class="pagination"><span id="sources-page" class="muted"></span><div><button id="sources-previous" class="secondary small" type="button">Trước</button><button id="sources-next" class="secondary small" type="button">Sau</button></div></div>
+  </dialog>
 
   <dialog id="grant-dialog" class="modal" aria-labelledby="grant-title">
     <form id="grant-form">

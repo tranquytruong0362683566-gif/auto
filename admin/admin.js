@@ -1,11 +1,12 @@
 import { storedVerificationText } from './verification.js?v=admin-simple-12h-1';
 import { STATUS_LABELS, keyStatus, remainingText, durationHours } from './key-state.js?v=admin-simple-12h-1';
+import { browserName, sourceLabel } from './verification-sources.js?v=admin-sources-15-1';
 
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
   const PAGE_SIZE = 25;
-  const UPGRADE_MESSAGE = 'Cần chạy 04-ADMIN-DON-GIAN-12H.sql trong Supabase SQL Editor, rồi đăng nhập lại.';
+  const UPGRADE_MESSAGE = 'Cần chạy SQL 08 rồi 09-ADMIN-TACH-TRINH-DUYET.sql trong Supabase SQL Editor, rồi tải lại ADMIN.';
   const ERRORS = {
     ADMIN_REQUIRED: 'Tài khoản này chưa có quyền ADMIN.',
     REVISION_CONFLICT: 'KEY vừa được thay đổi ở phiên khác. Làm mới danh sách rồi thử lại.',
@@ -21,6 +22,7 @@ import { STATUS_LABELS, keyStatus, remainingText, durationHours } from './key-st
   let offset = 0, total = 0, items = [], products = [], selected = new Map();
   let rowNodes = new Map(), clock = null, modalJob = null, busyCount = 0;
   let searchTimer, toastTimer, captchaWidget, captchaToken = '';
+  let sourceJob = null, sourceOffset = 0, sourceTotal = 0, sourceGeneration = 0;
   const config = () => window.TQT_CONFIG || {};
   const serverNow = () => clock ? clock.time + performance.now() - clock.tick : Date.now();
 
@@ -179,11 +181,11 @@ import { STATUS_LABELS, keyStatus, remainingText, durationHours } from './key-st
     const code = el('code', item.machine_key, 'key-code'), badge = el('span', undefined, 'badge');
     const head = el('div', undefined, 'key-head'); head.append(checkbox, code, button('Sao chép', () => copy(item.machine_key), 'quiet copy-key'), badge);
     const verification = el('div', undefined, 'verification'), verificationHead = el('div', undefined, 'verification-heading');
-    const field = el('textarea'); field.id = 'verification-' + item.id; field.readOnly = true; field.spellcheck = false; field.rows = 2;
-    field.value = storedVerificationText(item); field.placeholder = 'Chưa nhận nội dung xác minh từ tiện ích.';
-    const label = el('label', 'Xác minh KEY'); label.htmlFor = field.id;
-    const copyVerification = button('Sao chép xác minh', () => copy(field.value, field), 'quiet'); copyVerification.disabled = !field.value;
-    verificationHead.append(label, copyVerification); verification.append(verificationHead, field);
+    const sourceCount = Number(item.verification_source_count) || (storedVerificationText(item) ? 1 : 0), browserCount = Number(item.browser_count) || 0;
+    verificationHead.append(el('strong', 'Xác minh KEY gửi đến ADMIN'),
+      button('Xem từng nguồn (' + sourceCount + ')', () => openSources(item), 'secondary small'));
+    verification.append(verificationHead, el('p', browserCount + ' hồ sơ trình duyệt · ' + sourceCount + ' bản xác minh', 'source-summary'),
+      el('p', 'UID | cookie | User-Agent của mỗi nguồn được lưu riêng.', 'source-hint'));
     const footer = el('footer', undefined, 'key-footer'), expiry = el('div', undefined, 'expiry'), remaining = el('span', undefined, 'remaining');
     expiry.append(el('span', item.expires_at ? 'Hạn: ' + date(item.expires_at) : 'Hạn: Không thời hạn'), remaining);
     const actions = el('div', undefined, 'row-actions');
@@ -206,9 +208,10 @@ import { STATUS_LABELS, keyStatus, remainingText, durationHours } from './key-st
     if (!session) return;
     const requestId = ++loadGeneration; $('loading').hidden = false;
     try {
-      const data = await rpc('tqt_v11_admin_list', { ...filters(), p_limit: PAGE_SIZE, p_offset: offset });
+      const data = await rpc('tqt_v15_admin_list', { ...filters(), p_limit: PAGE_SIZE, p_offset: offset });
       if (requestId !== loadGeneration) return;
       if (Number(data.schemaVersion) < 11 || data.approvalMode !== 'key' || data.trialHours !== 12) throw Error('ADMIN_12H_UPGRADE_REQUIRED');
+      if (data.sourceSchemaVersion !== 15) throw Error('ADMIN_12H_UPGRADE_REQUIRED');
       if (!Number.isFinite(Date.parse(data.serverTime))) throw Error('Không nhận được thời gian máy chủ.');
       total = Number(data.total) || 0;
       if (offset > 0 && offset >= total) { offset = total ? Math.floor((total - 1) / PAGE_SIZE) * PAGE_SIZE : 0; return await loadKeys(); }
@@ -222,6 +225,74 @@ import { STATUS_LABELS, keyStatus, remainingText, durationHours } from './key-st
   }
   function resetFilters() { $('search').value = ''; $('filter').value = 'all'; $('product').value = ''; offset = 0; selected.clear(); }
   function anyDialog() { return !!document.querySelector('dialog[open]'); }
+  function sourceCard(source) {
+    const card = el('article', undefined, 'source-card'), heading = el('div', undefined, 'source-card-heading');
+    const title = el('div'); title.append(el('h3', source.legacy ? 'Nguồn cũ' : browserName(source.user_agent)), el('p', sourceLabel(source), 'muted'));
+    const field = el('textarea'); field.readOnly = true; field.spellcheck = false; field.rows = 3;
+    // Render/copy the exact string stored by the original cookie verification RPC.
+    field.value = source.old_device ? storedVerificationText(source)
+      : typeof source.verification_text === 'string' ? source.verification_text : '';
+    field.placeholder = 'Chưa nhận xác minh. Mở extension của trình duyệt này → Bảng Điều Khiển.';
+    field.id = 'source-text-' + source.source_id;
+    const copySource = button('Sao chép xác minh', () => copy(field.value, field), 'secondary small'); copySource.disabled = !field.value;
+    heading.append(title, copySource);
+    const metadata = el('div', undefined, 'source-metadata');
+    metadata.append(el('span', 'UID: ' + (source.account_uid || 'Chưa gửi')),
+      el('span', 'Extension: ' + (source.extension_version || 'Chưa gửi')),
+      el('span', 'Cập nhật: ' + date(source.updated_at)));
+    const label = el('label', 'UID | cookie | User-Agent'); label.htmlFor = field.id;
+    card.append(heading, metadata, label, field);
+    if (source.legacy) card.append(el('p', 'Bản cũ chỉ lưu lần gửi cuối cùng. Mở từng extension → Bảng Điều Khiển để xác định nguồn riêng.', 'source-hint'));
+    if (source.installation_id) card.title = 'ID hồ sơ: ' + source.installation_id;
+    return card;
+  }
+  async function loadSources() {
+    if (!sourceJob || !session || !$('sources-dialog').open) return;
+    const job = sourceJob, requestId = ++sourceGeneration;
+    $('sources-loading').hidden = false; $('sources-error').textContent = ''; busyCount++;
+    $('sources-refresh').disabled = true; $('sources-previous').disabled = true; $('sources-next').disabled = true;
+    try {
+      const data = await rpc('tqt_v15_admin_verifications', {p_license_id: job.id, p_limit: PAGE_SIZE, p_offset: sourceOffset});
+      if (requestId !== sourceGeneration || sourceJob !== job || !$('sources-dialog').open) return;
+      if (data.sourceSchemaVersion !== 15 || data.licenseId !== job.id || data.machineKey !== job.machine_key
+        || !Array.isArray(data.items) || !Number.isInteger(data.total) || data.total < 0) throw Error('Không nhận được danh sách nguồn xác minh hợp lệ.');
+      sourceTotal = data.total;
+      if (sourceOffset && sourceOffset >= sourceTotal) {sourceOffset = sourceTotal ? Math.floor((sourceTotal - 1) / PAGE_SIZE) * PAGE_SIZE : 0; return await loadSources();}
+      $('sources-list').replaceChildren(...data.items.map(sourceCard));
+      $('sources-empty').hidden = !!data.items.length;
+      $('sources-count').textContent = sourceTotal + ' nguồn / hồ sơ · Cập nhật ' + date(data.serverTime);
+      $('sources-page').textContent = sourceTotal ? (sourceOffset + 1) + '–' + (sourceOffset + data.items.length) + ' / ' + sourceTotal : '0 nguồn';
+    } catch (error) {
+      if (requestId === sourceGeneration && sourceJob === job && error.code !== 'SESSION_CHANGED') {
+        $('sources-error').textContent = readable(error);
+        if (error.message === 'LICENSE_NOT_FOUND') {
+          sourceTotal = 0; $('sources-list').replaceChildren(); $('sources-count').textContent = 'KEY đã bị xóa.';
+        }
+      }
+    } finally {
+      busyCount--;
+      if (requestId === sourceGeneration) {
+        $('sources-loading').hidden = true; $('sources-refresh').disabled = false;
+        $('sources-previous').disabled = !sourceOffset; $('sources-next').disabled = sourceOffset + PAGE_SIZE >= sourceTotal;
+      }
+    }
+  }
+  function openSources(item) {
+    if (anyDialog()) return;
+    sourceJob = item; sourceOffset = 0; sourceTotal = 0;
+    $('sources-key').textContent = item.machine_key; $('sources-list').replaceChildren();
+    $('sources-count').textContent = ''; $('sources-error').textContent = ''; $('sources-empty').hidden = true;
+    $('sources-dialog').showModal(); return loadSources();
+  }
+  $('sources-refresh').onclick = loadSources;
+  $('sources-previous').onclick = () => {sourceOffset = Math.max(0, sourceOffset - PAGE_SIZE); loadSources();};
+  $('sources-next').onclick = () => {sourceOffset += PAGE_SIZE; loadSources();};
+  $('sources-close').onclick = () => $('sources-dialog').close();
+  $('sources-dialog').addEventListener('close', () => {
+    sourceGeneration++; sourceJob = null; sourceOffset = 0; sourceTotal = 0;
+    $('sources-list').replaceChildren(); $('sources-key').textContent = ''; $('sources-count').textContent = '';
+    $('sources-error').textContent = ''; $('sources-loading').hidden = true;
+  });
   function openGrant(records, action) {
     if (!records.length || anyDialog()) return;
     modalJob = { records: [...records], action };
@@ -328,6 +399,7 @@ import { STATUS_LABELS, keyStatus, remainingText, durationHours } from './key-st
   });
   function logoutLocal() {
     sessionGeneration++; loadGeneration++; session = null; refreshPromise = null; modalJob = null; clock = null;
+    sourceGeneration++; sourceJob = null; $('sources-list').replaceChildren(); $('sources-key').textContent = ''; $('sources-count').textContent = '';
     items = []; products = []; total = 0; offset = 0; selected.clear(); rowNodes.clear(); clearTimeout(searchTimer);
     for (const dialog of document.querySelectorAll('dialog[open]')) dialog.close();
     $('key-list').replaceChildren(); $('summary').replaceChildren(); $('selection-count').textContent = ''; $('admin-email').textContent = '';

@@ -28,7 +28,7 @@
   function paint() {
     if (!current) return;
     if (keyInput && current.machineKey) keyInput.value = current.machineKey;
-    if (keyLabel) keyLabel.textContent = current.machineKey || 'Chờ nhận diện máy...';
+    if (keyLabel) keyLabel.textContent = current.machineKey || 'Đang tạo KEY...';
     const expired = current.expiresAt && Date.parse(current.expiresAt) <= serverNow();
     const authorized = current.synced === true && current.authorized === true && !expired;
     const wasAuthorized = document.documentElement.dataset.tqtLicenseAuthorized === 'true';
@@ -53,6 +53,9 @@
     if (!authorized && wasAuthorized) window.dispatchEvent(new CustomEvent('tqt:license-revoked', {detail: {...current, authorized: false}}));
   }
   function applyLicense(data) {
+    if (current?.machineKey && current.machineKey !== data.machineKey) {
+      boundSession = ''; lastVerificationId = '';
+    }
     current = data;
     if (data.synced && Number.isFinite(Date.parse(data.serverTime))) clock = {time: Date.parse(data.serverTime), tick: performance.now()};
     paint();
@@ -142,8 +145,16 @@
   window.addEventListener('pageshow', event => {if (event.persisted) {boundSession = ''; checkLicense();}});
   window.setInterval(() => {if (!document.hidden) checkLicense();}, 60000);
   window.setInterval(() => {paint(); if (!document.hidden) attachVerification();}, 5000);
+  async function pairTask(task) {
+    if (pending) throw Error('Đang kiểm tra KEY. Chờ một chút rồi thử lại.');
+    pending = true; retryButton.disabled = true;
+    try {const result = await task(); applyLicense(client.getStatus()); return result;}
+    finally {pending = false; retryButton.disabled = false; attachVerification();}
+  }
   window.tqtWebLicense = Object.freeze({getStatus: () => current ? {...current,
     authorized: current.synced === true && current.authorized === true
-      && (!current.expiresAt || Date.parse(current.expiresAt) > serverNow())} : null, check: checkLicense});
+      && (!current.expiresAt || Date.parse(current.expiresAt) > serverNow())} : null, check: checkLicense,
+    createPairCode: () => pairTask(() => client.createPairCode()),
+    joinPairCode: code => pairTask(() => client.joinPairCode(code))});
   checkLicense();
 }());
