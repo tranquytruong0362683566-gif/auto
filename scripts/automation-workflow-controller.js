@@ -1196,7 +1196,7 @@
   }
 
   function getCommentComposerMode() {
-    const storedMode = S.load(S.STORE.commentComposerMode, 'ai');
+    const storedMode = S.load(S.STORE.commentComposerMode, 'manual');
     return storedMode === 'manual' ? 'manual' : 'ai';
   }
 
@@ -1261,7 +1261,7 @@
   function getCommentComposerContext() {
     const mode = getCommentComposerMode();
     return mode === 'manual'
-      ? { mode, manual: requireManualCommentConfiguration() }
+      ? { mode, manual: requireManualCommentConfiguration(), images: window.manualCommentImages?.getSnapshot() || [] }
       : { mode: 'ai', manual: null };
   }
 
@@ -1589,6 +1589,7 @@
           const controller = window.chatGPTApiController || {};
           const skipSellingPostFilter = !filterSellingPostsEnabled || bypassSellingFilterByCommentCount;
           let comment = '';
+          let commentImage = null;
 
           if (composerContext.mode === 'manual') {
             if (!skipSellingPostFilter) {
@@ -1649,6 +1650,7 @@
 
             if (!isNextCommentResult(comment)) {
               comment = pickManualComment(composerContext.manual);
+              commentImage = window.manualCommentImages?.pick(composerContext.images) || null;
               const selectionLabel = composerContext.manual.random
                 ? `Đã chọn ngẫu nhiên 1/${composerContext.manual.variants.length} nội dung`
                 : 'Đã lấy nội dung cố định';
@@ -1754,7 +1756,8 @@
           if (AUTO_COMMENT_AFTER_GENERATE && comment) {
             if (stopForDailyCommentLimitIfReached()) break;
             const commentResponse = await commentToFacebook(link, comment, {
-              source: composerContext.mode === 'manual' ? 'manual-automatic' : 'ai'
+              source: composerContext.mode === 'manual' ? 'manual-automatic' : 'ai',
+              image: commentImage
             });
             if (isDeletedFacebookPostResult(commentResponse)) {
               // Bài đã bị xóa: link đã được chuyển sang danh sách loại bỏ.

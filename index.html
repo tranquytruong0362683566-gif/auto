@@ -6,7 +6,7 @@
   <title>Trần Quý Trường</title>
   <link rel="stylesheet" href="styles/dashboard.css?v=4.0.0">
   <link rel="stylesheet" href="styles/dashboard-taste.css?v=web-key-12-1">
-  <link rel="stylesheet" href="styles/key-pairing.css?v=web-key-15-1">
+  <link rel="stylesheet" href="styles/manual-comment-images.css?v=4.0.6">
   <script src="scripts/source-view-guard.js?v=machine-key-13-1"></script>
 </head>
 <body>
@@ -19,16 +19,15 @@
       <div class="license-mark" aria-hidden="true">KEY</div>
       <p class="eyebrow">Xác thực bản quyền</p>
       <h1 id="licenseGateTitle">Xác minh KEY với ADMIN</h1>
-      <p class="license-instruction">Web tự tạo KEY và xác minh với ADMIN. KEY mới được dùng thử <strong>12 giờ</strong>. Cài tiện ích để thực hiện các thao tác từ web.</p>
+      <p class="license-instruction">Kết nối tiện ích để web nhận diện CPU, RAM và ổ đĩa, tạo KEY theo máy rồi xác minh với ADMIN. Các trình duyệt có cùng cấu hình nhận cùng KEY. KEY mới được dùng thử <strong>12 giờ</strong>.</p>
       <label for="tqtMachineKeyInput">KEY của web</label>
       <div class="license-key-row">
-        <input id="tqtMachineKeyInput" type="text" value="Đang tạo KEY..." readonly spellcheck="false" aria-label="KEY do web tạo">
+        <input id="tqtMachineKeyInput" type="text" value="Chờ nhận diện máy qua tiện ích" readonly spellcheck="false" aria-label="KEY do web tạo">
         <button class="primary-button" id="copyTqtMachineKeyBtn" type="button">Copy KEY</button>
       </div>
       <p class="license-status" id="tqtLicenseStatus" data-state="checking" aria-live="polite">Đang tạo và xác minh KEY với ADMIN...</p>
       <div id="tqtLicenseCaptcha" hidden></div>
       <button class="secondary-button license-retry-button" id="retryTqtLicenseBtn" type="button">Kiểm tra lại</button>
-      <button class="secondary-button license-retry-button" id="openTqtPairGateBtn" type="button">Dùng chung KEY giữa các trình duyệt</button>
     </section>
   </div>
 
@@ -56,15 +55,15 @@
       </nav>
       <div class="sidebar-meta web-key-meta" aria-label="KEY và thời hạn sử dụng">
         <div class="web-key-heading"><span>KEY của web</span><button id="copyTqtSidebarKeyBtn" type="button" title="Sao chép KEY">Copy</button></div>
-        <strong id="tqtWebKeyValue">Đang tạo KEY...</strong>
+        <strong id="tqtWebKeyValue">Chờ nhận diện máy</strong>
         <span id="tqtWebKeyRemaining" class="web-key-remaining">Đang xác minh KEY...</span>
         <span id="tqtWebVerificationStatus" class="web-key-verification">Đang kết nối tiện ích...</span>
-        <button id="openTqtPairSidebarBtn" class="web-key-pair-trigger" type="button">Dùng chung KEY</button>
       </div>
     </div>
   </header>
 
   <main class="app-main dashboard-home is-page-active" id="homePage" data-dashboard-page="home">
+    <div class="home-page-heading"><h1>Trang Chủ</h1></div>
     <section class="status-card" aria-labelledby="statusHeading">
       <div class="status-overview">
         <div class="status-heading">
@@ -159,15 +158,34 @@
 
         <section class="workspace-panel panel" id="composer" data-workspace-panel="composer" aria-label="Soạn bình luận">
           <div class="composer-tabs" role="tablist" aria-label="Chọn cách soạn bình luận">
-            <button class="composer-tab is-active" id="composerAiTab" type="button" role="tab" aria-selected="true" aria-controls="composerAiPanel" data-composer-tab="ai">
-              <span>Chọn bằng AI</span>
-            </button>
-            <button class="composer-tab" id="composerManualTab" type="button" role="tab" aria-selected="false" aria-controls="composerManualPanel" data-composer-tab="manual" tabindex="-1">
+            <button class="composer-tab is-active" id="composerManualTab" type="button" role="tab" aria-selected="true" aria-controls="composerManualPanel" data-composer-tab="manual">
               <span>Nhập thủ công</span>
+            </button>
+            <button class="composer-tab" id="composerAiTab" type="button" role="tab" aria-selected="false" aria-controls="composerAiPanel" data-composer-tab="ai" tabindex="-1">
+              <span>Chọn bằng AI</span>
             </button>
           </div>
 
-          <div class="composer-tab-panel is-active" id="composerAiPanel" role="tabpanel" aria-labelledby="composerAiTab" data-composer-panel="ai">
+          <div class="composer-tab-panel is-active" id="composerManualPanel" role="tabpanel" aria-labelledby="composerManualTab" data-composer-panel="manual">
+            <div class="manual-auto-comment-layout">
+              <div class="form-group">
+                <label for="manualCommentInput">Nội dung bình luận</label>
+                <textarea id="manualCommentInput" maxlength="8000" placeholder="Nhập văn bản, hoặc (nội dung1):(nội dung2) để chọn ngẫu nhiên."></textarea>
+              </div>
+              <div class="manual-image-picker" aria-labelledby="manualImagesHeading">
+                <div class="manual-image-heading">
+                  <label id="manualImagesHeading" for="manualCommentImages">Ảnh đính kèm</label>
+                  <button class="secondary-button small-button" id="clearManualImagesBtn" type="button" hidden>Xóa tất cả ảnh</button>
+                </div>
+                <input id="manualCommentImages" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple>
+                <p class="manual-image-hint">Không chọn ảnh: chỉ gửi văn bản. Chọn nhiều ảnh: mỗi bình luận gửi kèm ngẫu nhiên 1 ảnh đã chọn.</p>
+                <div id="manualImagePreview" class="manual-image-preview" aria-label="Ảnh đã chọn"></div>
+                <p id="manualImageStatus" class="manual-image-status" role="status" aria-live="polite" hidden></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="composer-tab-panel" id="composerAiPanel" role="tabpanel" aria-labelledby="composerAiTab" data-composer-panel="ai" hidden>
             <div class="two-column">
               <div class="form-group">
                 <div class="label-row">
@@ -208,33 +226,6 @@
                 </div>
                 <button class="primary-button" id="generateBtn" type="button">Tạo bình luận bằng AI</button>
               </div>
-            </div>
-          </div>
-
-          <div class="composer-tab-panel" id="composerManualPanel" role="tabpanel" aria-labelledby="composerManualTab" data-composer-panel="manual" hidden>
-            <div class="manual-auto-comment-layout">
-              <div class="form-group">
-                <label for="manualCommentInput">Nội dung dùng cho quá trình gửi tự động</label>
-                <textarea id="manualCommentInput" maxlength="8000" placeholder="Nhập một nội dung cố định, hoặc (nội dung1):(nội dung2):(nội dung3) để chọn ngẫu nhiên cho mỗi bài."></textarea>
-                <div class="field-status">
-                  <span class="hint">Hệ thống giữ nguyên nội dung đã nhập và tự gửi cho các link trong hàng đợi.</span>
-                  <span class="counter" id="manualCommentCounter">0/8000</span>
-                </div>
-              </div>
-
-              <div class="manual-random-format" aria-label="Cú pháp nội dung ngẫu nhiên">
-                <strong>Muốn chọn ngẫu nhiên?</strong>
-                <span>Nhập các nội dung theo đúng dạng:</span>
-                <code>(nội dung1):(nội dung2):(nội dung3)</code>
-                <small>Mỗi link sẽ chọn ngẫu nhiên một nội dung. Dấu hai chấm nằm bên trong ngoặc vẫn được giữ nguyên.</small>
-              </div>
-
-              <div class="manual-auto-comment-note">
-                <strong>Quy trình vẫn chạy hoàn toàn tự động</strong>
-                <span>Extension vẫn quét link, áp dụng bộ lọc đang bật, chờ theo cài đặt và tự gửi bình luận. Chế độ này chỉ thay bước AI viết nội dung bằng văn bản bạn nhập.</span>
-              </div>
-
-              <p class="manual-comment-status" id="manualCommentStatus" data-state="warning" aria-live="polite">Hãy nhập nội dung trước khi bắt đầu Chạy Tự Động.</p>
             </div>
           </div>
         </section>
@@ -522,34 +513,17 @@
   </div>
 
   <script src="scripts/web-connection-policy.js?v=4.0.1"></script>
-  <script src="scripts/web-extension-bridge.js?v=web-key-12-1"></script>
+  <script src="scripts/web-extension-bridge.js?v=4.0.6"></script>
   <script src="config.js?v=web-key-12-1"></script>
-  <dialog id="tqtPairDialog" class="web-key-pair-dialog" aria-labelledby="tqtPairTitle">
-    <div class="web-key-pair-heading"><h2 id="tqtPairTitle">Dùng chung KEY</h2><button id="closeTqtPairBtn" type="button" aria-label="Đóng">Đóng</button></div>
-    <p>Trên cùng máy, tạo mã ở trình duyệt giữ KEY muốn dùng chung, rồi nhập mã ở trình duyệt khác. Mỗi trình duyệt vẫn có nguồn xác minh riêng trên ADMIN.</p>
-    <p>KEY hiện tại: <strong id="tqtPairCurrentKey"></strong></p>
-    <section class="web-key-pair-section" aria-label="Tạo mã ghép">
-      <h3>1. Trình duyệt giữ KEY chung</h3>
-      <button id="createTqtPairBtn" type="button">Tạo mã ghép 10 phút</button>
-      <div id="tqtPairOutput" hidden><label for="tqtPairCode">Mã dùng một lần</label><div class="web-key-pair-input"><input id="tqtPairCode" readonly spellcheck="false"><button id="copyTqtPairBtn" type="button">Copy mã</button></div><p id="tqtPairExpiry" role="status"></p></div>
-    </section>
-    <form id="tqtPairJoinForm" class="web-key-pair-section">
-      <h3>2. Trình duyệt cần ghép</h3>
-      <label for="tqtPairJoinCode">Nhập mã từ trình duyệt trên</label><input id="tqtPairJoinCode" maxlength="41" placeholder="TQT-LINK-…" autocomplete="off" spellcheck="false" required>
-      <p>Ghép sẽ chuyển trình duyệt này sang KEY chung và dùng hạn của KEY đó. KEY cũ được giữ trên ADMIN; thao tác không cấp thêm thời gian dùng thử.</p>
-      <button id="joinTqtPairBtn" type="submit">Ghép vào KEY chung</button>
-    </form>
-    <p id="tqtPairMessage" role="status" aria-live="polite"></p>
-  </dialog>
-  <script src="scripts/web-key-client.js?v=web-key-15-1"></script>
-  <script src="scripts/license-access-controller.js?v=web-key-15-1"></script>
-  <script src="scripts/web-key-pairing.js?v=web-key-15-1"></script>
+  <script src="scripts/web-key-client.js?v=4.0.7"></script>
+  <script src="scripts/license-access-controller.js?v=4.0.7"></script>
   <script src="scripts/manual-comment-content.js?v=4.0.0"></script>
+  <script src="scripts/manual-comment-images.js?v=4.0.6"></script>
   <script src="scripts/ai-comment-composer.js?v=4.0.0"></script>
   <script src="scripts/dashboard-state.js?v=4.0.0"></script>
   <script src="scripts/background-bridge-client.js?v=4.0.0"></script>
   <script src="scripts/apify-scanner-client.js?v=4.0.0"></script>
-  <script src="scripts/automation-workflow-controller.js?v=4.0.0"></script>
-  <script src="scripts/dashboard-ui-controller.js?v=4.0.0"></script>
+  <script src="scripts/automation-workflow-controller.js?v=4.0.6"></script>
+  <script src="scripts/dashboard-ui-controller.js?v=4.0.6"></script>
 </body>
 </html>

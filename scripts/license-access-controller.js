@@ -12,6 +12,7 @@
   const client = window.TQTWebKey.createClient();
   let pending = false, attaching = false, boundSession = '', lastVerificationId = '';
   let current = null, clock = null, captchaWidget = null, captchaLoading = null;
+  let refreshOnEntry = true, automaticSnapshot = null, nextAutomaticAttempt = 0, connectedSession = '';
   const serverNow = () => clock ? clock.time + performance.now() - clock.tick : Date.now();
 
   function remainingText(data) {
@@ -27,8 +28,9 @@
   }
   function paint() {
     if (!current) return;
-    if (keyInput && current.machineKey) keyInput.value = current.machineKey;
-    if (keyLabel) keyLabel.textContent = current.machineKey || 'Đang tạo KEY...';
+    if (keyInput) keyInput.value = current.machineKey || 'Chờ nhận diện máy qua tiện ích';
+    if (keyLabel) keyLabel.textContent = current.machineKey || 'Chờ nhận diện máy';
+    if (copyButton) copyButton.disabled = !current.machineKey;
     const expired = current.expiresAt && Date.parse(current.expiresAt) <= serverNow();
     const authorized = current.synced === true && current.authorized === true && !expired;
     const wasAuthorized = document.documentElement.dataset.tqtLicenseAuthorized === 'true';
@@ -55,6 +57,7 @@
   function applyLicense(data) {
     if (current?.machineKey && current.machineKey !== data.machineKey) {
       boundSession = ''; lastVerificationId = '';
+      refreshOnEntry = true; automaticSnapshot = null; nextAutomaticAttempt = 0;
     }
     current = data;
     if (data.synced && Number.isFinite(Date.parse(data.serverTime))) clock = {time: Date.parse(data.serverTime), tick: performance.now()};
@@ -75,24 +78,41 @@
         if (!response?.ok) throw Error(response?.message || 'Chưa liên kết được KEY với tiện ích.');
         boundSession = session;
       }
-      const response = await bridge.request('TQT_GET_WEB_VERIFICATION', {machineKey: binding.machineKey}, {timeoutMs: 15000});
-      if (!response?.ok) throw Error(response?.message || 'Chưa nhận được xác minh KEY.');
-      if (!response.data) {
-        verificationStatus(current.verificationReceived ? 'Đã bổ sung xác minh KEY' : 'Mở tiện ích → Bảng Điều Khiển để bổ sung xác minh KEY');
-        return;
+      let value = automaticSnapshot;
+      if (!value) {
+        const response = await bridge.request('TQT_GET_WEB_VERIFICATION', {machineKey: binding.machineKey}, {timeoutMs: 15000});
+        if (!response?.ok) throw Object.assign(Error(response?.message || 'Chưa nhận được xác minh KEY.'), {code: response?.code});
+        value = response.data;
       }
-      const value = response.data;
+      if (!value && refreshOnEntry) {
+        if (performance.now() < nextAutomaticAttempt) return;
+        verificationStatus('Đang tự lấy xác minh từ tiện ích...');
+        const response = await bridge.request('TQT_REFRESH_WEB_VERIFICATION', {machineKey: binding.machineKey}, {timeoutMs: 15000});
+        if (!response?.ok) throw Object.assign(Error(response?.message || 'Chưa lấy được xác minh tự động.'), {code: response?.code});
+        value = response.data;
+        if (!value) throw Error('Tiện ích chưa trả về xác minh.');
+        automaticSnapshot = value;
+      }
+      if (!value) return;
       if (value.machineKey !== binding.machineKey || typeof value.verificationText !== 'string' || !value.verificationId) throw Error('Xác minh không khớp KEY của web.');
       if (lastVerificationId !== value.verificationId) {
         verificationStatus('Đang bổ sung xác minh KEY...');
         applyLicense(await client.shareVerification(value.verificationText, value.version));
         lastVerificationId = value.verificationId;
       }
-      await bridge.request('TQT_ACK_WEB_VERIFICATION', {verificationId: value.verificationId}, {timeoutMs: 15000});
-      verificationStatus('Đã bổ sung UID|cookie|User-Agent vào KEY', 'ok');
+      if (!value.automatic) {
+        const ack = await bridge.request('TQT_ACK_WEB_VERIFICATION', {verificationId: value.verificationId}, {timeoutMs: 15000});
+        if (!ack?.ok) throw Error('Chưa xác nhận được bản xác minh với tiện ích.');
+      }
+      automaticSnapshot = null; refreshOnEntry = false;
+      verificationStatus('Đã tự gửi xác minh đến ADMIN', 'ok');
     } catch (error) {
       boundSession = '';
-      verificationStatus(error.message || 'Chưa bổ sung được xác minh KEY. Mở tiện ích rồi thử lại.', 'error');
+      if (!automaticSnapshot) nextAutomaticAttempt = performance.now() + 30000;
+      const message = ['DASHBOARD_ACTION_DENIED', 'UNSUPPORTED_ACTION'].includes(error.code)
+        ? 'Cập nhật tiện ích lên 4.0.7 rồi tải lại trang để tự gửi xác minh.'
+        : error.message || 'Chưa gửi được xác minh KEY. Kết nối lại tiện ích rồi thử lại.';
+      verificationStatus(message, 'error');
     } finally {attaching = false;}
   }
   async function checkLicense(options = {}) {
@@ -131,30 +151,33 @@
   }
   copyButton?.addEventListener('click', () => copyMachineKey());
   document.getElementById('copyTqtSidebarKeyBtn')?.addEventListener('click', event => copyMachineKey(event.currentTarget));
-  retryButton?.addEventListener('click', () => current?.code === 'TQT_CAPTCHA_REQUIRED' ? showCaptcha()
-    : checkLicense({reconnect: current?.code === 'TQT_AUTH_RESET_REQUIRED'}));
+  retryButton?.addEventListener('click', () => {
+    nextAutomaticAttempt = 0;
+    return current?.code === 'TQT_CAPTCHA_REQUIRED' ? showCaptcha()
+      : checkLicense({reconnect: current?.code === 'TQT_AUTH_RESET_REQUIRED'});
+  });
   window.addEventListener('tqt:bridge-status', event => {
     boundSession = '';
     if (event.detail?.connected) {
+      const session = window.tqtWebTransport.getStatus().session;
+      if (session !== connectedSession) {
+        connectedSession = session; refreshOnEntry = true; automaticSnapshot = null; nextAutomaticAttempt = 0;
+      }
       if (!current?.synced) checkLicense();
       else attachVerification();
     }
-    else verificationStatus('Chưa kết nối tiện ích để bổ sung xác minh KEY');
+    else {connectedSession = ''; verificationStatus('Chưa kết nối tiện ích để tự gửi xác minh');}
   });
-  document.addEventListener('visibilitychange', () => {if (!document.hidden) checkLicense();});
-  window.addEventListener('pageshow', event => {if (event.persisted) {boundSession = ''; checkLicense();}});
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {refreshOnEntry = true; nextAutomaticAttempt = 0; checkLicense();}
+  });
+  window.addEventListener('pageshow', event => {
+    if (event.persisted) {boundSession = ''; refreshOnEntry = true; nextAutomaticAttempt = 0; checkLicense();}
+  });
   window.setInterval(() => {if (!document.hidden) checkLicense();}, 60000);
   window.setInterval(() => {paint(); if (!document.hidden) attachVerification();}, 5000);
-  async function pairTask(task) {
-    if (pending) throw Error('Đang kiểm tra KEY. Chờ một chút rồi thử lại.');
-    pending = true; retryButton.disabled = true;
-    try {const result = await task(); applyLicense(client.getStatus()); return result;}
-    finally {pending = false; retryButton.disabled = false; attachVerification();}
-  }
   window.tqtWebLicense = Object.freeze({getStatus: () => current ? {...current,
     authorized: current.synced === true && current.authorized === true
-      && (!current.expiresAt || Date.parse(current.expiresAt) > serverNow())} : null, check: checkLicense,
-    createPairCode: () => pairTask(() => client.createPairCode()),
-    joinPairCode: code => pairTask(() => client.joinPairCode(code))});
+      && (!current.expiresAt || Date.parse(current.expiresAt) > serverNow())} : null, check: checkLicense});
   checkLicense();
 }());

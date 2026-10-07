@@ -5,8 +5,8 @@
   const KEY_PATTERN = /^TQT-[A-F0-9]{27}$/;
   const TOKEN_PATTERN = /^[a-f0-9]{64}$/;
   const UUID_PATTERN = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
-  const DEVICE_METHODS = new Set(['ex-hardware-v1', 'web-installation-v1']);
-  const REGISTER_RPC = 'tqt_v14_web_register';
+  const DEVICE_METHODS = new Set(['ex-hardware-v1', 'web-installation-v1', 'ex-hardware-v2']);
+  const REGISTER_RPC = 'tqt_v16_web_register_device';
   const SESSION_ERRORS = new Set(['refresh_token_not_found', 'refresh_token_already_used', 'session_not_found', 'session_expired']);
   const MESSAGES = Object.freeze({
     TQT_LICENSE_AUTHORIZED: 'KEY đã được ADMIN duyệt.',
@@ -15,11 +15,8 @@
     TQT_LICENSE_BLOCKED: 'KEY đang bị khóa.',
     TQT_LICENSE_EXPIRED: 'KEY đã hết hạn. Chờ ADMIN duyệt hoặc gia hạn.',
     TQT_PRODUCT_DISABLED: 'Sản phẩm đang tạm tắt trên trang quản lý.',
-    TQT_BACKEND_SETUP_REQUIRED: 'ADMIN cần chạy SQL 08 rồi SQL 09 trong gói web trước khi sử dụng.',
-    TQT_PAIR_CODE_INVALID: 'Mã ghép không hợp lệ, đã dùng hoặc hết hạn. Tạo mã mới ở trình duyệt đang giữ KEY cần dùng chung.',
-    TQT_PAIR_KEY_UNAVAILABLE: 'KEY đang bị khóa hoặc tạm ngừng; chưa thể ghép trình duyệt.',
-    TQT_PAIR_SAME_KEY: 'Trình duyệt này đã dùng cùng KEY.',
-    TQT_DEVICE_EXTENSION_REQUIRED: 'KEY chưa được đăng ký với ADMIN. Tải lại trang rồi thử lại.',
+    TQT_BACKEND_SETUP_REQUIRED: 'ADMIN cần chạy SQL 11 sau SQL 10 trong gói web trước khi sử dụng.',
+    TQT_DEVICE_EXTENSION_REQUIRED: 'Cài tiện ích 4.0.7 và kết nối với web để nhận diện máy và tạo KEY.',
     TQT_DEVICE_UNAVAILABLE: 'Chưa đọc được cấu hình máy. Kiểm tra quyền CPU/RAM/ổ đĩa của tiện ích rồi thử lại.',
     TQT_DEVICE_CHANGED: 'Cấu hình máy đã thay đổi. Liên hệ ADMIN để kiểm tra KEY; không tự cấp thêm dùng thử.',
     TQT_AUTH_RESET_REQUIRED: 'Phiên kết nối hết hiệu lực. Bấm Khôi phục kết nối; KEY và hạn dùng được giữ nguyên.',
@@ -37,8 +34,8 @@
 
   function createClient({config = window.TQT_CONFIG || {}, storage,
     fetchImpl = window.fetch.bind(window), cryptoApi = window.crypto,
-    now = () => Date.now(), locks = navigator.locks} = {}) {
-    let identity, auth, latest = null, serial = Promise.resolve();
+    now = () => Date.now(), locks = navigator.locks, deviceProvider} = {}) {
+    let identity, auth, device, latest = null, serial = Promise.resolve();
     const productCode = config.webKeyProductCode || 'facebook-auto-comment';
     const failure = code => Object.assign(new Error(MESSAGES[code] || MESSAGES.TQT_LICENSE_SOURCE_UNAVAILABLE), {code});
     function queue(task) {
@@ -64,7 +61,7 @@
     function load() {
       identity = read(IDENTITY_KEY);
       if (!identity) {
-        identity = {machineKey: 'TQT-' + randomHex(14).slice(0, 27).toUpperCase(),
+        identity = {machineKey: '',
           installationId: cryptoApi.randomUUID(), bindingToken: randomHex(32), productCode,
           project: config.supabaseUrl};
         write(IDENTITY_KEY, identity);
@@ -73,10 +70,38 @@
           || !TOKEN_PATTERN.test(identity.bindingToken || '') || identity.productCode !== productCode
           || identity.project !== config.supabaseUrl
           || (identity.deviceFingerprint && !TOKEN_PATTERN.test(identity.deviceFingerprint))
-          || (identity.deviceMethod && !DEVICE_METHODS.has(identity.deviceMethod))) throw failure('TQT_WEB_KEY_INVALID');
-      if (identity.machineKey === '') {identity.machineKey = 'TQT-' + randomHex(14).slice(0, 27).toUpperCase(); write(IDENTITY_KEY, identity);}
+          || (identity.deviceMethod && !DEVICE_METHODS.has(identity.deviceMethod))
+          || (identity.hardwareFingerprint && !TOKEN_PATTERN.test(identity.hardwareFingerprint))) throw failure('TQT_WEB_KEY_INVALID');
       const savedAuth = read(AUTH_KEY);
       auth = savedAuth?.project === config.supabaseUrl ? savedAuth : null;
+    }
+    async function readDevice() {
+      let value;
+      if (deviceProvider) value = await deviceProvider();
+      else {
+        const bridge = window.tqtWebTransport;
+        if (!bridge?.request) throw failure('TQT_DEVICE_EXTENSION_REQUIRED');
+        if (!bridge.getStatus()?.connected) {
+          try {await bridge.ready(5000);} catch {throw failure('TQT_DEVICE_EXTENSION_REQUIRED');}
+        }
+        let response;
+        try {response = await bridge.request('TQT_GET_DEVICE_ID', {}, {timeoutMs: 15000});}
+        catch {throw failure('TQT_DEVICE_UNAVAILABLE');}
+        if (!response?.ok) throw failure(['DASHBOARD_ACTION_DENIED', 'UNSUPPORTED_ACTION'].includes(response?.code)
+          ? 'TQT_DEVICE_EXTENSION_REQUIRED' : 'TQT_DEVICE_UNAVAILABLE');
+        value = response.data;
+      }
+      if (value?.method === 'ex-hardware-v1') throw failure('TQT_DEVICE_EXTENSION_REQUIRED');
+      if (value?.schemaVersion !== 1 || value.method !== 'ex-hardware-v2'
+          || !TOKEN_PATTERN.test(value.fingerprint || '')
+          || (value.legacyFingerprint && !TOKEN_PATTERN.test(value.legacyFingerprint))) throw failure('TQT_DEVICE_UNAVAILABLE');
+      if ((identity.hardwareFingerprint && identity.hardwareFingerprint !== value.fingerprint)
+          || (identity.deviceMethod === 'ex-hardware-v2' && identity.deviceFingerprint !== value.fingerprint)
+          || (identity.deviceMethod === 'ex-hardware-v1' && identity.deviceFingerprint !== value.legacyFingerprint)) throw failure('TQT_DEVICE_CHANGED');
+      device = value;
+      identity.hardwareFingerprint = value.fingerprint;
+      if (!identity.machineKey) identity.machineKey = 'TQT-' + value.fingerprint.slice(0, 27).toUpperCase();
+      write(IDENTITY_KEY, identity);
     }
     function httpError(status, data, path) {
       const message = String(data?.message || data?.msg || data?.error_description || '');
@@ -136,12 +161,14 @@
       return saveAuth(await post('/auth/v1/signup', body));
     }
     function registrationBody() {
-      return {p_machine_key: identity.machineKey, p_installation_id: identity.installationId,
-        p_binding_token: identity.bindingToken, p_product_code: productCode};
+      return {p_device_fingerprint: device.fingerprint, p_installation_id: identity.installationId,
+        p_binding_token: identity.bindingToken, p_product_code: productCode,
+        p_previous_key: identity.machineKey, p_legacy_fingerprint: device.legacyFingerprint || ''};
     }
     async function restoreWebBinding(token) {
       // A renewed anonymous session is reattached with the existing private
       // installation proof. Neither KEY nor trial time is regenerated here.
+      if (!device) await readDevice();
       saveRegistration(validate(await post('/rest/v1/rpc/' + REGISTER_RPC, registrationBody(), token), true));
     }
     async function rpc(name, body, captchaToken) {
@@ -179,7 +206,8 @@
         && data.bindingVerified === true && KEY_PATTERN.test(data.machineKey || '');
       if (data?.schemaVersion !== 12 || !KEY_PATTERN.test(data.machineKey || '')
           || (data.machineKey !== identity.machineKey && !replacement && !relinked)
-          || (registering && (!TOKEN_PATTERN.test(data.deviceFingerprint || '') || !DEVICE_METHODS.has(data.deviceMethod)))
+          || (registering && (data.deviceFingerprint !== device?.fingerprint || data.deviceMethod !== 'ex-hardware-v2'
+            || data.bindingVerified !== true))
           || typeof data.authorized !== 'boolean' || !MESSAGES[data.code]
           || !Number.isFinite(Date.parse(data.serverTime))
           || (data.expiresAt !== null && !Number.isFinite(Date.parse(data.expiresAt)))
@@ -195,6 +223,7 @@
     const sync = ({captchaToken, reconnect = false} = {}) => queue(async () => {
       try {
         load();
+        await readDevice();
         if (reconnect) {auth = null; write(AUTH_KEY, null);}
         const data = validate(await rpc(REGISTER_RPC, registrationBody(), captchaToken), true);
         saveRegistration(data);
@@ -215,24 +244,8 @@
       delete latest.verificationText; delete latest.stored;
       return structuredClone(latest);
     });
-    const createPairCode = () => queue(async () => {
-      load(); saveRegistration(validate(await rpc(REGISTER_RPC, registrationBody()), true));
-      const data = await rpc('tqt_v15_web_pair_code', registrationBody());
-      if (data?.machineKey !== identity.machineKey || !/^TQT-LINK-[A-F0-9]{32}$/.test(data.pairCode || '')
-        || !Number.isFinite(Date.parse(data.serverTime)) || !Number.isFinite(Date.parse(data.expiresAt))
-        || Date.parse(data.expiresAt) <= Date.parse(data.serverTime)) throw failure('TQT_LICENSE_RESPONSE_INVALID');
-      return structuredClone(data);
-    });
-    const joinPairCode = code => queue(async () => {
-      const pairCode = String(code || '').trim().toUpperCase();
-      if (!/^TQT-LINK-[A-F0-9]{32}$/.test(pairCode)) throw failure('TQT_PAIR_CODE_INVALID');
-      load(); saveRegistration(validate(await rpc(REGISTER_RPC, registrationBody()), true));
-      const data = validate(await rpc('tqt_v15_web_pair_join', {...registrationBody(), p_pair_code: pairCode}), true);
-      if (data.bindingVerified !== true || data.relinkedFromKey !== identity.machineKey) throw failure('TQT_LICENSE_RESPONSE_INVALID');
-      saveRegistration(data); return structuredClone(latest);
-    });
     return {
-      sync, shareVerification, createPairCode, joinPairCode,
+      sync, shareVerification,
       getBinding() {return identity?.deviceFingerprint && KEY_PATTERN.test(identity.machineKey)
         ? {machineKey: identity.machineKey, bindingToken: identity.bindingToken} : null;},
       getStatus() {return structuredClone(latest);}

@@ -84,12 +84,16 @@
     subscribe(callback) {subscribers.add(callback); callback({...status}); return () => subscribers.delete(callback);},
     reconnect() {disconnect('Đang kết nối lại tiện ích...'); post('HELLO');}
   };
-  const discovery = setInterval(() => {if (!status.connected) post('HELLO');}, 1500);
+  const discover = () => {if (!status.connected) post('HELLO');};
+  let discovery = setInterval(discover, 1500);
   window.addEventListener('pagehide', () => {
     stopped = true; clearInterval(discovery);
     disconnect('Trang điều khiển đã đóng.');
     for (const waiter of [...waiters]) waiter.reject(new Error('Trang điều khiển đã đóng.'));
-  }, {once: true});
+  });
+  window.addEventListener('pageshow', event => {
+    if (event.persisted) {stopped = false; clearInterval(discovery); discovery = setInterval(discover, 1500); post('HELLO');}
+  });
   const statusElement = document.getElementById('webExtensionStatus');
   const connectionBar = statusElement?.parentElement;
   window.tqtWebTransport.subscribe(next => {

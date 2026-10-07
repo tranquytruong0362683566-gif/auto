@@ -28,7 +28,7 @@
     activeSettings: null,
     activeWorkspace: null,
     activeWorkspaceTrigger: null,
-    activeComposerTab: 'ai',
+    activeComposerTab: 'manual',
     processView: {
       title: 'Hệ thống sẵn sàng nhận lệnh',
       detail: 'Chưa có tác vụ đang chạy.',
@@ -348,7 +348,7 @@
     composer: {
       title: 'Soạn Bình Luận',
       icon: '✎',
-      description: 'Chọn AI viết nội dung hoặc nhập nội dung dùng cho quá trình gửi tự động'
+      description: 'Nhập văn bản kèm ảnh hoặc chọn AI soạn bình luận'
     },
     templates: {
       title: 'Kho Mẫu',
@@ -368,7 +368,7 @@
 
   function getStoredComposerTab() {
     const shared = window.fbBridgeShared;
-    const stored = shared?.load?.(shared.STORE?.commentComposerMode, 'ai');
+    const stored = shared?.load?.(shared.STORE?.commentComposerMode, 'manual');
     return stored === 'manual' ? 'manual' : 'ai';
   }
 
@@ -399,7 +399,7 @@
     if (restoreFocus) previousTrigger?.focus({ preventScroll: true });
   }
 
-  function setComposerTab(tabName = 'ai', { focus = false } = {}) {
+  function setComposerTab(tabName = 'manual', { focus = false } = {}) {
     const tab = tabName === 'manual' ? 'manual' : 'ai';
     const buttons = $$('[data-composer-tab]');
     const panels = $$('[data-composer-panel]');
